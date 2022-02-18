@@ -73,7 +73,7 @@ namespace MRuby
         public static extern RClass mrb_class_get(mrb_state mrb, string name);
 
         [DllImport(Dll)]
-        public static extern  mrb_value mrb_obj_new(mrb_state mrb, RClass c, mrb_int argc, mrb_value[] argv);
+        public static extern mrb_value mrb_obj_new(mrb_state mrb, RClass c, mrb_int argc, mrb_value[] argv);
 
         [DllImport(Dll)]
         public static extern mrb_sym mrb_intern_cstr(mrb_state mrb, string str);
@@ -113,6 +113,10 @@ namespace MRuby
 
         [DllImport(Dll, EntryPoint = "mrb_unity_bool_value")]
         public static extern mrb_value mrb_bool_value(bool v);
+
+        [DllImport(Dll, EntryPoint = "mrb_unity_obj_value")]
+        public static extern mrb_value mrb_obj_value(UIntPtr p);
+
         #endregion
 
         #region Value conversion
@@ -124,6 +128,14 @@ namespace MRuby
 
         [DllImport(Dll, EntryPoint = "mrb_unity_string_buf")]
         public static extern Int64 mrb_string_buf(mrb_state mrb, mrb_value obj, byte[] buf, mrb_int buf_len);
+
+        public static string mrb_as_string(mrb_state mrb, mrb_value str)
+        {
+            var len = DLL.mrb_string_len(mrb, str);
+            var buf = new byte[len];
+            DLL.mrb_string_buf(mrb, str, buf, len);
+            return System.Text.Encoding.UTF8.GetString(buf);
+        }
         #endregion
 
         #region Others

@@ -52,7 +52,17 @@ namespace MRuby
                     val = DLL.mrb_float_value(mrb.mrb, v);
                     break;
                 default:
-                    throw new ArgumentException();
+                    if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
+                    {
+                        if (mrb == null) throw new ArgumentException();
+                        var obj = constructor(mrb, _val);
+                        val = obj.val;
+                        break;
+                    }
+                    else
+                    {
+                        throw new ArgumentException();
+                    }
             }
         }
 
