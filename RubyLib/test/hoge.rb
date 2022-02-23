@@ -1,0 +1,1 @@
+puts "LOADED hoge.rb"
