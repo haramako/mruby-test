@@ -6,10 +6,21 @@ using UnityEngine;
 
 namespace MRuby
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Struct | AttributeTargets.Delegate | AttributeTargets.Interface)]
-    public class CustomLuaClassAttribute : System.Attribute
+#pragma warning disable 414
+    public class MonoPInvokeCallbackAttribute : System.Attribute
     {
-        public CustomLuaClassAttribute()
+        private Type type;
+        public MonoPInvokeCallbackAttribute(Type t)
+        {
+            type = t;
+        }
+    }
+#pragma warning restore 414
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Struct | AttributeTargets.Delegate | AttributeTargets.Interface)]
+    public class CustomMRubyClassAttribute : System.Attribute
+    {
+        public CustomMRubyClassAttribute()
         {
             //
         }

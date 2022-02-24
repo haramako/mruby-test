@@ -39,3 +39,6 @@ ExportedObj/
 /Assets/mruby-unity/Plugins/Win/mruby.dll
 /Assets/mruby-unity/Plugins/Win/mruby.dll.meta
 .vscode
+
+/Assets/mruby-unity/MRubyObject
+/Assets/mruby-unity/MRubyObject.meta

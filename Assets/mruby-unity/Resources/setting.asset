@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp-Editor:MRuby.CodeGen:SLuaSetting
   eol: 0
   exportExtensionMethod: 1
-  UnityEngineGeneratePath: Assets/mruby-unity/LuaObject/
+  UnityEngineGeneratePath: Assets/mruby-unity/MRubyObject/
   PrintTrace: 1
   jitType: 0

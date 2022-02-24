@@ -52,10 +52,9 @@ namespace MRuby.CodeGen {
 
 		public EOL eol = EOL.Native;
 		public bool exportExtensionMethod = true;
-		public string UnityEngineGeneratePath = "Assets/mruby-unity/LuaObject/";
+		public string UnityEngineGeneratePath = "Assets/mruby-unity/MRubyObject/";
 
         public bool PrintTrace = true;
-
 
 		public JITBUILDTYPE jitType = JITBUILDTYPE.none;
 

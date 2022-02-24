@@ -366,7 +366,7 @@ namespace MRuby.CodeGen
                 types = assembly.GetExportedTypes();
                 foreach (Type t in types)
                 {
-                    if (t.IsDefined(typeof(CustomLuaClassAttribute), false) || namespaces.Contains(t.Namespace))
+                    if (t.IsDefined(typeof(CustomMRubyClassAttribute), false) || namespaces.Contains(t.Namespace))
                     {
                         fun(t, null);
                     }
@@ -379,7 +379,7 @@ namespace MRuby.CodeGen
             types = assembly.GetExportedTypes();
             foreach (Type t in types)
             {
-                if (t.IsDefined(typeof(CustomLuaClassAttribute), false) || namespaces.Contains(t.Namespace))
+                if (t.IsDefined(typeof(CustomMRubyClassAttribute), false) || namespaces.Contains(t.Namespace))
                 {
                     fun(t, null);
                 }
@@ -490,18 +490,22 @@ namespace MRuby.CodeGen
                 Debug.Log("Generate 3rdDll interface finished");
             }
         }
+#if false
         [MenuItem("SLua/3rdDll/Clear")]
         static public void Clear3rdDll()
         {
             clear(new string[] { GenPath + "Dll" });
             Debug.Log("Clear AssemblyDll complete.");
         }
-        [MenuItem("SLua/Custom/Clear")]
+
+#endif
+        [MenuItem("MRuby/Custom/Clear")]
         static public void ClearCustom()
         {
             clear(new string[] { GenPath + "Custom" });
             Debug.Log("Clear custom complete.");
         }
+#if false
 
         [MenuItem("SLua/All/Clear")]
         static public void ClearALL()
@@ -513,7 +517,7 @@ namespace MRuby.CodeGen
         [MenuItem("SLua/Compile LuaObject To DLL")]
         static public void CompileDLL()
         {
-#region scripts
+        #region scripts
             List<string> scripts = new List<string>();
             string[] guids = AssetDatabase.FindAssets("t:Script", new string[1] { Path.GetDirectoryName(GenPath) }).Distinct().ToArray();
             int guidCount = guids.Length;
@@ -530,10 +534,10 @@ namespace MRuby.CodeGen
                 Debug.LogError("No Scripts");
                 return;
             }
-#endregion
+        #endregion
 
-#region libraries
-            List<string> libraries = new List<string>();
+        #region libraries
+        List<string> libraries = new List<string>();
 #if UNITY_2017_2_OR_NEWER
             string[] referenced = unityModule;
 #else
@@ -553,13 +557,13 @@ namespace MRuby.CodeGen
                     libraries.Add(path);
                 }
             }
-#endregion
+        #endregion
 
-            //generate AssemblyInfo
-            string AssemblyInfoFile = Application.dataPath + "/AssemblyInfo.cs";
+        //generate AssemblyInfo
+        string AssemblyInfoFile = Application.dataPath + "/AssemblyInfo.cs";
             File.WriteAllText(AssemblyInfoFile, string.Format("[assembly: UnityEngine.UnityAPICompatibilityVersionAttribute(\"{0}\")]", Application.unityVersion));
 
-#region mono compile            
+        #region mono compile            
             string editorData = EditorApplication.applicationContentsPath;
 #if UNITY_EDITOR_OSX && !UNITY_5_4_OR_NEWER
 			editorData += "/Frameworks";
@@ -581,9 +585,9 @@ namespace MRuby.CodeGen
 #if UNITY_EDITOR_WIN
             mcs += ".bat";
 #endif
-#endregion
+        #endregion
 
-#region execute bash
+        #region execute bash
             StringBuilder output = new StringBuilder();
             StringBuilder error = new StringBuilder();
             bool success = false;
@@ -640,7 +644,7 @@ namespace MRuby.CodeGen
             {
                 Debug.LogError(ex);
             }
-#endregion
+        #endregion
 
             Debug.Log(output.ToString());
             if (success)
@@ -657,6 +661,7 @@ namespace MRuby.CodeGen
                 Debug.LogError(error.ToString());
             }
         }
+#endif
 
         static void clear(string[] paths)
         {
@@ -858,6 +863,7 @@ namespace MRuby.CodeGen
             string f = System.IO.Path.Combine(path, name + ".cs");
             StreamWriter file = new StreamWriter(f, false, Encoding.UTF8);
             file.NewLine = NewLine;
+            Write(file, "#if false");
             Write(file, "using System;");
             Write(file, "using System.Collections.Generic;");
             Write(file, "namespace SLua {");
@@ -874,6 +880,7 @@ namespace MRuby.CodeGen
             Write(file, "}");
             Write(file, "}");
             Write(file, "}");
+            Write(file, "#endif");
             file.Close();
         }
 
@@ -987,6 +994,7 @@ namespace MRuby.CodeGen
         void WriteDelegate(Type t, StreamWriter file)
         {
             string temp = @"
+#if false
 using System;
 using System.Collections.Generic;
 namespace SLua
@@ -1052,6 +1060,7 @@ namespace SLua
             Write(file, "}");
             Write(file, "}");
             Write(file, "}");
+            Write(file, "#endif");
         }
 
         string ArgsList(MethodInfo m)
@@ -1094,15 +1103,16 @@ namespace SLua
         void WriteEvent(Type t, StreamWriter file)
         {
             string temp = @"
+#if false
 using System;
 using System.Collections.Generic;
 
-namespace SLua
+namespace MRuby.Bind
 {
     public class LuaUnityEvent_$CLS : LuaObject
     {
 
-        [SLua.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        [MRuby.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static public int AddListener(IntPtr l)
         {
             try
@@ -1119,7 +1129,7 @@ namespace SLua
 				return error(l,e);
             }
         }
-        [SLua.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        [MRuby.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static public int RemoveListener(IntPtr l)
         {
             try
@@ -1136,7 +1146,7 @@ namespace SLua
                 return error(l,e);
             }
         }
-        [SLua.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        [MRuby.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static public int Invoke(IntPtr l)
         {
             try
@@ -1186,7 +1196,8 @@ namespace SLua
             return true;
         }
     }
-}";
+}
+#endif";
 
 
             temp = temp.Replace("$CLS", _Name(GenericName(t.BaseType)));
@@ -1322,6 +1333,7 @@ namespace SLua
         private void End(StreamWriter file)
         {
             Write(file, "}");
+            Write(file, "#endif");
             file.Flush();
             file.Close();
         }
@@ -1329,8 +1341,9 @@ namespace SLua
         private void WriteHead(Type t, StreamWriter file)
         {
             HashSet<string> nsset = new HashSet<string>();
+            Write(file, "#if false");
             Write(file, "using System;");
-            Write(file, "using SLua;");
+            Write(file, "using MRuby;");
             Write(file, "using System.Collections.Generic;");
             nsset.Add("System");
             nsset.Add("SLua");
@@ -1407,7 +1420,7 @@ namespace SLua
 
         bool isPInvoke(MethodInfo mi, out bool instanceFunc)
         {
-            if (mi.IsDefined(typeof(SLua.MonoPInvokeCallbackAttribute), false))
+            if (mi.IsDefined(typeof(MRuby.MonoPInvokeCallbackAttribute), false))
             {
                 instanceFunc = !mi.IsDefined(typeof(StaticExportAttribute), false);
                 return true;
@@ -1460,7 +1473,7 @@ namespace SLua
             if (overloadedClass.TryGetValue(t, out ot))
             {
                 MethodInfo mi = ot.GetMethod(f, BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-                if (mi != null && mi.IsDefined(typeof(SLua.MonoPInvokeCallbackAttribute), false))
+                if (mi != null && mi.IsDefined(typeof(MRuby.MonoPInvokeCallbackAttribute), false))
                 {
                     f = FullName(ot) + "." + f;
                     return true;
@@ -1889,7 +1902,7 @@ namespace SLua
 
         private void WriteFunctionAttr(StreamWriter file)
         {
-            Write(file, "[SLua.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]");
+            Write(file, "[MRuby.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]");
 #if UNITY_5_3_OR_NEWER
             Write(file, "[UnityEngine.Scripting.Preserve]");
 #endif
@@ -2542,7 +2555,7 @@ namespace SLua
         {
             if (t.IsEnum)
                 Write(file, "pushEnum(l,(int)ret);");
-            else if (t.IsInterface && t.IsDefined(typeof(CustomLuaClassAttribute), false))
+            else if (t.IsInterface && t.IsDefined(typeof(CustomMRubyClassAttribute), false))
                 Write(file, "pushInterface(l,ret, typeof({0}));", TypeDecl(t));
             else
                 Write(file, "pushValue(l,ret);");
@@ -2552,7 +2565,7 @@ namespace SLua
         {
             if (t.IsEnum)
                 Write(file, "pushEnum(l,(int){0});", ret);
-            else if (t.IsInterface && t.IsDefined(typeof(CustomLuaClassAttribute), false))
+            else if (t.IsInterface && t.IsDefined(typeof(CustomMRubyClassAttribute), false))
                 Write(file, "pushInterface(l,{0}, typeof({1}));", ret, TypeDecl(t));
             else
                 Write(file, "pushValue(l,{0});", ret);
