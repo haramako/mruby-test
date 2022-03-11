@@ -34,6 +34,14 @@ namespace MRuby
         public UInt32 val;
     }
 
+
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int LuaCSFunction(IntPtr luaState);
+#else
+	public delegate int LuaCSFunction(IntPtr luaState);
+#endif
+
     public static class DLL
     {
         const string Dll = "mruby.dll";
@@ -44,7 +52,7 @@ namespace MRuby
         public static mrb_aspec MRB_ARGS_OPT(int n) => new mrb_aspec(((UInt64)n & 0x1fUL) << 13);
         public static mrb_aspec MRB_ARGS_NONE() => new mrb_aspec(0);
 
-        #region Ruby original
+#region Ruby original
         [DllImport(Dll)]
         public static extern mrb_state mrb_open();
 
@@ -90,9 +98,9 @@ namespace MRuby
         [DllImport(Dll)]
         public static extern string mrb_string_cstr(mrb_state mrb, mrb_value str);
 
-        #endregion
+#endregion
 
-        #region Value creation
+#region Value creation
         [DllImport(Dll, EntryPoint = "mrb_unity_fixnum_value")]
         public static extern mrb_value mrb_fixnum_value(mrb_int v);
 
@@ -117,9 +125,9 @@ namespace MRuby
         [DllImport(Dll, EntryPoint = "mrb_unity_obj_value")]
         public static extern mrb_value mrb_obj_value(UIntPtr p);
 
-        #endregion
+#endregion
 
-        #region Value conversion
+#region Value conversion
         [DllImport(Dll, EntryPoint = "mrb_unity_as_int")]
         public static extern Int64 mrb_as_int(mrb_state mrb, mrb_value obj);
 
@@ -136,9 +144,9 @@ namespace MRuby
             DLL.mrb_string_buf(mrb, str, buf, len);
             return System.Text.Encoding.UTF8.GetString(buf);
         }
-        #endregion
+#endregion
 
-        #region Others
+#region Others
         public delegate void AbortFunc(string msg);
 
         [DllImport(Dll)]
@@ -146,7 +154,7 @@ namespace MRuby
 
         [DllImport(Dll, EntryPoint = "mrb_unity_funcall_argv")]
         public static extern mrb_value mrb_funcall_argv(mrb_state mrb, mrb_value val, string name, mrb_int argc, mrb_value[] vals);
-        #endregion
+#endregion
     }
 
 

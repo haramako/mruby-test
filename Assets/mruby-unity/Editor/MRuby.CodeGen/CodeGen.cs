@@ -999,7 +999,7 @@ using System;
 using System.Collections.Generic;
 namespace SLua
 {
-    public partial class LuaDelegation : LuaObject
+    public partial class LuaDelegation : CSObject
     {
 
         static internal $RET $FN(LuaFunction ld $ARGS) {
@@ -1026,7 +1026,7 @@ namespace SLua
             for (int n = 0; n < pis.Length; n++)
             {
                 if (!pis[n].IsOut)
-                    Write(file, "pushValue(l,a{0});", n + 1);
+                    Write(file, "Converter.pushValue(l,a{0});", n + 1);
             }
 
             int outcount = pis.Count((ParameterInfo p) =>
@@ -1109,7 +1109,7 @@ using System.Collections.Generic;
 
 namespace MRuby.Bind
 {
-    public class LuaUnityEvent_$CLS : LuaObject
+    public class LuaUnityEvent_$CLS : CSObject
     {
 
         [MRuby.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
@@ -1117,7 +1117,7 @@ namespace MRuby.Bind
         {
             try
             {
-                UnityEngine.Events.UnityEvent<$GN> self = checkSelf<UnityEngine.Events.UnityEvent<$GN>>(l);
+                UnityEngine.Events.UnityEvent<$GN> self = Converter.checkSelf<UnityEngine.Events.UnityEvent<$GN>>(l);
                 UnityEngine.Events.UnityAction<$GN> a1;
                 checkType(l, 2, out a1);
                 self.AddListener(a1);
@@ -1134,7 +1134,7 @@ namespace MRuby.Bind
         {
             try
             {
-                UnityEngine.Events.UnityEvent<$GN> self = checkSelf<UnityEngine.Events.UnityEvent<$GN>>(l);
+                UnityEngine.Events.UnityEvent<$GN> self = Converter.checkSelf<UnityEngine.Events.UnityEvent<$GN>>(l);
                 UnityEngine.Events.UnityAction<$GN> a1;
                 checkType(l, 2, out a1);
                 self.RemoveListener(a1);
@@ -1151,7 +1151,7 @@ namespace MRuby.Bind
         {
             try
             {
-                UnityEngine.Events.UnityEvent<$GN> self = checkSelf<UnityEngine.Events.UnityEvent<$GN>>(l);
+                UnityEngine.Events.UnityEvent<$GN> self = Converter.checkSelf<UnityEngine.Events.UnityEvent<$GN>>(l);
 " +
 
                 GenericCallDecl(t.BaseType)
@@ -1249,17 +1249,17 @@ namespace MRuby.Bind
             else if (IsValueType(t))
             {
                 if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                    return string.Format("checkNullable(l,{2}{0},out {1});", n, v, prefix);
+                    return string.Format("Converter.checkNullable(l,{2}{0},out {1});", n, v, prefix);
                 else
-                    return string.Format("checkValueType(l,{2}{0},out {1});", n, v, prefix);
+                    return string.Format("Converter.checkValueType(l,{2}{0},out {1});", n, v, prefix);
             }
             else if (t.IsArray)
             {
-                return string.Format("checkArray(l,{2}{0},out {1});", n, v, prefix);
+                return string.Format("Converter.checkArray(l,{2}{0},out {1});", n, v, prefix);
             }
             else
             {
-                return string.Format("checkType(l,{2}{0},out {1});", n, v, prefix);
+                return string.Format("Converter.checkType(l,{2}{0},out {1});", n, v, prefix);
             }
         }
 
@@ -1271,7 +1271,7 @@ namespace MRuby.Bind
                 string ret = "";
                 for (int n = 0; n < tt.Length; n++)
                 {
-                    ret += ("pushValue(l,v" + n + ");");
+                    ret += ("Converter.pushValue(l,v" + n + ");");
                 }
                 return ret;
             }
@@ -1352,7 +1352,7 @@ namespace MRuby.Bind
 #if UNITY_5_3_OR_NEWER
             Write(file, "[UnityEngine.Scripting.Preserve]");
 #endif
-            Write(file, "public class {0} : LuaObject {{", ExportName(t));
+            Write(file, "public class {0} : CSObject {{", ExportName(t));
         }
 
         // add namespace for extension method
@@ -1781,7 +1781,7 @@ namespace MRuby.Bind
                     {
                         PropertyInfo fii = getter[i];
                         ParameterInfo[] infos = fii.GetIndexParameters();
-                        Write(file, "{0}(matchType(l,2,t,typeof({1}))){{", first_get ? "if" : "else if", infos[0].ParameterType);
+                        Write(file, "{0}(Converter.matchType(l,2,t,typeof({1}))){{", first_get ? "if" : "else if", infos[0].ParameterType);
                         WriteValueCheck(file, infos[0].ParameterType, 2, "v");
                         Write(file, "var ret = self[v];");
                         WriteOk(file);
@@ -1822,7 +1822,7 @@ namespace MRuby.Bind
                         if (t.BaseType != typeof(MulticastDelegate))
                         {
                             ParameterInfo[] infos = fii.GetIndexParameters();
-                            Write(file, "{0}(matchType(l,2,t,typeof({1}))){{", first_set ? "if" : "else if", infos[0].ParameterType);
+                            Write(file, "{0}(Converter.matchType(l,2,t,typeof({1}))){{", first_set ? "if" : "else if", infos[0].ParameterType);
                             WriteValueCheck(file, infos[0].ParameterType, 2, "v");
                             WriteValueCheck(file, fii.PropertyType, 3, "c");
                             Write(file, "self[v]=c;");
@@ -1860,7 +1860,7 @@ namespace MRuby.Bind
         {
             Write(file, "}");
             Write(file, "catch(Exception e) {");
-            Write(file, "return error(l,e);");
+            Write(file, "return Converter.error(l,e);");
             Write(file, "}");
             WriteFinaly(file);
         }
@@ -1885,13 +1885,13 @@ namespace MRuby.Bind
                 Write(file, "int op=checkDelegate(l,{2}{0},out {1});", n, v, nprefix);
             else if (IsValueType(t))
                 if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                    Write(file, "checkNullable(l,{2}{0},out {1});", n, v, nprefix);
+                    Write(file, "Converter.checkNullable(l,{2}{0},out {1});", n, v, nprefix);
                 else
-                    Write(file, "checkValueType(l,{2}{0},out {1});", n, v, nprefix);
+                    Write(file, "Converter.checkValueType(l,{2}{0},out {1});", n, v, nprefix);
             else if (t.IsArray)
-                Write(file, "checkArray(l,{2}{0},out {1});", n, v, nprefix);
+                Write(file, "Converter.checkArray(l,{2}{0},out {1});", n, v, nprefix);
             else
-                Write(file, "checkType(l,{2}{0},out {1});", n, v, nprefix);
+                Write(file, "Converter.checkType(l,{2}{0},out {1});", n, v, nprefix);
         }
 
         void WriteValueCheck(StreamWriter file, Type t, int n, string v = "v", string nprefix = "")
@@ -2011,7 +2011,7 @@ namespace MRuby.Bind
                         if (isUniqueArgsCount(cons, ci))
                             Write(file, "{0}(argc=={1}){{", first ? "if" : "else if", ci.GetParameters().Length + 1);
                         else
-                            Write(file, "{0}(matchType(l,argc,2{1})){{", first ? "if" : "else if", TypeDecl(pars));
+                            Write(file, "{0}(Converter.matchType(l,argc,2{1})){{", first ? "if" : "else if", TypeDecl(pars));
                     }
 
                     for (int k = 0; k < pars.Length; k++)
@@ -2023,9 +2023,9 @@ namespace MRuby.Bind
                     Write(file, "o=new {0}({1});", TypeDecl(t), FuncCall(ci));
                     WriteOk(file);
                     if (t.Name == "String") // if export system.string, push string as ud not lua string
-                        Write(file, "pushObject(l,o);");
+                        Write(file, "Converter.pushObject(l,o);");
                     else
-                        Write(file, "pushValue(l,o);");
+                        Write(file, "Converter.pushValue(l,o);");
                     Write(file, "return 2;");
                     if (cons.Length == 1)
                         WriteCatchExecption(file);
@@ -2039,13 +2039,13 @@ namespace MRuby.Bind
                     {
                         Write(file, "{0}(argc=={1}){{", first ? "if" : "else if", 0);
                         Write(file, "o=new {0}();", FullName(t));
-                        Write(file, "pushValue(l,true);");
-                        Write(file, "pushObject(l,o);");
+                        Write(file, "Converter.pushValue(l,true);");
+                        Write(file, "Converter.pushObject(l,o);");
                         Write(file, "return 2;");
                         Write(file, "}");
                     }
 
-                    Write(file, "return error(l,\"New object failed.\");");
+                    Write(file, "return Converter.error(l,\"New object failed.\");");
                     WriteCatchExecption(file);
                     Write(file, "}");
                 }
@@ -2065,11 +2065,11 @@ namespace MRuby.Bind
 
         void WriteOk(StreamWriter file)
         {
-            Write(file, "pushValue(l,true);");
+            Write(file, "Converter.pushValue(l,true);");
         }
         void WriteBad(StreamWriter file)
         {
-            Write(file, "pushValue(l,false);");
+            Write(file, "Converter.pushValue(l,false);");
         }
 
         void WriteError(StreamWriter file, string err)
@@ -2081,8 +2081,8 @@ namespace MRuby.Bind
 
         void WriteReturn(StreamWriter file, string val)
         {
-            Write(file, "pushValue(l,true);");
-            Write(file, "pushValue(l,{0});", val);
+            Write(file, "Converter.pushValue(l,true);");
+            Write(file, "Converter.pushValue(l,{0});", val);
             Write(file, "return 2;");
         }
 
@@ -2344,7 +2344,7 @@ namespace MRuby.Bind
                             if (isUniqueArgsCount(cons, mi))
                                 Write(file, "{0}(argc=={1}){{", first ? "if" : "else if", mi.IsStatic ? mi.GetParameters().Length : mi.GetParameters().Length + 1);
                             else
-                                Write(file, "{0}(matchType(l,argc,{1}{2})){{", first ? "if" : "else if", mi.IsStatic && !isExtension ? 1 : 2, TypeDecl(pars, isExtension ? 1 : 0));
+                                Write(file, "{0}(Converter.matchType(l,argc,{1}{2})){{", first ? "if" : "else if", mi.IsStatic && !isExtension ? 1 : 2, TypeDecl(pars, isExtension ? 1 : 0));
                             WriteFunctionCall(mi, file, t, bf);
                             Write(file, "}");
                             first = false;
@@ -2410,12 +2410,12 @@ namespace MRuby.Bind
             {
                 Write(file, "{0} self;", TypeDecl(t));
                 if (IsBaseType(t))
-                    Write(file, "checkType(l,1,out self);");
+                    Write(file, "Converter.checkType(l,1,out self);");
                 else
-                    Write(file, "checkValueType(l,1,out self);");
+                    Write(file, "Converter.checkValueType(l,1,out self);");
             }
             else
-                Write(file, "{0} self=({0})checkSelf(l);", TypeDecl(t));
+                Write(file, "{0} self=({0})Converter.checkSelf(l);", TypeDecl(t));
         }
 
 
@@ -2554,21 +2554,21 @@ namespace MRuby.Bind
         void WritePushValue(Type t, StreamWriter file)
         {
             if (t.IsEnum)
-                Write(file, "pushEnum(l,(int)ret);");
+                Write(file, "Converter.pushEnum(l,(int)ret);");
             else if (t.IsInterface && t.IsDefined(typeof(CustomMRubyClassAttribute), false))
-                Write(file, "pushInterface(l,ret, typeof({0}));", TypeDecl(t));
+                Write(file, "Converter.pushInterface(l,ret, typeof({0}));", TypeDecl(t));
             else
-                Write(file, "pushValue(l,ret);");
+                Write(file, "Converter.pushValue(l,ret);");
         }
 
         void WritePushValue(Type t, StreamWriter file, string ret)
         {
             if (t.IsEnum)
-                Write(file, "pushEnum(l,(int){0});", ret);
+                Write(file, "Converter.pushEnum(l,(int){0});", ret);
             else if (t.IsInterface && t.IsDefined(typeof(CustomMRubyClassAttribute), false))
-                Write(file, "pushInterface(l,{0}, typeof({1}));", ret, TypeDecl(t));
+                Write(file, "Converter.pushInterface(l,{0}, typeof({1}));", ret, TypeDecl(t));
             else
-                Write(file, "pushValue(l,{0});", ret);
+                Write(file, "Converter.pushValue(l,{0});", ret);
         }
 
         void Write(StreamWriter file, string fmt, params object[] args)
@@ -2609,25 +2609,25 @@ namespace MRuby.Bind
 				else if (t.BaseType == typeof(System.MulticastDelegate))
 				{
 					tryMake(t);
-					Write(file, "checkDelegate(l,{0},out a{1});", n + argstart, n + 1);
+					Write(file, "Converter.checkDelegate(l,{0},out a{1});", n + argstart, n + 1);
 				}
 				else if (isparams)
 				{
 					if(t.GetElementType().IsValueType && !IsBaseType(t.GetElementType()))
-						Write(file, "checkValueParams(l,{0},out a{1});", n + argstart, n + 1);
+						Write(file, "Converter.checkValueParams(l,{0},out a{1});", n + argstart, n + 1);
 					else
-						Write(file, "checkParams(l,{0},out a{1});", n + argstart, n + 1);
+						Write(file, "Converter.checkParams(l,{0},out a{1});", n + argstart, n + 1);
 				}
 				else if(t.IsArray)
-					Write(file, "checkArray(l,{0},out a{1});", n + argstart, n + 1);
+					Write(file, "Converter.checkArray(l,{0},out a{1});", n + argstart, n + 1);
 				else if (IsValueType(t)) {
 					if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-						Write(file, "checkNullable(l,{0},out a{1});", n + argstart, n + 1);
+						Write(file, "Converter.checkNullable(l,{0},out a{1});", n + argstart, n + 1);
 					else
-						Write(file, "checkValueType(l,{0},out a{1});", n + argstart, n + 1);
+						Write(file, "Converter.checkValueType(l,{0},out a{1});", n + argstart, n + 1);
 				}
 				else
-					Write(file, "checkType(l,{0},out a{1});", n + argstart, n + 1);
+					Write(file, "Converter.checkType(l,{0},out a{1});", n + argstart, n + 1);
 			}
 		}
 

@@ -14,6 +14,12 @@ public class CodeGenSample
     public int IntProperty { get; set; }
     public string StringProperty { get; set; }
 
+    public CodeGenSample(int i, string s)
+    {
+        IntField = i;
+        StringField = s;
+    }
+
     public string GetStringValue()
     {
         return s;
@@ -23,4 +29,22 @@ public class CodeGenSample
     {
         return i;
     }
+
+    public int OverloadedMethod(int n)
+    {
+        return n;
+    }
+
+#if false
+    public int OverloadedMethod(int n, int m)
+    {
+        return n + m;
+    }
+
+    public string OverloadedMethod(string s)
+    {
+        return s;
+    }
+#endif
+
 }
