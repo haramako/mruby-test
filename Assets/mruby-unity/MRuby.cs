@@ -83,6 +83,55 @@ namespace MRuby
 
         public Value(object _val) : this(null, _val) { }
 
+        public Value(mrb_state mrb, object _val)
+        {
+            switch (_val)
+            {
+                case byte v:
+                    val = DLL.mrb_fixnum_value(v);
+                    break;
+                case UInt16 v:
+                    val = DLL.mrb_fixnum_value(v);
+                    break;
+                case Int16 v:
+                    val = DLL.mrb_fixnum_value(v);
+                    break;
+                case UInt32 v:
+                    val = DLL.mrb_fixnum_value(v);
+                    break;
+                case Int32 v:
+                    val = DLL.mrb_fixnum_value(v);
+                    break;
+                case bool v:
+                    val = DLL.mrb_bool_value(v);
+                    break;
+                case string v:
+                    val = DLL.mrb_str_new_cstr(mrb, v);
+                    break;
+                case float v:
+                    val = DLL.mrb_float_value(mrb, v);
+                    break;
+                case double v:
+                    val = DLL.mrb_float_value(mrb, v);
+                    break;
+                default:
+                    if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
+                    {
+#if false
+                        var obj = constructor(mrb, _val);
+                        val = obj.val;
+#else
+                        val = default;
+#endif
+                        break;
+                    }
+                    else
+                    {
+                        throw new ArgumentException();
+                    }
+            }
+        }
+
         public Value(MrbState mrb, object _val)
         {
             switch( _val)

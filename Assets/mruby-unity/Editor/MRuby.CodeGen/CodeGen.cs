@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// #define ENABLE_PROFILE
+
 namespace MRuby.CodeGen
 {
     using UnityEngine;
@@ -866,11 +868,11 @@ namespace MRuby.CodeGen
             Write(file, "#if false");
             Write(file, "using System;");
             Write(file, "using System.Collections.Generic;");
-            Write(file, "namespace SLua {");
+            Write(file, "namespace MRuby {");
             Write(file, "[LuaBinder({0})]", order);
             Write(file, "public class {0} {{", name);
-            Write(file, "public static Action<IntPtr>[] GetBindList() {");
-            Write(file, "Action<IntPtr>[] list= {");
+            Write(file, "public static Action<MrbState>[] GetBindList() {");
+            Write(file, "Action<MrbState>[] list= {");
             foreach (Type t in list)
             {
                 WriteBindType(file, t, list, exported);
@@ -899,11 +901,11 @@ namespace MRuby.CodeGen
             string f;
             if (t.IsGenericType)
             {
-                f = path + string.Format("Lua{0}_{1}.cs", _Name(GenericBaseName(t)), _Name(GenericName(t)));
+                f = path + string.Format("MRuby{0}_{1}.cs", _Name(GenericBaseName(t)), _Name(GenericName(t)));
             }
             else
             {
-                f = path + "LuaDelegate_" + _Name(t.FullName) + ".cs";
+                f = path + "MRubyDelegate_" + _Name(t.FullName) + ".cs";
             }
             return f;
         }
@@ -997,7 +999,7 @@ namespace MRuby.CodeGen
 #if false
 using System;
 using System.Collections.Generic;
-namespace SLua
+namespace MRuby
 {
     public partial class LuaDelegation : CSObject
     {
@@ -1308,7 +1310,7 @@ namespace MRuby.Bind
         void RegEnumFunction(Type t, StreamWriter file)
         {
             // Write export function
-            Write(file, "static public void reg(IntPtr l) {");
+            Write(file, "static public void reg(mrb_state l) {");
             Write(file, "getEnumTable(l,\"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
 
             foreach (string name in Enum.GetNames(t))
@@ -1353,6 +1355,9 @@ namespace MRuby.Bind
             Write(file, "[UnityEngine.Scripting.Preserve]");
 #endif
             Write(file, "public class {0} : CSObject {{", ExportName(t));
+            
+            Write(file, "static RClass _cls;");
+            Write(file, "static mrb_value _cls_value;");
         }
 
         // add namespace for extension method
@@ -1489,22 +1494,27 @@ namespace MRuby.Bind
 #endif
 
             // Write export function
-            Write(file, "static public void reg(IntPtr l) {");
+            Write(file, "static public void reg(MrbState _mrb) {");
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
                 Write(file, "LuaUnityEvent_{1}.reg(l);", FullName(t), _Name((GenericName(t.BaseType))));
             }
 
-            Write(file, "getTypeTable(l,\"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
+            Write(file, "mrb_state mrb = _mrb.mrb;");
+            Write(file, "_cls = DLL.mrb_define_class(mrb, \"{0}\", DLL.mrb_class_get(mrb, \"Object\"));", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
+            Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
+            //Write(file, "getTypeTable(l,\"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
             foreach (string i in funcname)
             {
                 string f = i;
                 trygetOverloadedVersion(t, ref f);
-                Write(file, "addMember(l,{0});", f);
+                Write(file, "Converter.define_method(mrb, _cls, {0});", f);
+                //Write(file, "addMember(l,{0});", f);
             }
             foreach (string f in directfunc.Keys)
             {
+                // TODO
                 bool instance = directfunc[f];
                 Write(file, "addMember(l,{0},{1});", f, instance ? "true" : "false");
             }
@@ -1514,8 +1524,11 @@ namespace MRuby.Bind
                 PropPair pp = propname[f];
                 trygetOverloadedVersion(t, ref pp.get);
                 trygetOverloadedVersion(t, ref pp.set);
-                Write(file, "addMember(l,\"{0}\",{1},{2},{3});", f, pp.get, pp.set, pp.isInstance ? "true" : "false");
+                Write(file, "Converter.define_property(mrb, _cls,\"{0}\",{1},{2},{3});", f, pp.get, pp.set, pp.isInstance ? "true" : "false");
+                //Write(file, "addMember(l,\"{0}\",{1},{2},{3});", f, pp.get, pp.set, pp.isInstance ? "true" : "false");
             }
+            // TODO
+#if false
             if (t.BaseType != null && !CutBase(t.BaseType))
             {
                 if (t.BaseType.Name.Contains("UnityEvent`"))
@@ -1525,6 +1538,9 @@ namespace MRuby.Bind
             }
             else
                 Write(file, "createTypeMetatable(l,{1}, typeof({0}));", TypeDecl(t), constructorOrNot(t));
+#endif
+            // TODO
+            //Write(file, "TypeCache.AddType(typeof(Character), constructor);");
             Write(file, "}");
         }
 
@@ -1606,22 +1622,19 @@ namespace MRuby.Bind
                 if (fi.FieldType.BaseType != typeof(MulticastDelegate))
                 {
                     WriteFunctionAttr(file);
-                    Write(file, "static public int get_{0}(IntPtr l) {{", fi.Name);
+                    Write(file, "static public mrb_value get_{0}(mrb_state l) {{", fi.Name);
                     WriteTry(file);
 
                     if (fi.IsStatic)
                     {
-                        WriteOk(file);
-                        WritePushValue(fi.FieldType, file, string.Format("{0}.{1}", TypeDecl(t), NormalName(fi.Name)));
+                        WriteReturn(fi.FieldType, file, string.Format("{0}.{1}", TypeDecl(t), NormalName(fi.Name)));
                     }
                     else
                     {
                         WriteCheckSelf(file, t);
-                        WriteOk(file);
-                        WritePushValue(fi.FieldType, file, string.Format("self.{0}", NormalName(fi.Name)));
+                        WriteReturn(fi.FieldType, file, string.Format("self.{0}", NormalName(fi.Name)));
                     }
 
-                    Write(file, "return 2;");
                     WriteCatchExecption(file);
                     Write(file, "}");
 
@@ -1634,7 +1647,7 @@ namespace MRuby.Bind
                 if (!fi.IsLiteral && !fi.IsInitOnly)
                 {
                     WriteFunctionAttr(file);
-                    Write(file, "static public int set_{0}(IntPtr l) {{", fi.Name);
+                    Write(file, "static public mrb_value set_{0}(mrb_state l) {{", fi.Name);
                     WriteTry(file);
                     if (fi.IsStatic)
                     {
@@ -1652,8 +1665,7 @@ namespace MRuby.Bind
 
                     if (t.IsValueType && !fi.IsStatic)
                         Write(file, "setBack(l,self);");
-                    WriteOk(file);
-                    Write(file, "return 1;");
+                    Write(file, "return DLL.mrb_nil_value();");
                     WriteCatchExecption(file);
                     Write(file, "}");
 
@@ -1694,23 +1706,20 @@ namespace MRuby.Bind
                     if (!IsNotSupport(fi.PropertyType))
                     {
                         WriteFunctionAttr(file);
-                        Write(file, "static public int get_{0}(IntPtr l) {{", fi.Name);
+                        Write(file, "static public mrb_value get_{0}(mrb_state l) {{", fi.Name);
                         WriteTry(file);
 
                         if (fi.GetGetMethod().IsStatic)
                         {
                             isInstance = false;
-                            WriteOk(file);
-                            WritePushValue(fi.PropertyType, file, string.Format("{0}.{1}", TypeDecl(t), NormalName(fi.Name)));
+                            WriteReturn(fi.PropertyType, file, string.Format("{0}.{1}", TypeDecl(t), NormalName(fi.Name)));
                         }
                         else
                         {
                             WriteCheckSelf(file, t);
-                            WriteOk(file);
-                            WritePushValue(fi.PropertyType, file, string.Format("self.{0}", NormalName(fi.Name)));
+                            WriteReturn(fi.PropertyType, file, string.Format("self.{0}", NormalName(fi.Name)));
                         }
 
-                        Write(file, "return 2;");
                         WriteCatchExecption(file);
                         Write(file, "}");
                         pp.get = "get_" + fi.Name;
@@ -1721,7 +1730,7 @@ namespace MRuby.Bind
                 if (fi.CanWrite && fi.GetSetMethod() != null)
                 {
                     WriteFunctionAttr(file);
-                    Write(file, "static public int set_{0}(IntPtr l) {{", fi.Name);
+                    Write(file, "static public int set_{0}(mrb_state l) {{", fi.Name);
                     WriteTry(file);
                     if (fi.GetSetMethod().IsStatic)
                     {
@@ -1738,8 +1747,7 @@ namespace MRuby.Bind
 
                     if (t.IsValueType)
                         Write(file, "setBack(l,self);");
-                    WriteOk(file);
-                    Write(file, "return 1;");
+                    Write(file, "return DLL.mrb_nil_value()1;");
                     WriteCatchExecption(file);
                     Write(file, "}");
                     pp.set = "set_" + fi.Name;
@@ -1770,9 +1778,7 @@ namespace MRuby.Bind
                     ParameterInfo[] infos = _get.GetIndexParameters();
                     WriteValueCheck(file, infos[0].ParameterType, 2, "v");
                     Write(file, "var ret = self[v];");
-                    WriteOk(file);
-                    WritePushValue(_get.PropertyType, file, "ret");
-                    Write(file, "return 2;");
+                    WriteReturn(_get.PropertyType, file, "ret");
                 }
                 else
                 {
@@ -1784,9 +1790,7 @@ namespace MRuby.Bind
                         Write(file, "{0}(Converter.matchType(l,2,t,typeof({1}))){{", first_get ? "if" : "else if", infos[0].ParameterType);
                         WriteValueCheck(file, infos[0].ParameterType, 2, "v");
                         Write(file, "var ret = self[v];");
-                        WriteOk(file);
-                        WritePushValue(fii.PropertyType, file, "ret");
-                        Write(file, "return 2;");
+                        WriteReturn(fii.PropertyType, file, "ret");
                         Write(file, "}");
                         first_get = false;
                     }
@@ -1810,8 +1814,7 @@ namespace MRuby.Bind
                     WriteValueCheck(file, infos[0].ParameterType, 2);
                     WriteValueCheck(file, _set.PropertyType, 3, "c");
                     Write(file, "self[v]=c;");
-                    WriteOk(file);
-                    Write(file, "return 1;");
+                    Write(file, "return DLL.mrb_nil_value()1;");
                 }
                 else
                 {
@@ -1826,8 +1829,7 @@ namespace MRuby.Bind
                             WriteValueCheck(file, infos[0].ParameterType, 2, "v");
                             WriteValueCheck(file, fii.PropertyType, 3, "c");
                             Write(file, "self[v]=c;");
-                            WriteOk(file);
-                            Write(file, "return 1;");
+                            Write(file, "return DLL.mrb_nil_value()1;");
                             Write(file, "}");
                             first_set = false;
                         }
@@ -1845,6 +1847,7 @@ namespace MRuby.Bind
         void WriteTry(StreamWriter file)
         {
             Write(file, "try {");
+#if ENABLE_PROFILE
             Write(file, "#if DEBUG");
             Write(file, "var method = System.Reflection.MethodBase.GetCurrentMethod();");
             Write(file, "string methodName = GetMethodName(method);");
@@ -1854,6 +1857,7 @@ namespace MRuby.Bind
             Write(file, "Profiler.BeginSample(methodName);");
             Write(file, "#endif");
             Write(file, "#endif");
+#endif
         }
 
         void WriteCatchExecption(StreamWriter file)
@@ -1866,6 +1870,7 @@ namespace MRuby.Bind
         }
         void WriteFinaly(StreamWriter file)
         {
+#if ENABLE_PROFILE
             Write(file, "#if DEBUG");
             Write(file, "finally {");
             Write(file, "#if UNITY_5_5_OR_NEWER");
@@ -1875,6 +1880,7 @@ namespace MRuby.Bind
             Write(file, "#endif");
             Write(file, "}");
             Write(file, "#endif");
+#endif
         }
 
         void WriteCheckType(StreamWriter file, Type t, int n, string v = "v", string nprefix = "")
@@ -1995,7 +2001,7 @@ namespace MRuby.Bind
             if (cons.Length > 0)
             {
                 WriteFunctionAttr(file);
-                Write(file, "static public int constructor(IntPtr l) {");
+                Write(file, "static public mrb_value constructor(mrb_state l) {");
                 WriteTry(file);
                 if (cons.Length > 1)
                     Write(file, "int argc = LuaDLL.lua_gettop(l);");
@@ -2021,12 +2027,10 @@ namespace MRuby.Bind
                         CheckArgument(file, p.ParameterType, k, 2, IsOutArg(p), hasParams);
                     }
                     Write(file, "o=new {0}({1});", TypeDecl(t), FuncCall(ci));
-                    WriteOk(file);
                     if (t.Name == "String") // if export system.string, push string as ud not lua string
-                        Write(file, "Converter.pushObject(l,o);");
+                        WriteReturn(file, "o");
                     else
-                        Write(file, "Converter.pushValue(l,o);");
-                    Write(file, "return 2;");
+                        WriteReturn(file, "o");
                     if (cons.Length == 1)
                         WriteCatchExecption(file);
                     Write(file, "}");
@@ -2039,9 +2043,7 @@ namespace MRuby.Bind
                     {
                         Write(file, "{0}(argc=={1}){{", first ? "if" : "else if", 0);
                         Write(file, "o=new {0}();", FullName(t));
-                        Write(file, "Converter.pushValue(l,true);");
-                        Write(file, "Converter.pushObject(l,o);");
-                        Write(file, "return 2;");
+                        Write(file, "return Converter.make_value(o);");
                         Write(file, "}");
                     }
 
@@ -2053,7 +2055,7 @@ namespace MRuby.Bind
             else if (t.IsValueType) // default constructor
             {
                 WriteFunctionAttr(file);
-                Write(file, "static public int constructor(IntPtr l) {");
+                Write(file, "static public mrb_value constructor(mrb_state l) {");
                 WriteTry(file);
                 Write(file, "{0} o;", FullName(t));
                 Write(file, "o=new {0}();", FullName(t));
@@ -2081,9 +2083,7 @@ namespace MRuby.Bind
 
         void WriteReturn(StreamWriter file, string val)
         {
-            Write(file, "Converter.pushValue(l,true);");
-            Write(file, "Converter.pushValue(l,{0});", val);
-            Write(file, "return 2;");
+            Write(file, "return Converter.make_value(o);");
         }
 
         bool IsNotSupport(Type t)
@@ -2241,7 +2241,7 @@ namespace MRuby.Bind
         void WriteFunctionDec(StreamWriter file, string name)
         {
             WriteFunctionAttr(file);
-            Write(file, "static public int {0}(IntPtr l) {{", name);
+            Write(file, "static public mrb_value {0}(mrb_state l) {{", name);
 
         }
 
@@ -2494,6 +2494,8 @@ namespace MRuby.Bind
                 Write(file, "{2}self.{0}({1});", MethodDecl(m), FuncCall(m, parOffset), ret);
             }
 
+            Write(file, "return Converter.make_value({0}), ret);");
+#if false // TODO: return value with out/ref parameter.
             WriteOk(file);
             int retcount = 1;
             if (m.ReturnType != typeof(void))
@@ -2502,7 +2504,6 @@ namespace MRuby.Bind
                 WritePushValue(m.ReturnType, file);
                 retcount = 2;
             }
-
 
             // push out/ref value for return value
             if (hasref)
@@ -2523,6 +2524,7 @@ namespace MRuby.Bind
                 Write(file, "setBack(l,self);");
 
             Write(file, "return {0};", retcount);
+#endif
         }
 
         string SimpleType(Type t)
@@ -2559,6 +2561,11 @@ namespace MRuby.Bind
                 Write(file, "Converter.pushInterface(l,ret, typeof({0}));", TypeDecl(t));
             else
                 Write(file, "Converter.pushValue(l,ret);");
+        }
+
+        void WriteReturn(Type t, StreamWriter file, string ret)
+        {
+            Write(file, "return Converter.make_value({0});", ret);
         }
 
         void WritePushValue(Type t, StreamWriter file, string ret)
@@ -2684,12 +2691,12 @@ namespace MRuby.Bind
 		{
 			if (t.IsGenericType)
 			{
-				return string.Format("Lua_{0}_{1}", _Name(GenericBaseName(t)), _Name(GenericName(t)));
+				return string.Format("MRuby_{0}_{1}", _Name(GenericBaseName(t)), _Name(GenericName(t)));
 			}
 			else
 			{
 				string name = RemoveRef(t.FullName, true);
-				name = "Lua_" + name;
+				name = "MRuby_" + name;
 				return name.Replace(".", "_");
 			}
 		}

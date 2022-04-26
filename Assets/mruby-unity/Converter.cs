@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System;
+using System.Reflection;
 
 namespace MRuby
 {
@@ -113,7 +113,7 @@ namespace MRuby
 #endif
 
         #region int
-        static public bool checkType(IntPtr l, int p, out int v)
+        static public bool checkType(mrb_state l, int p, out int v)
         {
 #if false
 			v = (int)LuaDLL.luaL_checkinteger(l, p);
@@ -124,7 +124,7 @@ namespace MRuby
 #endif
 		}
 
-        public static void pushValue(IntPtr l, int i)
+        public static void pushValue(mrb_state l, int i)
         {
 #if false
 			LuaDLL.lua_pushinteger(l, i);
@@ -267,7 +267,7 @@ namespace MRuby
 #endif
 		}
 
-        static public bool checkBinaryString(IntPtr l, int p, out byte[] bytes)
+        static public bool checkBinaryString(mrb_state l, int p, out byte[] bytes)
         {
 #if false
 			if (LuaDLL.lua_isstring(l, p))
@@ -283,7 +283,7 @@ namespace MRuby
 #endif
 		}
 
-        public static void pushValue(IntPtr l, string s)
+        public static void pushValue(mrb_state l, string s)
         {
 #if false
 			LuaDLL.lua_pushstring(l, s);
@@ -615,22 +615,22 @@ return true;
 #endif
 		}
 
-		static public int error(IntPtr l, Exception e)
+		static public mrb_value error(mrb_state l, Exception e)
 		{
 #if false
 			LuaDLL.lua_pushboolean(l, false);
 			LuaDLL.lua_pushstring(l, e.ToString());
 #endif
-			return 2;
+			return default;
 		}
 
-		static public int error(IntPtr l, string err)
+		static public mrb_value error(mrb_state l, string err)
 		{
 #if false
 			LuaDLL.lua_pushboolean(l, false);
 			LuaDLL.lua_pushstring(l, err);
 #endif
-			return 2;
+			return default;
 		}
 
 		static public int error(IntPtr l, string err, params object[] args)
@@ -724,5 +724,167 @@ return true;
 #endif
 			return false;
 		}
+
+		public static bool matchType(IntPtr l, int p, Type t1)
+		{
+#if false
+			MRubyType t = LuaDLL.lua_type(l, p);
+			return matchType(l, p, t, t1);
+#endif
+			return false;
+		}
+
+		public static bool matchType(IntPtr l, int total, int from, Type t1)
+		{
+			if (total - from + 1 != 1)
+				return false;
+
+			return matchType(l, from, t1);
+		}
+
+		public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2)
+		{
+			if (total - from + 1 != 2)
+				return false;
+
+			return matchType(l, from, t1) && matchType(l, from + 1, t2);
+		}
+
+		public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3)
+		{
+			if (total - from + 1 != 3)
+				return false;
+
+			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3);
+		}
+
+		public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4)
+		{
+			if (total - from + 1 != 4)
+				return false;
+
+			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4);
+		}
+
+		public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5)
+		{
+			if (total - from + 1 != 5)
+				return false;
+
+			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+				&& matchType(l, from + 4, t5);
+		}
+
+		public static bool matchType
+			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6)
+		{
+			if (total - from + 1 != 6)
+				return false;
+
+			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+				&& matchType(l, from + 4, t5)
+				&& matchType(l, from + 5, t6);
+		}
+
+		public static bool matchType
+			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7)
+		{
+			if (total - from + 1 != 7)
+				return false;
+
+			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+				&& matchType(l, from + 4, t5)
+				&& matchType(l, from + 5, t6)
+				&& matchType(l, from + 6, t7);
+		}
+
+		public static bool matchType
+			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8)
+		{
+			if (total - from + 1 != 8)
+				return false;
+
+			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+				&& matchType(l, from + 4, t5)
+				&& matchType(l, from + 5, t6)
+				&& matchType(l, from + 6, t7)
+				&& matchType(l, from + 7, t8);
+		}
+
+
+		public static bool matchType
+			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9)
+		{
+			if (total - from + 1 != 9)
+				return false;
+
+			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+				&& matchType(l, from + 4, t5)
+				&& matchType(l, from + 5, t6)
+				&& matchType(l, from + 6, t7)
+				&& matchType(l, from + 7, t8)
+				&& matchType(l, from + 8, t9);
+		}
+
+		public static bool matchType
+			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9, Type t10)
+		{
+			if (total - from + 1 != 10)
+				return false;
+
+			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+				&& matchType(l, from + 4, t5)
+					&& matchType(l, from + 5, t6)
+					&& matchType(l, from + 6, t7)
+					&& matchType(l, from + 7, t8)
+					&& matchType(l, from + 8, t9)
+					&& matchType(l, from + 9, t10);
+		}
+
+		public static bool matchType(IntPtr l, int total, int from, params Type[] t)
+		{
+			if (total - from + 1 != t.Length)
+				return false;
+
+			for (int i = 0; i < t.Length; ++i)
+			{
+				if (!matchType(l, from + i, t[i]))
+					return false;
+			}
+
+			return true;
+		}
+
+		public static bool matchType(IntPtr l, int total, int from, ParameterInfo[] pars)
+		{
+#if false
+			if (total - from + 1 != pars.Length)
+				return false;
+
+			for (int n = 0; n < pars.Length; n++)
+			{
+				int p = n + from;
+				LuaTypes t = LuaDLL.lua_type(l, p);
+				if (!matchType(l, p, t, pars[n].ParameterType))
+					return false;
+			}
+#endif
+			return true;
+		}
+
+		public static void define_method(mrb_state mrb, RClass cls, LuaCSFunction func)
+        {
+
+        }
+
+		public static void define_property(mrb_state mrb, RClass cls, string name, LuaCSFunction getter, LuaCSFunction setter, bool isInstance)
+        {
+
+        }
+
+		public static mrb_value make_value(mrb_state mrb, object obj)
+        {
+			return new Value(mrb, obj).val;
+        }
 	}
 }
