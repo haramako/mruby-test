@@ -291,18 +291,18 @@ namespace MRuby
         }
 
 
-#endregion
+		#endregion
 
 #if false
-#region IntPtr
+		#region IntPtr
 		static public bool checkType(IntPtr l, int p, out IntPtr v)
 		{
 			v = LuaDLL.lua_touserdata(l, p);
 			return true;
 		}
-#endregion
+		#endregion
 
-#region LuaType
+		#region LuaType
 		static public bool checkType(IntPtr l, int p, out LuaDelegate f)
 		{
 			LuaState state = LuaState.get(l);
@@ -386,9 +386,9 @@ namespace MRuby
 			else
 				t.push(l);
 		}
-#endregion
+		#endregion
 
-#region Type
+		#region Type
 		private static Type MonoType = typeof(Type).GetType();
 
 		public static Type FindType(string qualifiedTypeName)
@@ -461,15 +461,15 @@ namespace MRuby
 			}
 			return t != null;
 		}
-#endregion
+		#endregion
 
-#region struct
+		#region struct
 		static public bool checkValueType<T>(IntPtr l, int p, out T v) where T : struct
 		{
 			v = (T)checkObj(l, p);
 			return true;
 		}
-#endregion
+		#endregion
 
 		static public bool checkNullable<T>(IntPtr l, int p, out Nullable<T> v) where T : struct
 		{
@@ -483,10 +483,12 @@ namespace MRuby
 			}
 			return true;
 		}
+#endif
 
-#region object
-		static public bool checkType<T>(IntPtr l, int p, out T o) where T : class
+		#region object
+		static public bool checkType<T>(mrb_state l, int p, out T o) where T : class
 		{
+#if false
 			object obj = checkVar(l, p);
 			if (obj == null)
 			{
@@ -499,9 +501,12 @@ namespace MRuby
 				throw new Exception(string.Format("arg {0} is not type of {1}", p, typeof(T).Name));
 
 			return true;
+#else
+			o = null;
+			return false;
+#endif
 		}
 #endregion
-	}
 
 #if false
         static public bool checkType(IntPtr l, int p, out LuaDelegate f)
@@ -598,10 +603,8 @@ return true;
                 t.push(l);
 }
 #endif
-#endif
 
-
-		public static void pushValue(IntPtr l, object o)
+	public static void pushValue(IntPtr l, object o)
 		{
 #if false
 			pushVar(l, o);
@@ -643,7 +646,7 @@ return true;
 			return 2;
 		}
 
-		public static T checkSelf<T>(IntPtr l)
+		public static T checkSelf<T>(mrb_state l)
 		{
 #if false
 			object o = checkObj(l, 1);
@@ -656,7 +659,7 @@ return true;
 			return default;
 		}
 
-		public static object checkSelf(IntPtr l)
+		public static object checkSelf(mrb_state l)
 		{
 #if false
 			object o = checkObj(l, 1);

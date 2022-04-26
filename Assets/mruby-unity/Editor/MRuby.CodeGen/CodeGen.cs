@@ -1730,7 +1730,7 @@ namespace MRuby.Bind
                 if (fi.CanWrite && fi.GetSetMethod() != null)
                 {
                     WriteFunctionAttr(file);
-                    Write(file, "static public int set_{0}(mrb_state l) {{", fi.Name);
+                    Write(file, "static public mrb_value set_{0}(mrb_state l) {{", fi.Name);
                     WriteTry(file);
                     if (fi.GetSetMethod().IsStatic)
                     {
@@ -1747,7 +1747,7 @@ namespace MRuby.Bind
 
                     if (t.IsValueType)
                         Write(file, "setBack(l,self);");
-                    Write(file, "return DLL.mrb_nil_value()1;");
+                    Write(file, "return DLL.mrb_nil_value();");
                     WriteCatchExecption(file);
                     Write(file, "}");
                     pp.set = "set_" + fi.Name;
@@ -2043,7 +2043,7 @@ namespace MRuby.Bind
                     {
                         Write(file, "{0}(argc=={1}){{", first ? "if" : "else if", 0);
                         Write(file, "o=new {0}();", FullName(t));
-                        Write(file, "return Converter.make_value(o);");
+                        Write(file, "return Converter.make_value(l, o);");
                         Write(file, "}");
                     }
 
@@ -2083,7 +2083,7 @@ namespace MRuby.Bind
 
         void WriteReturn(StreamWriter file, string val)
         {
-            Write(file, "return Converter.make_value(o);");
+            Write(file, "return Converter.make_value(l, o);");
         }
 
         bool IsNotSupport(Type t)
@@ -2494,7 +2494,7 @@ namespace MRuby.Bind
                 Write(file, "{2}self.{0}({1});", MethodDecl(m), FuncCall(m, parOffset), ret);
             }
 
-            Write(file, "return Converter.make_value({0}), ret);");
+            Write(file, "return Converter.make_value(l, ret);");
 #if false // TODO: return value with out/ref parameter.
             WriteOk(file);
             int retcount = 1;
@@ -2565,7 +2565,7 @@ namespace MRuby.Bind
 
         void WriteReturn(Type t, StreamWriter file, string ret)
         {
-            Write(file, "return Converter.make_value({0});", ret);
+            Write(file, "return Converter.make_value(l, {0});", ret);
         }
 
         void WritePushValue(Type t, StreamWriter file, string ret)
