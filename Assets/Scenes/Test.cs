@@ -9,7 +9,8 @@ public class Test : MonoBehaviour
 {
     public void OnButtonClick()
     {
-        MrbState mrb = new MrbState();
+        MrbState _mrb = new MrbState();
+        mrb_value r;
 #if false
         MRuby_Character.RegisterClass(mrb);
 
@@ -26,17 +27,17 @@ public class Test : MonoBehaviour
         Debug.Log(r4.Send(mrb, "show").ToString(mrb));
 #endif
 
-        Converter.sym_objid = DLL.mrb_intern_cstr(mrb.mrb, "objid");
-        MRuby_CodeGenSample.reg(mrb);
+        var mrb = _mrb.mrb;
 
-        var r5 = mrb.LoadString("CodeGenSample");
-        Debug.Log(r5.ToString(mrb));
+        mrbc_context ctx = DLL.mrbc_context_new(mrb);
+        Converter.sym_objid = DLL.mrb_intern_cstr(mrb, "objid");
+        MRuby_CodeGenSample.reg(_mrb);
 
-        //var r = r5.Send(mrb, "methods");
-        var r = r5.Send(mrb, "new", 1, "2");
-        Debug.Log(r.ToString(mrb));
-        Debug.Log(r.Send(mrb, "GetIntValue").ToString(mrb));
+        r = Converter.Exec(mrb, "CodeGenSample.new(1,'2')");
 
+        Debug.Log(Converter.ToString(mrb, r));
+
+        Debug.Log(Converter.ToString(mrb, Converter.Send(mrb, r, "GetIntValue")));
     }
 }
 

@@ -34,6 +34,12 @@ namespace MRuby
         public UInt32 val;
     }
 
+    public struct mrbc_context
+    {
+        public UIntPtr val;
+    }
+
+
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -61,6 +67,9 @@ namespace MRuby
 
         [DllImport(Dll)]
         public static extern mrb_value mrb_load_string(mrb_state mrb, string s);
+
+        [DllImport(Dll)]
+        public static extern mrb_value mrb_load_string_cxt(mrb_state mrb, string s, mrbc_context cxt);
 
         [DllImport(Dll)]
         public static extern mrb_int mrb_get_argc(mrb_state mrb);
@@ -98,9 +107,16 @@ namespace MRuby
         [DllImport(Dll)]
         public static extern string mrb_string_cstr(mrb_state mrb, mrb_value str);
 
-#endregion
+        [DllImport(Dll)]
+        public static extern mrbc_context mrbc_context_new(mrb_state mrb);
 
-#region Value creation
+        [DllImport(Dll)]
+        public static extern void mrbc_context_free(mrb_state mrb, mrbc_context cxt);
+
+
+        #endregion
+
+        #region Value creation
         [DllImport(Dll, EntryPoint = "mrb_unity_fixnum_value")]
         public static extern mrb_value mrb_fixnum_value(mrb_int v);
 
@@ -125,9 +141,15 @@ namespace MRuby
         [DllImport(Dll, EntryPoint = "mrb_unity_obj_value")]
         public static extern mrb_value mrb_obj_value(UIntPtr p);
 
-#endregion
+        [DllImport(Dll, EntryPoint = "mrb_unity_mrb_state_exc")]
+        public static extern mrb_value mrb_mrb_state_exc(mrb_state mrb);
 
-#region Value conversion
+        [DllImport(Dll, EntryPoint = "mrb_unity_nil_p")]
+        public static extern bool mrb_nil_p(mrb_value v);
+
+        #endregion
+
+        #region Value conversion
         [DllImport(Dll, EntryPoint = "mrb_unity_as_int")]
         public static extern Int64 mrb_as_int(mrb_state mrb, mrb_value obj);
 

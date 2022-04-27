@@ -38,7 +38,7 @@ namespace MRuby
 
         public static object GetObject(mrb_state mrb, mrb_value obj)
         {
-            UnityEngine.Debug.Log("GetObject: " + obj.val);
+            //UnityEngine.Debug.Log("GetObject: " + obj.val);
             var x = DLL.mrb_iv_get(mrb, obj, Converter.sym_objid);
             var id = (int)DLL.mrb_as_int(mrb, x);
             if (cache.TryGetValue(id, out object found))

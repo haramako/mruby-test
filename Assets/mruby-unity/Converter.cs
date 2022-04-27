@@ -902,5 +902,51 @@ return true;
         {
 			return new Value(mrb, obj).val;
         }
+
+		public static string ToString(mrb_state mrb, mrb_value val)
+        {
+			return AsString(mrb, Send(mrb, val, "to_s"));
+		}
+
+		public static string AsString(mrb_state mrb, mrb_value val)
+		{
+			var len = DLL.mrb_string_len(mrb, val);
+			var buf = new byte[len];
+			DLL.mrb_string_buf(mrb, val, buf, len);
+			return System.Text.Encoding.UTF8.GetString(buf);
+		}
+
+		public static mrb_value Send(mrb_state mrb, mrb_value val, string methodName)
+        {
+			return DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);
+
+		}
+
+		static mrb_value[] argsCache = new mrb_value[16];
+
+		public static mrb_value Send(mrb_state mrb, mrb_value val, string methodName, params object[] args)
+		{
+			for (int i = 0; i < args.Length; i++)
+			{
+				argsCache[i] = new Value(mrb, args[i]).val;
+			}
+			return DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache);
+		}
+
+		public static mrb_value Exec(mrb_state mrb, string src)
+		{
+			mrbc_context ctx = DLL.mrbc_context_new(mrb);
+			var r = DLL.mrb_load_string_cxt(mrb, src, ctx);
+			var exc = DLL.mrb_mrb_state_exc(mrb);
+
+			if (!DLL.mrb_nil_p(exc))
+			{
+				throw new Exception(Converter.ToString(mrb, exc));
+			}
+
+			DLL.mrbc_context_free(mrb, ctx);
+
+			return r;
+		}
 	}
 }
