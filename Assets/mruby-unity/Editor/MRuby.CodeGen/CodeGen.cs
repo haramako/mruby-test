@@ -1355,7 +1355,7 @@ namespace MRuby.Bind
 #if UNITY_5_3_OR_NEWER
             Write(file, "[UnityEngine.Scripting.Preserve]");
 #endif
-            Write(file, "public class {0} : CSObject {{", ExportName(t));
+            Write(file, "public class {0} {{", ExportName(t));
             
             Write(file, "static RClass _cls;");
             Write(file, "static mrb_value _cls_value;");
@@ -1504,10 +1504,10 @@ namespace MRuby.Bind
             }
 
             Write(file, "mrb_state mrb = _mrb.mrb;");
-            Write(file, "_cls = DLL.mrb_define_class(mrb, \"{0}\", DLL.mrb_class_get(mrb, \"Object\"));", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
+            Write(file, "_cls = Converter.DefineClass(mrb, \"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
             Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
 
-            Write(file, "Converter.define_method(mrb, _cls, \"initialize\", constructor);");
+            Write(file, "Converter.define_method(mrb, _cls, \"initialize\", constructor, DLL.MRB_ARGS_OPT(4));");
             Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
 
             //Write(file, "getTypeTable(l,\"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
@@ -2003,16 +2003,7 @@ namespace MRuby.Bind
 
         private void WriteCSConstructor(Type t, StreamWriter file)
         {
-            Write(file, "public {0}(MrbState mrb, object _obj)", ExportName(t));
-            Write(file, "{");
-            Write(file, "obj = ({0})_obj;", FullName(t));
-            Write(file, "var id = ObjectCache.AddObject(obj);");
-            Write(file, "val = new Value(_cls_value).Send(mrb, \"allocate\").val;");
-            Write(file, "DLL.mrb_iv_set(mrb.mrb, val, Converter.sym_objid, DLL.mrb_fixnum_value(id));");
-            Write(file, "}");
-
-            Write(file, "static CSObject Construct(MrbState mrb, object obj) => new {0}(mrb, obj);", ExportName(t));
-
+            Write(file, "static CSObject Construct(mrb_state mrb, object obj) => ObjectCache.NewObject(mrb, _cls_value, obj);", ExportName(t));
         }
 
         private void WriteConstructor(Type t, StreamWriter file)
@@ -2047,10 +2038,14 @@ namespace MRuby.Bind
                         CheckArgument(file, p.ParameterType, k, 2, IsOutArg(p), hasParams);
                     }
                     Write(file, "o=new {0}({1});", TypeDecl(t), FuncCall(ci));
+                    Write(file, "ObjectCache.NewObjectByVal(l, _self, o);");
+                    Write(file, "return DLL.mrb_nil_value();");
+#if false
                     if (t.Name == "String") // if export system.string, push string as ud not lua string
                         WriteReturn(file, "o");
                     else
                         WriteReturn(file, "o");
+#endif
                     if (cons.Length == 1)
                         WriteCatchExecption(file);
                     Write(file, "}");

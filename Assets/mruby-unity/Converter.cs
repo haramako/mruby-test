@@ -948,5 +948,32 @@ return true;
 
 			return r;
 		}
+
+		public static RClass DefineClass(mrb_state mrb, string name)
+        {
+			var baseClass = DLL.mrb_class_get(mrb, "Object");
+
+			var names = name.Split('.');
+			if (names.Length <= 1)
+			{
+				return DLL.mrb_define_class(mrb, names[0], baseClass);
+			}
+			else
+			{
+				RClass module = new RClass();
+				for (int i = 0; i < names.Length - 1; i++)
+				{
+					if (i == 0)
+					{
+						module = DLL.mrb_define_module(mrb, names[i]);
+					}
+					else
+					{
+						module = DLL.mrb_define_module_under(mrb, module, names[i]);
+					}
+				}
+				return DLL.mrb_define_class_under(mrb, module, names[names.Length-1], baseClass);
+			}
+		}
 	}
 }

@@ -81,6 +81,15 @@ namespace MRuby
         public static extern RClass mrb_define_class(mrb_state mrb, string name, RClass super);
 
         [DllImport(Dll)]
+        public static extern RClass mrb_define_class_under(mrb_state mrb, RClass outer, string name, RClass super);
+
+        [DllImport(Dll)]
+        public static extern RClass mrb_define_module(mrb_state mrb, string name);
+
+        [DllImport(Dll)]
+        public static extern RClass mrb_define_module_under(mrb_state mrb, RClass outer, string name);
+
+        [DllImport(Dll)]
         public static extern void mrb_define_class_method(mrb_state mrb, RClass c, string name, mrb_func_t func, mrb_aspec aspec);
 
         [DllImport(Dll)]

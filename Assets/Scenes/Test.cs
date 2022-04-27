@@ -31,13 +31,18 @@ public class Test : MonoBehaviour
 
         mrbc_context ctx = DLL.mrbc_context_new(mrb);
         Converter.sym_objid = DLL.mrb_intern_cstr(mrb, "objid");
-        MRuby_CodeGenSample.reg(_mrb);
+        MRuby_Hoge_CodeGenSample.reg(_mrb);
 
-        r = Converter.Exec(mrb, "CodeGenSample.new(1,'2')");
+        r = Converter.Exec(mrb, "Hoge::CodeGenSample.new(1,'2')");
 
         Debug.Log(Converter.ToString(mrb, r));
 
         Debug.Log(Converter.ToString(mrb, Converter.Send(mrb, r, "GetIntValue")));
+
+
+        r = Converter.Exec(mrb, "Hoge::CodeGenSample.new(3,'2').IntField");
+        Debug.Log(Converter.ToString(mrb, r));
+
     }
 }
 

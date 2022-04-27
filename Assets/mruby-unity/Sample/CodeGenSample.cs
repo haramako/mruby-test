@@ -2,35 +2,37 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[MRuby.CustomMRubyClass]
-public class CodeGenSample
+namespace Hoge
 {
-    public int IntField;
-    public string StringField;
-
-    public int IntProperty { get; set; }
-    public string StringProperty { get; set; }
-
-    public CodeGenSample(int i, string s)
+    [MRuby.CustomMRubyClass]
+    public class CodeGenSample
     {
-        IntField = i;
-        StringField = s;
-    }
+        public int IntField;
+        public string StringField;
 
-    public string GetStringValue()
-    {
-        return "str";
-    }
+        public int IntProperty { get; set; }
+        public string StringProperty { get; set; }
 
-    public int GetIntValue()
-    {
-        return 99;
-    }
+        public CodeGenSample(int i, string s)
+        {
+            IntField = i;
+            StringField = s;
+        }
 
-    public int OverloadedMethod(int n)
-    {
-        return n;
-    }
+        public string GetStringValue()
+        {
+            return "str";
+        }
+
+        public int GetIntValue()
+        {
+            return 99;
+        }
+
+        public int OverloadedMethod(int n)
+        {
+            return n;
+        }
 
 #if false
     public int OverloadedMethod(int n, int m)
@@ -44,4 +46,5 @@ public class CodeGenSample
     }
 #endif
 
+    }
 }
