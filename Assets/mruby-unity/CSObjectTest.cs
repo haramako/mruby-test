@@ -22,7 +22,8 @@ namespace MRuby
         }
     }
 
-    public class MRuby_Character : CSObject
+#if false
+    public class MRuby_Character
     {
         static RClass cls;
         static mrb_value cls_value;
@@ -77,6 +78,6 @@ namespace MRuby
             return DLL.mrb_str_new_cstr(mrb, result);
         }
 
-
     }
+#endif
 }

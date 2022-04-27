@@ -22,9 +22,21 @@ namespace MRuby
     }
 
 
-    public abstract class CSObject
+    public class CSObject
     {
         public mrb_value val;
+        readonly object obj;
+
+        public CSObject(mrb_state mrb, object _obj)
+        {
+            obj = _obj;
+        }
+
+        public CSObject(mrb_state mrb, object _obj, mrb_value _val)
+        {
+            obj = _obj;
+            val = _val;
+        }
 
         public static bool isImplByLua(Type t)
         {

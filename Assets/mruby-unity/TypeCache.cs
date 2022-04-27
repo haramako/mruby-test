@@ -36,6 +36,23 @@ namespace MRuby
             return id;
         }
 
+        public static CSObject NewObject(mrb_state mrb, mrb_value cls, object obj)
+        {
+            var val = DLL.mrb_funcall_argv(mrb, cls, "allocate", 0, null);
+            var r = new CSObject(mrb, obj, val);
+            var id = ObjectCache.AddObject(obj);
+            DLL.mrb_iv_set(mrb, r.val, Converter.sym_objid, DLL.mrb_fixnum_value(id));
+            return r;
+        }
+
+        public static CSObject NewObjectByVal(mrb_state mrb, mrb_value self, object obj)
+        {
+            var r = new CSObject(mrb, obj, self);
+            var id = ObjectCache.AddObject(obj);
+            DLL.mrb_iv_set(mrb, r.val, Converter.sym_objid, DLL.mrb_fixnum_value(id));
+            return r;
+        }
+
         public static object GetObject(mrb_state mrb, mrb_value obj)
         {
             //UnityEngine.Debug.Log("GetObject: " + obj.val);
