@@ -5,9 +5,6 @@ using UnityEngine;
 [MRuby.CustomMRubyClass]
 public class CodeGenSample
 {
-    string s;
-    int i;
-
     public int IntField;
     public string StringField;
 
@@ -22,12 +19,12 @@ public class CodeGenSample
 
     public string GetStringValue()
     {
-        return s;
+        return "str";
     }
 
     public int GetIntValue()
     {
-        return i;
+        return 99;
     }
 
     public int OverloadedMethod(int n)

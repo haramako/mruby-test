@@ -114,10 +114,20 @@ namespace MRuby
                 case double v:
                     val = DLL.mrb_float_value(mrb, v);
                     break;
+                case CSObject o:
+                    throw new Exception();
+#if false
+                    var obj = ObjectCache.GetObject(mrb, o.val);
+                    if( obj != null)
+                    {
+
+                    }
+                        break;
+#endif
                 default:
                     if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
                     {
-#if false
+#if true
                         var obj = constructor(mrb, _val);
                         val = obj.val;
 #else
@@ -170,7 +180,7 @@ namespace MRuby
                     if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
                     {
                         if (mrb == null) throw new ArgumentException();
-                        var obj = constructor(mrb, _val);
+                        var obj = constructor(mrb.mrb, _val);
                         val = obj.val;
                         break;
                     }
@@ -192,7 +202,7 @@ namespace MRuby
         {
             for (int i = 0; i < args.Length; i++)
             {
-                argsCache[i] = new Value(args[i]).val;
+                argsCache[i] = new Value(mrb, args[i]).val;
             }
             return new Value(DLL.mrb_funcall_argv(mrb.mrb, val, methodName, args.Length, argsCache));
         }

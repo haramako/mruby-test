@@ -954,6 +954,7 @@ namespace MRuby.CodeGen
 
                     StreamWriter file = Begin(t);
                     WriteHead(t, file);
+                    WriteCSConstructor(t, file);
                     WriteConstructor(t, file);
                     WriteFunction(t, file, false);
                     WriteFunction(t, file, true);
@@ -1358,6 +1359,7 @@ namespace MRuby.Bind
             
             Write(file, "static RClass _cls;");
             Write(file, "static mrb_value _cls_value;");
+            Write(file, "readonly {0} obj;", FullName(t));
         }
 
         // add namespace for extension method
@@ -1504,12 +1506,16 @@ namespace MRuby.Bind
             Write(file, "mrb_state mrb = _mrb.mrb;");
             Write(file, "_cls = DLL.mrb_define_class(mrb, \"{0}\", DLL.mrb_class_get(mrb, \"Object\"));", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
             Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
+
+            Write(file, "Converter.define_method(mrb, _cls, \"initialize\", constructor);");
+            Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
+
             //Write(file, "getTypeTable(l,\"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
             foreach (string i in funcname)
             {
                 string f = i;
                 trygetOverloadedVersion(t, ref f);
-                Write(file, "Converter.define_method(mrb, _cls, {0});", f);
+                Write(file, "Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(4));", f, f);
                 //Write(file, "addMember(l,{0});", f);
             }
             foreach (string f in directfunc.Keys)
@@ -1622,7 +1628,7 @@ namespace MRuby.Bind
                 if (fi.FieldType.BaseType != typeof(MulticastDelegate))
                 {
                     WriteFunctionAttr(file);
-                    Write(file, "static public mrb_value get_{0}(mrb_state l) {{", fi.Name);
+                    Write(file, "static public mrb_value get_{0}(mrb_state l, mrb_value _self) {{", fi.Name);
                     WriteTry(file);
 
                     if (fi.IsStatic)
@@ -1647,7 +1653,7 @@ namespace MRuby.Bind
                 if (!fi.IsLiteral && !fi.IsInitOnly)
                 {
                     WriteFunctionAttr(file);
-                    Write(file, "static public mrb_value set_{0}(mrb_state l) {{", fi.Name);
+                    Write(file, "static public mrb_value set_{0}(mrb_state l, mrb_value _self) {{", fi.Name);
                     WriteTry(file);
                     if (fi.IsStatic)
                     {
@@ -1706,7 +1712,7 @@ namespace MRuby.Bind
                     if (!IsNotSupport(fi.PropertyType))
                     {
                         WriteFunctionAttr(file);
-                        Write(file, "static public mrb_value get_{0}(mrb_state l) {{", fi.Name);
+                        Write(file, "static public mrb_value get_{0}(mrb_state l, mrb_value _self) {{", fi.Name);
                         WriteTry(file);
 
                         if (fi.GetGetMethod().IsStatic)
@@ -1730,7 +1736,7 @@ namespace MRuby.Bind
                 if (fi.CanWrite && fi.GetSetMethod() != null)
                 {
                     WriteFunctionAttr(file);
-                    Write(file, "static public mrb_value set_{0}(mrb_state l) {{", fi.Name);
+                    Write(file, "static public mrb_value set_{0}(mrb_state l, mrb_value _self) {{", fi.Name);
                     WriteTry(file);
                     if (fi.GetSetMethod().IsStatic)
                     {
@@ -1995,13 +2001,27 @@ namespace MRuby.Bind
         }
 
 
+        private void WriteCSConstructor(Type t, StreamWriter file)
+        {
+            Write(file, "public {0}(MrbState mrb, object _obj)", ExportName(t));
+            Write(file, "{");
+            Write(file, "obj = ({0})_obj;", FullName(t));
+            Write(file, "var id = ObjectCache.AddObject(obj);");
+            Write(file, "val = new Value(_cls_value).Send(mrb, \"allocate\").val;");
+            Write(file, "DLL.mrb_iv_set(mrb.mrb, val, Converter.sym_objid, DLL.mrb_fixnum_value(id));");
+            Write(file, "}");
+
+            Write(file, "static CSObject Construct(MrbState mrb, object obj) => new {0}(mrb, obj);", ExportName(t));
+
+        }
+
         private void WriteConstructor(Type t, StreamWriter file)
         {
             ConstructorInfo[] cons = GetValidConstructor(t);
             if (cons.Length > 0)
             {
                 WriteFunctionAttr(file);
-                Write(file, "static public mrb_value constructor(mrb_state l) {");
+                Write(file, "static public mrb_value constructor(mrb_state l, mrb_value _self) {");
                 WriteTry(file);
                 if (cons.Length > 1)
                     Write(file, "int argc = LuaDLL.lua_gettop(l);");
@@ -2241,7 +2261,7 @@ namespace MRuby.Bind
         void WriteFunctionDec(StreamWriter file, string name)
         {
             WriteFunctionAttr(file);
-            Write(file, "static public mrb_value {0}(mrb_state l) {{", name);
+            Write(file, "static public mrb_value {0}(mrb_state l, mrb_value _self) {{", name);
 
         }
 
@@ -2415,7 +2435,7 @@ namespace MRuby.Bind
                     Write(file, "Converter.checkValueType(l,1,out self);");
             }
             else
-                Write(file, "{0} self=({0})Converter.checkSelf(l);", TypeDecl(t));
+                Write(file, "{0} self=({0})Converter.checkSelf(l, _self);", TypeDecl(t));
         }
 
 
@@ -2634,7 +2654,7 @@ namespace MRuby.Bind
 						Write(file, "Converter.checkValueType(l,{0},out a{1});", n + argstart, n + 1);
 				}
 				else
-					Write(file, "Converter.checkType(l,{0},out a{1});", n + argstart, n + 1);
+					Write(file, "Converter.checkType(l,{0},out a{1});", n /* + argstart */, n + 1);
 			}
 		}
 

@@ -37,9 +37,9 @@ namespace MRuby
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate mrb_value LuaCSFunction(mrb_state mrb);
+    public delegate mrb_value LuaCSFunction(mrb_state mrb, mrb_value _self);
 #else
-	public delegate mrb_value LuaCSFunction(mrb_state mrb);
+	public delegate mrb_value LuaCSFunction(mrb_state mrb, mrb_value _self);
 #endif
 
     public static class DLL

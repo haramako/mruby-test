@@ -7,8 +7,10 @@ namespace MRuby
 {
     public static class Converter
     {
+		public static mrb_sym sym_objid;
+
 #if false
-        #region enum
+		#region enum
 		static public bool checkEnum<T>(IntPtr l, int p, out T o) where T : struct
 		{
 			int i = (int)LuaDLL.luaL_checkinteger(l, p);
@@ -21,10 +23,10 @@ namespace MRuby
 		{
 			pushValue(l, e);
 		}
-        #endregion
+		#endregion
 
 		//#region Integral Types
-        #region sbyte
+		#region sbyte
 		public static bool checkType(IntPtr l, int p, out sbyte v)
 		{
 			v = (sbyte)LuaDLL.luaL_checkinteger(l, p);
@@ -36,9 +38,9 @@ namespace MRuby
 			LuaDLL.lua_pushinteger(l, v);
 		}
 
-        #endregion
+		#endregion
 
-        #region byte
+		#region byte
 		static public bool checkType(IntPtr l, int p, out byte v)
 		{
 			v = (byte)LuaDLL.luaL_checkinteger(l, p);
@@ -52,9 +54,9 @@ namespace MRuby
 
 		// why doesn't have a checkArray<byte[]> function accept lua string?
 		// I think you should did a Buffer class to wrap byte[] pass/accept between mono and lua vm
-        #endregion
+		#endregion
 
-        #region char
+		#region char
 		static public bool checkType(IntPtr l, int p, out char c)
 		{
 			c = (char)LuaDLL.luaL_checkinteger(l, p);
@@ -74,9 +76,9 @@ namespace MRuby
 			pars = s.ToCharArray();
 			return true;
 		}
-        #endregion
+		#endregion
 
-        #region short
+		#region short
 		static public bool checkType(IntPtr l, int p, out short v)
 		{
 			v = (short)LuaDLL.luaL_checkinteger(l, p);
@@ -87,9 +89,9 @@ namespace MRuby
 		{
 			LuaDLL.lua_pushinteger(l, i);
 		}
-        #endregion
+		#endregion
 
-        #region ushort
+		#region ushort
 		static public bool checkType(IntPtr l, int p, out ushort v)
 		{
 			v = (ushort)LuaDLL.luaL_checkinteger(l, p);
@@ -101,26 +103,30 @@ namespace MRuby
 			LuaDLL.lua_pushinteger(l, v);
 		}
 
-        #endregion
+		#endregion
 
-        #region interface
+		#region interface
 		static public void pushInterface(IntPtr l, object i, Type t)
 		{
 			ObjectCache oc = ObjectCache.get(l);
 			oc.pushInterface(l, i, t);
 		}
-        #endregion
+		#endregion
 #endif
 
-        #region int
-        static public bool checkType(mrb_state l, int p, out int v)
+		#region int
+		static public bool checkType(mrb_state l, int p, out int v)
         {
 #if false
 			v = (int)LuaDLL.luaL_checkinteger(l, p);
             return true;
 #else
-			v = 0;
-			return true;
+			unsafe
+			{
+				mrb_value* args = DLL.mrb_get_argv(l);
+				v = (int)DLL.mrb_as_int(l, args[p]);
+				return true;
+			}
 #endif
 		}
 
@@ -241,7 +247,7 @@ namespace MRuby
 #endif
 
 #region string
-        static public bool checkType(IntPtr l, int p, out string v)
+        static public bool checkType(mrb_state l, int p, out string v)
         {
 #if false
 			if (LuaDLL.lua_isuserdata(l, p) > 0)
@@ -262,7 +268,12 @@ namespace MRuby
             v = null;
             return false;
 #else
-			v = null;
+			unsafe
+			{
+				mrb_value* args = DLL.mrb_get_argv(l);
+				v = DLL.mrb_as_string(l, args[p]);
+				return true;
+			}
 			return true;
 #endif
 		}
@@ -659,15 +670,16 @@ return true;
 			return default;
 		}
 
-		public static object checkSelf(mrb_state l)
+		public static object checkSelf(mrb_state l, mrb_value self)
 		{
 #if false
 			object o = checkObj(l, 1);
 			if (o == null)
 				throw new Exception("expect self, but get null");
 			return o;
+#else
+			return ObjectCache.GetObject(l, self);
 #endif
-			return null;
 		}
 
 		public static bool matchType(IntPtr l, int p, MRubyType lt, Type t)
@@ -875,15 +887,16 @@ return true;
 			return true;
 		}
 
-		public static void define_method(mrb_state mrb, RClass cls, LuaCSFunction func)
+		public static void define_method(mrb_state mrb, RClass cls, string funcName, LuaCSFunction func, mrb_aspec aspec)
         {
-
-        }
+			DLL.mrb_define_method(mrb, cls, funcName, new DLL.mrb_func_t(func), aspec);
+		}
 
 		public static void define_property(mrb_state mrb, RClass cls, string name, LuaCSFunction getter, LuaCSFunction setter, bool isInstance)
         {
-
-        }
+			DLL.mrb_define_method(mrb, cls, name, new DLL.mrb_func_t(getter), DLL.MRB_ARGS_NONE());
+			DLL.mrb_define_method(mrb, cls, name + "=", new DLL.mrb_func_t(setter), DLL.MRB_ARGS_REQ(1));
+		}
 
 		public static mrb_value make_value(mrb_state mrb, object obj)
         {

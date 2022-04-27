@@ -29,16 +29,16 @@ namespace MRuby
         static mrb_sym sym_objid;
         readonly Character obj;
 
-        public MRuby_Character(MrbState mrb, object _obj)
+        public MRuby_Character(mrb_state mrb, object _obj)
         {
             obj = (Character)_obj;
             var id = ObjectCache.AddObject(obj);
 
-            val = new Value(cls_value).Send(mrb, "allocate").val;
-            DLL.mrb_iv_set(mrb.mrb, val, sym_objid, DLL.mrb_fixnum_value(id));
+            DLL.mrb_funcall_argv(mrb, cls_value, "allocate", 0, null);
+            DLL.mrb_iv_set(mrb, val, sym_objid, DLL.mrb_fixnum_value(id));
         }
 
-        static CSObject Construct(MrbState mrb, object obj) => new MRuby_Character(mrb, obj);
+        static CSObject Construct(mrb_state mrb, object obj) => new MRuby_Character(mrb, obj);
 
         public static void RegisterClass(MrbState _mrb)
         {
