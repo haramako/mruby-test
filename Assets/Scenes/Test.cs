@@ -4,13 +4,19 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using MRuby;
+using System.IO;
 
 public class Test : MonoBehaviour
 {
     public void OnButtonClick()
     {
         MrbState _mrb = new MrbState();
+        var mrb = _mrb.mrb;
+        var arena = DLL.mrb_gc_arena_save(mrb);
+        Converter.sym_objid = DLL.mrb_intern_cstr(mrb, "objid");
+
         mrb_value r;
+
 #if false
         MRuby_Character.RegisterClass(mrb);
 
@@ -27,10 +33,8 @@ public class Test : MonoBehaviour
         Debug.Log(r4.Send(mrb, "show").ToString(mrb));
 #endif
 
-        var mrb = _mrb.mrb;
 
-        mrbc_context ctx = DLL.mrbc_context_new(mrb);
-        Converter.sym_objid = DLL.mrb_intern_cstr(mrb, "objid");
+#if false
         MRuby_Hoge_CodeGenSample.reg(_mrb);
 
         r = Converter.Exec(mrb, "Hoge::CodeGenSample.new(1,'2')");
@@ -42,6 +46,17 @@ public class Test : MonoBehaviour
 
         r = Converter.Exec(mrb, "Hoge::CodeGenSample.new(3,'2').IntField");
         Debug.Log(Converter.ToString(mrb, r));
+
+        r = Converter.Exec(mrb, "Hoge::CodeGenSample.StaticMethod(9)");
+        Debug.Log(Converter.ToString(mrb, r));
+#endif
+
+        MRuby_MRubyUnity_Console.reg(_mrb);
+
+        var src = File.ReadAllText("RubyLib\\prelude.rb");
+        r = Converter.Exec(mrb, src);
+
+        DLL.mrb_gc_arena_restore(mrb, arena);
 
     }
 }

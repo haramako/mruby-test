@@ -1440,7 +1440,8 @@ namespace MRuby.Bind
         {
             if (name.StartsWith("op_"))
                 return name;
-            return name + "_s";
+            return name;
+            //return name + "_s";
         }
 
 
@@ -1489,6 +1490,11 @@ namespace MRuby.Bind
             return false;
         }
 
+        string RubyMethodName(string name)
+        {
+            return name.ToLower();
+        }
+
         void RegFunction(Type t, StreamWriter file)
         {
 #if UNITY_5_3_OR_NEWER
@@ -1507,15 +1513,23 @@ namespace MRuby.Bind
             Write(file, "_cls = Converter.DefineClass(mrb, \"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
             Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
 
-            Write(file, "Converter.define_method(mrb, _cls, \"initialize\", constructor, DLL.MRB_ARGS_OPT(4));");
+            Write(file, "Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(4));");
             Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
 
             //Write(file, "getTypeTable(l,\"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
             foreach (string i in funcname)
             {
                 string f = i;
+                var isStatic = t.GetMethods().Any(m=>m.Name == f && m.IsStatic); // TODO
                 trygetOverloadedVersion(t, ref f);
-                Write(file, "Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(4));", f, f);
+                if (isStatic)
+                {
+                    Write(file, "Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(4));", RubyMethodName(f), f);
+                }
+                else
+                {
+                    Write(file, "Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(4));", RubyMethodName(f), f);
+                }
                 //Write(file, "addMember(l,{0});", f);
             }
             foreach (string f in directfunc.Keys)
@@ -2012,7 +2026,7 @@ namespace MRuby.Bind
             if (cons.Length > 0)
             {
                 WriteFunctionAttr(file);
-                Write(file, "static public mrb_value constructor(mrb_state l, mrb_value _self) {");
+                Write(file, "static public mrb_value _initialize(mrb_state l, mrb_value _self) {");
                 WriteTry(file);
                 if (cons.Length > 1)
                     Write(file, "int argc = LuaDLL.lua_gettop(l);");
@@ -2070,7 +2084,7 @@ namespace MRuby.Bind
             else if (t.IsValueType) // default constructor
             {
                 WriteFunctionAttr(file);
-                Write(file, "static public mrb_value constructor(mrb_state l) {");
+                Write(file, "static public mrb_value _initialize(mrb_state l) {");
                 WriteTry(file);
                 Write(file, "{0} o;", FullName(t));
                 Write(file, "o=new {0}();", FullName(t));
@@ -2509,7 +2523,14 @@ namespace MRuby.Bind
                 Write(file, "{2}self.{0}({1});", MethodDecl(m), FuncCall(m, parOffset), ret);
             }
 
-            Write(file, "return Converter.make_value(l, ret);");
+            if (m.ReturnType != typeof(void))
+            {
+                Write(file, "return Converter.make_value(l, ret);");
+            }
+            else
+            {
+                Write(file, "return DLL.mrb_nil_value();");
+            }
 #if false // TODO: return value with out/ref parameter.
             WriteOk(file);
             int retcount = 1;

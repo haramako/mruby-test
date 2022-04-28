@@ -1,8 +1,28 @@
 TOPLEVEL_BINDING = binding
-$LOAD_PATH = ["."]
+$LOAD_PATH = [".", "RubyLib"]
 
 class LoadError < Exception
 end
+
+MRUBY_UNITY = true
+if MRUBY_UNITY
+  module MRubyUnity
+  end
+
+  $stdout = MRubyUnity::Console.new
+
+  module Kernel
+    def puts(*args)
+      $stdout.write args.join("\n")
+    end
+
+    def print(*args)
+      $stdout.write args.join("\n")
+    end
+  end
+end
+
+puts "hoge"
 
 module MRubyUnity
   class ModuleLoader
@@ -47,16 +67,6 @@ module MRubyUnity
       true
     end
   end
-
-  class DummyIO < IO
-    def initialize(f)
-      @f = f
-    end
-
-    def write(str)
-      @f.write str.to_s
-    end
-  end
 end
 
 module Kernel
@@ -74,8 +84,6 @@ module Kernel
     args.each { |v| puts v.inspect }
   end
 end
-
-$stdout = MRubyUnity::DummyIO.new($stdout)
 
 puts "start"
 require "test/require_test"

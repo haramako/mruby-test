@@ -122,7 +122,6 @@ namespace MRuby
         [DllImport(Dll)]
         public static extern void mrbc_context_free(mrb_state mrb, mrbc_context cxt);
 
-
         #endregion
 
         #region Value creation
@@ -167,6 +166,14 @@ namespace MRuby
 
         [DllImport(Dll, EntryPoint = "mrb_unity_string_buf")]
         public static extern Int64 mrb_string_buf(mrb_state mrb, mrb_value obj, byte[] buf, mrb_int buf_len);
+
+
+        [DllImport(Dll, EntryPoint = "mrb_unity_gc_arena_save")]
+        public static extern int mrb_gc_arena_save(mrb_state mrb);
+
+        [DllImport(Dll, EntryPoint = "mrb_unity_gc_arena_restore")]
+        public static extern void mrb_gc_arena_restore(mrb_state mrb, int idx);
+
 
         public static string mrb_as_string(mrb_state mrb, mrb_value str)
         {

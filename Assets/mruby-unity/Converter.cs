@@ -892,6 +892,11 @@ return true;
 			DLL.mrb_define_method(mrb, cls, funcName, new DLL.mrb_func_t(func), aspec);
 		}
 
+		public static void define_class_method(mrb_state mrb, RClass cls, string funcName, LuaCSFunction func, mrb_aspec aspec)
+		{
+			DLL.mrb_define_class_method(mrb, cls, funcName, new DLL.mrb_func_t(func), aspec);
+		}
+
 		public static void define_property(mrb_state mrb, RClass cls, string name, LuaCSFunction getter, LuaCSFunction setter, bool isInstance)
         {
 			DLL.mrb_define_method(mrb, cls, name, new DLL.mrb_func_t(getter), DLL.MRB_ARGS_NONE());
