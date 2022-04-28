@@ -11,6 +11,8 @@ public class Test : MonoBehaviour
     public void OnButtonClick()
     {
         MrbState _mrb = new MrbState();
+        MRubySvr svr = new MRubySvr(_mrb);
+        MRubySvr.doBind(_mrb.mrb);
         var mrb = _mrb.mrb;
         var arena = DLL.mrb_gc_arena_save(mrb);
         Converter.sym_objid = DLL.mrb_intern_cstr(mrb, "objid");
@@ -51,7 +53,7 @@ public class Test : MonoBehaviour
         Debug.Log(Converter.ToString(mrb, r));
 #endif
 
-        MRuby_MRubyUnity_Console.reg(_mrb);
+        //MRuby_MRubyUnity_Console.reg(_mrb);
 
         var src = File.ReadAllText("RubyLib\\prelude.rb");
         r = Converter.Exec(mrb, src);

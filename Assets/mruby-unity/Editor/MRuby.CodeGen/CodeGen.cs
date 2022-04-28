@@ -865,14 +865,14 @@ namespace MRuby.CodeGen
             string f = System.IO.Path.Combine(path, name + ".cs");
             StreamWriter file = new StreamWriter(f, false, Encoding.UTF8);
             file.NewLine = NewLine;
-            Write(file, "#if false");
+            Write(file, "#if true");
             Write(file, "using System;");
             Write(file, "using System.Collections.Generic;");
             Write(file, "namespace MRuby {");
             Write(file, "[LuaBinder({0})]", order);
             Write(file, "public class {0} {{", name);
-            Write(file, "public static Action<MrbState>[] GetBindList() {");
-            Write(file, "Action<MrbState>[] list= {");
+            Write(file, "public static Action<mrb_state>[] GetBindList() {");
+            Write(file, "Action<mrb_state>[] list= {");
             foreach (Type t in list)
             {
                 WriteBindType(file, t, list, exported);
@@ -1344,7 +1344,7 @@ namespace MRuby.Bind
         private void WriteHead(Type t, StreamWriter file)
         {
             HashSet<string> nsset = new HashSet<string>();
-            Write(file, "#if false");
+            Write(file, "#if true");
             Write(file, "using System;");
             Write(file, "using MRuby;");
             Write(file, "using System.Collections.Generic;");
@@ -1502,14 +1502,13 @@ namespace MRuby.Bind
 #endif
 
             // Write export function
-            Write(file, "static public void reg(MrbState _mrb) {");
+            Write(file, "static public void reg(mrb_state mrb) {");
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
                 Write(file, "LuaUnityEvent_{1}.reg(l);", FullName(t), _Name((GenericName(t.BaseType))));
             }
 
-            Write(file, "mrb_state mrb = _mrb.mrb;");
             Write(file, "_cls = Converter.DefineClass(mrb, \"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
             Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
 

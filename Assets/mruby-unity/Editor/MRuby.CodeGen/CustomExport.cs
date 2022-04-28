@@ -35,8 +35,9 @@ namespace MRuby.CodeGen
 
         public static void OnAddCustomClass(LuaCodeGen.ExportGenericDelegate add)
         {
-			// below lines only used for demostrate how to add custom class to export, can be delete on your app
+            // below lines only used for demostrate how to add custom class to export, can be delete on your app
 
+#if false
             add(typeof(System.Func<int>), null);
             add(typeof(System.Action<int, string>), null);
             add(typeof(System.Action<int, Dictionary<int, object>>), null);
@@ -44,6 +45,7 @@ namespace MRuby.CodeGen
             // .net 4.6 export class not match used class on runtime, so skip it
             //add(typeof(Dictionary<int, string>), "DictIntStr");
             add(typeof(string), "String");
+#endif
             
             // add your custom class here
             // add( type, typename)
