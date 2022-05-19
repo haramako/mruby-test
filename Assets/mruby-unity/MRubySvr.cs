@@ -48,9 +48,9 @@ namespace MRuby
 
 		public class MainState : MrbState {
 
+#if false
 			int errorReported = 0;
 
-#if false
 			protected override void tick() {
 				base.tick ();
 #if !SLUA_STANDALONE

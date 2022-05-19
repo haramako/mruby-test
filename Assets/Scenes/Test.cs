@@ -17,7 +17,7 @@ public class Test : MonoBehaviour
         using (var arena = Converter.LockArena(mrb))
         {
 
-            mrb_value r;
+            //mrb_value r;
 
 #if false
         MRuby_Character.RegisterClass(mrb);

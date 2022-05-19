@@ -283,7 +283,6 @@ namespace MRuby
             {
                 mrb_value* args = DLL.mrb_get_argv(l);
                 v = DLL.mrb_as_string(l, args[p]);
-                return true;
             }
             return true;
 #endif
