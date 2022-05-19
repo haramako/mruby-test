@@ -43,16 +43,14 @@ namespace MRuby
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate mrb_value LuaCSFunction(mrb_state mrb, mrb_value _self);
+    public delegate mrb_value MRubyCSFunction(mrb_state mrb, mrb_value _self);
 #else
-	public delegate mrb_value LuaCSFunction(mrb_state mrb, mrb_value _self);
+	public delegate mrb_value MRubyCSFunction(mrb_state mrb, mrb_value _self);
 #endif
 
     public static class DLL
     {
         const string Dll = "mruby.dll";
-
-        public delegate mrb_value mrb_func_t(mrb_state mrb, mrb_value self);
 
         public static mrb_aspec MRB_ARGS_REQ(int n) => new mrb_aspec(((UInt64)n & 0x1fUL) << 18);
         public static mrb_aspec MRB_ARGS_OPT(int n) => new mrb_aspec(((UInt64)n & 0x1fUL) << 13);
@@ -105,13 +103,13 @@ namespace MRuby
         public static extern RClass mrb_define_module_under(mrb_state mrb, RClass outer, string name);
 
         [DllImport(Dll)]
-        public static extern void mrb_define_class_method(mrb_state mrb, RClass c, string name, mrb_func_t func, mrb_aspec aspec);
+        public static extern void mrb_define_class_method(mrb_state mrb, RClass c, string name, MRubyCSFunction func, mrb_aspec aspec);
 
         [DllImport(Dll)]
-        public static extern void mrb_define_module_function(mrb_state mrb, RClass cla, string name, mrb_func_t fun, mrb_aspec aspec);
+        public static extern void mrb_define_module_function(mrb_state mrb, RClass cla, string name, MRubyCSFunction fun, mrb_aspec aspec);
 
         [DllImport(Dll)]
-        public static extern void mrb_define_method(mrb_state mrb, RClass c, string name, mrb_func_t func, mrb_aspec aspec);
+        public static extern void mrb_define_method(mrb_state mrb, RClass c, string name, MRubyCSFunction func, mrb_aspec aspec);
 
         [DllImport(Dll)]
         public static extern RClass mrb_class_get(mrb_state mrb, string name);

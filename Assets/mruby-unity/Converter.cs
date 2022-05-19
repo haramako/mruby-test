@@ -609,7 +609,7 @@ return true;
     }
 #endif
 
-        public static void pushValue(IntPtr l, LuaCSFunction f)
+        public static void pushValue(IntPtr l, MRubyCSFunction f)
         {
 #if false
             LuaState.pushcsfunction(l, f);
@@ -898,20 +898,20 @@ return true;
             return true;
         }
 
-        public static void define_method(mrb_state mrb, RClass cls, string funcName, LuaCSFunction func, mrb_aspec aspec)
+        public static void define_method(mrb_state mrb, RClass cls, string funcName, MRubyCSFunction func, mrb_aspec aspec)
         {
-            DLL.mrb_define_method(mrb, cls, funcName, new DLL.mrb_func_t(func), aspec);
+            DLL.mrb_define_method(mrb, cls, funcName, func, aspec);
         }
 
-        public static void define_class_method(mrb_state mrb, RClass cls, string funcName, LuaCSFunction func, mrb_aspec aspec)
+        public static void define_class_method(mrb_state mrb, RClass cls, string funcName, MRubyCSFunction func, mrb_aspec aspec)
         {
-            DLL.mrb_define_class_method(mrb, cls, funcName, new DLL.mrb_func_t(func), aspec);
+            DLL.mrb_define_class_method(mrb, cls, funcName, func, aspec);
         }
 
-        public static void define_property(mrb_state mrb, RClass cls, string name, LuaCSFunction getter, LuaCSFunction setter, bool isInstance)
+        public static void define_property(mrb_state mrb, RClass cls, string name, MRubyCSFunction getter, MRubyCSFunction setter, bool isInstance)
         {
-            DLL.mrb_define_method(mrb, cls, name, new DLL.mrb_func_t(getter), DLL.MRB_ARGS_NONE());
-            DLL.mrb_define_method(mrb, cls, name + "=", new DLL.mrb_func_t(setter), DLL.MRB_ARGS_REQ(1));
+            DLL.mrb_define_method(mrb, cls, name, getter, DLL.MRB_ARGS_NONE());
+            DLL.mrb_define_method(mrb, cls, name + "=", setter, DLL.MRB_ARGS_REQ(1));
         }
 
         public static mrb_value make_value(mrb_state mrb, object obj)
@@ -1025,7 +1025,6 @@ return true;
             {
                 if (arenaIndex != -1)
                 {
-                    UnityEngine.Debug.Log("unlock");
                     DLL.mrb_gc_arena_restore(mrb, arenaIndex);
                     arenaIndex = -1;
                 }

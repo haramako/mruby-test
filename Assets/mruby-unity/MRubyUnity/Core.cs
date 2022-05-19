@@ -84,9 +84,10 @@ namespace MRubyUnity
     [MRuby.CustomMRubyClass]
     public class Console
     {
+        static Console instance;
         public Console()
         {
-
+            instance = this;
         }
 
         public void Write(string s)

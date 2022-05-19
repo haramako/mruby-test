@@ -14,12 +14,10 @@ public class Test : MonoBehaviour
         MrbState _mrb = new MrbState();
         var mrb = _mrb.mrb;
 
-        MRubySvr svr = new MRubySvr(_mrb);
-        MRubySvr.doBind(_mrb.mrb);
+        using (var arena = Converter.LockArena(mrb))
+        {
 
-        using var arena = Converter.LockArena(mrb);
-
-        mrb_value r;
+            mrb_value r;
 
 #if false
         MRuby_Character.RegisterClass(mrb);
@@ -55,15 +53,13 @@ public class Test : MonoBehaviour
         Debug.Log(Converter.ToString(mrb, r));
 #endif
 
-        //MRuby_MRubyUnity_Console.reg(_mrb);
+            MRubyUnity.Core.LoadPath = MRubyUnity.Core.LoadPath.Concat(new string[] { "../tcg2" }).ToArray();
 
-        var src = File.ReadAllText("RubyLib\\prelude.rb");
-        r = Converter.Exec(mrb, src);
+            MRubyUnity.Core.Require(mrb, "prelude");
+        }
 
 
-        MRubyUnity.Core.LoadPath = MRubyUnity.Core.LoadPath.Concat(new string[] { "../tcg2" }).ToArray();
         MRubyUnity.Core.Require(mrb, "main");
-
     }
 }
 

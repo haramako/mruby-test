@@ -250,6 +250,9 @@ namespace MRuby
 
             var kernel = DLL.mrb_module_get(mrb, "Kernel");
             DLL.mrb_define_module_function(mrb, kernel, "require", MRubyUnity.Core._require, DLL.MRB_ARGS_REQ(1));
+
+            MRubySvr svr = new MRubySvr(this);
+            MRubySvr.doBind(mrb);
         }
 
         static void abortCallback(string msg)
