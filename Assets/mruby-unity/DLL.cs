@@ -78,6 +78,21 @@ namespace MRuby
         public unsafe static extern mrb_value* mrb_get_argv(mrb_state mrb);
 
         [DllImport(Dll)]
+        public static extern mrb_value mrb_const_get(mrb_state mrb, mrb_value v, mrb_sym sym);
+
+        [DllImport(Dll)]
+        public static extern RClass mrb_class_get(mrb_state mrb, RClass outer);
+
+        [DllImport(Dll)]
+        public static extern RClass mrb_class_get_under(mrb_state mrb, RClass outer, string name);
+
+        [DllImport(Dll)]
+        public static extern RClass mrb_module_get(mrb_state mrb, RClass outer);
+
+        [DllImport(Dll)]
+        public static extern RClass mrb_module_get_under(mrb_state mrb, RClass outer, string name);
+
+        [DllImport(Dll)]
         public static extern RClass mrb_define_class(mrb_state mrb, string name, RClass super);
 
         [DllImport(Dll)]
@@ -93,10 +108,17 @@ namespace MRuby
         public static extern void mrb_define_class_method(mrb_state mrb, RClass c, string name, mrb_func_t func, mrb_aspec aspec);
 
         [DllImport(Dll)]
+        public static extern void mrb_define_module_function(mrb_state mrb, RClass cla, string name, mrb_func_t fun, mrb_aspec aspec);
+
+        [DllImport(Dll)]
         public static extern void mrb_define_method(mrb_state mrb, RClass c, string name, mrb_func_t func, mrb_aspec aspec);
 
         [DllImport(Dll)]
         public static extern RClass mrb_class_get(mrb_state mrb, string name);
+
+        [DllImport(Dll)]
+        public static extern RClass mrb_module_get(mrb_state mrb, string name);
+
 
         [DllImport(Dll)]
         public static extern mrb_value mrb_obj_new(mrb_state mrb, RClass c, mrb_int argc, mrb_value[] argv);
@@ -160,6 +182,9 @@ namespace MRuby
         #region Value conversion
         [DllImport(Dll, EntryPoint = "mrb_unity_as_int")]
         public static extern Int64 mrb_as_int(mrb_state mrb, mrb_value obj);
+
+        [DllImport(Dll, EntryPoint = "mrb_unity_as_float")]
+        public static extern float mrb_as_float(mrb_state mrb, mrb_value obj);
 
         [DllImport(Dll, EntryPoint = "mrb_unity_string_len")]
         public static extern Int64 mrb_string_len(mrb_state mrb, mrb_value obj);

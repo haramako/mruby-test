@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 3a935c09064d86243a30f6042b331f63, type: 3}
   m_Name: setting
-  m_EditorClassIdentifier: Assembly-CSharp-Editor:MRuby.CodeGen:SLuaSetting
+  m_EditorClassIdentifier: 
   eol: 0
   exportExtensionMethod: 1
   UnityEngineGeneratePath: Assets/mruby-unity/MRubyObject/

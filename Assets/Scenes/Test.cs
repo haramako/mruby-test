@@ -5,17 +5,19 @@ using UnityEngine;
 
 using MRuby;
 using System.IO;
+using System.Linq;
 
 public class Test : MonoBehaviour
 {
     public void OnButtonClick()
     {
         MrbState _mrb = new MrbState();
+        var mrb = _mrb.mrb;
+
         MRubySvr svr = new MRubySvr(_mrb);
         MRubySvr.doBind(_mrb.mrb);
-        var mrb = _mrb.mrb;
-        var arena = DLL.mrb_gc_arena_save(mrb);
-        Converter.sym_objid = DLL.mrb_intern_cstr(mrb, "objid");
+
+        using var arena = Converter.LockArena(mrb);
 
         mrb_value r;
 
@@ -58,7 +60,9 @@ public class Test : MonoBehaviour
         var src = File.ReadAllText("RubyLib\\prelude.rb");
         r = Converter.Exec(mrb, src);
 
-        DLL.mrb_gc_arena_restore(mrb, arena);
+
+        MRubyUnity.Core.LoadPath = MRubyUnity.Core.LoadPath.Concat(new string[] { "../tcg2" }).ToArray();
+        MRubyUnity.Core.Require(mrb, "main");
 
     }
 }

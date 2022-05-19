@@ -245,6 +245,11 @@ namespace MRuby
         {
             mrb = DLL.mrb_open();
             DLL.mrb_unity_set_abort_func(mrb, abortCallback);
+
+            Converter.sym_objid = DLL.mrb_intern_cstr(mrb, "objid");
+
+            var kernel = DLL.mrb_module_get(mrb, "Kernel");
+            DLL.mrb_define_module_function(mrb, kernel, "require", MRubyUnity.Core._require, DLL.MRB_ARGS_REQ(1));
         }
 
         static void abortCallback(string msg)

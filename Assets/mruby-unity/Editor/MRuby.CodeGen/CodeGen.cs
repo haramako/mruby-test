@@ -41,7 +41,7 @@ namespace MRuby.CodeGen
 
     public class LuaCodeGen : MonoBehaviour
     {
-        static public string GenPath = SLuaSetting.Instance.UnityEngineGeneratePath;
+        static public string GenPath = MRubySetting.Instance.UnityEngineGeneratePath;
         static public string WrapperName = "sluaWrapper.dll";
         public delegate void ExportGenericDelegate(Type t, string ns);
 
@@ -846,8 +846,8 @@ namespace MRuby.CodeGen
 
         public string givenNamespace;
         public string path;
-        public bool includeExtension = SLuaSetting.Instance.exportExtensionMethod;
-        public EOL eol = SLuaSetting.Instance.eol;
+        public bool includeExtension = MRubySetting.Instance.exportExtensionMethod;
+        public EOL eol = MRubySetting.Instance.eol;
 
         class PropPair
         {
@@ -1509,11 +1509,23 @@ namespace MRuby.Bind
                 Write(file, "LuaUnityEvent_{1}.reg(l);", FullName(t), _Name((GenericName(t.BaseType))));
             }
 
-            Write(file, "_cls = Converter.DefineClass(mrb, \"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
+            var fullname = string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace;
+            var fullnames = fullname.Split('.');
+            Write(file, "RClass module = DLL.mrb_class_get(mrb, \"Object\");");
+            for ( int i=0; i<fullnames.Length - 1; i++)
+            {
+                Write(file, "module = DLL.mrb_define_module_under(mrb, module, \"{0}\");", fullnames[i]);
+            }
+
+            Write(file, "var baseClass = Converter.GetClass(mrb, \"{0}\");", FullName(t.BaseType));
+            Write(file, "_cls = DLL.mrb_define_class_under(mrb, module, \"{0}\", baseClass);", fullnames[fullnames.Length-1]);
             Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
 
-            Write(file, "Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(4));");
-            Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
+            if (GetValidConstructor(t).Length > 0)
+            {
+                Write(file, "Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(4));");
+                Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
+            }
 
             //Write(file, "getTypeTable(l,\"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
             foreach (string i in funcname)

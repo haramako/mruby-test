@@ -2,15 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
+using System.Linq;
 
 namespace MRuby
 {
     public static class Converter
     {
-		public static mrb_sym sym_objid;
+        public static mrb_sym sym_objid;
 
 #if false
-		#region enum
+        #region enum
 		static public bool checkEnum<T>(IntPtr l, int p, out T o) where T : struct
 		{
 			int i = (int)LuaDLL.luaL_checkinteger(l, p);
@@ -23,10 +24,10 @@ namespace MRuby
 		{
 			pushValue(l, e);
 		}
-		#endregion
+        #endregion
 
 		//#region Integral Types
-		#region sbyte
+        #region sbyte
 		public static bool checkType(IntPtr l, int p, out sbyte v)
 		{
 			v = (sbyte)LuaDLL.luaL_checkinteger(l, p);
@@ -38,9 +39,9 @@ namespace MRuby
 			LuaDLL.lua_pushinteger(l, v);
 		}
 
-		#endregion
+        #endregion
 
-		#region byte
+        #region byte
 		static public bool checkType(IntPtr l, int p, out byte v)
 		{
 			v = (byte)LuaDLL.luaL_checkinteger(l, p);
@@ -54,9 +55,9 @@ namespace MRuby
 
 		// why doesn't have a checkArray<byte[]> function accept lua string?
 		// I think you should did a Buffer class to wrap byte[] pass/accept between mono and lua vm
-		#endregion
+        #endregion
 
-		#region char
+        #region char
 		static public bool checkType(IntPtr l, int p, out char c)
 		{
 			c = (char)LuaDLL.luaL_checkinteger(l, p);
@@ -76,9 +77,9 @@ namespace MRuby
 			pars = s.ToCharArray();
 			return true;
 		}
-		#endregion
+        #endregion
 
-		#region short
+        #region short
 		static public bool checkType(IntPtr l, int p, out short v)
 		{
 			v = (short)LuaDLL.luaL_checkinteger(l, p);
@@ -89,9 +90,9 @@ namespace MRuby
 		{
 			LuaDLL.lua_pushinteger(l, i);
 		}
-		#endregion
+        #endregion
 
-		#region ushort
+        #region ushort
 		static public bool checkType(IntPtr l, int p, out ushort v)
 		{
 			v = (ushort)LuaDLL.luaL_checkinteger(l, p);
@@ -103,32 +104,32 @@ namespace MRuby
 			LuaDLL.lua_pushinteger(l, v);
 		}
 
-		#endregion
+        #endregion
 
-		#region interface
+        #region interface
 		static public void pushInterface(IntPtr l, object i, Type t)
 		{
 			ObjectCache oc = ObjectCache.get(l);
 			oc.pushInterface(l, i, t);
 		}
-		#endregion
+        #endregion
 #endif
 
-		#region int
-		static public bool checkType(mrb_state l, int p, out int v)
+        #region int
+        static public bool checkType(mrb_state l, int p, out int v)
         {
 #if false
 			v = (int)LuaDLL.luaL_checkinteger(l, p);
             return true;
 #else
-			unsafe
-			{
-				mrb_value* args = DLL.mrb_get_argv(l);
-				v = (int)DLL.mrb_as_int(l, args[p]);
-				return true;
-			}
+            unsafe
+            {
+                mrb_value* args = DLL.mrb_get_argv(l);
+                v = (int)DLL.mrb_as_int(l, args[p]);
+                return true;
+            }
 #endif
-		}
+        }
 
         public static void pushValue(mrb_state l, int i)
         {
@@ -137,10 +138,10 @@ namespace MRuby
 #endif
         }
 
-#endregion
+        #endregion
 
 #if false
-#region uint
+        #region uint
 		static public bool checkType(IntPtr l, int p, out uint v)
 		{
 			v = (uint)LuaDLL.luaL_checkinteger(l, p);
@@ -151,9 +152,9 @@ namespace MRuby
 		{
 			LuaDLL.lua_pushnumber(l, o);
 		}
-#endregion
+        #endregion
 
-#region long
+        #region long
 		static public bool checkType(IntPtr l, int p, out long v)
 		{
 #if LUA_5_3
@@ -173,9 +174,9 @@ namespace MRuby
 #endif
 		}
 
-#endregion
+        #endregion
 
-#region ulong
+        #region ulong
 		static public bool checkType(IntPtr l, int p, out ulong v)
 		{
 #if LUA_5_3
@@ -194,27 +195,35 @@ namespace MRuby
 			LuaDLL.lua_pushnumber(l, o);
 #endif
 		}
-#endregion
+        #endregion
+
+#endif
+        //#endregion
 
 
-//#endregion
+        #region Floating-Point Types
+        #region float
+        public static bool checkType(mrb_state l, int p, out float v)
+        {
+            unsafe
+            {
+                mrb_value* args = DLL.mrb_get_argv(l);
+                v = (int)DLL.mrb_as_float(l, args[p]);
+                return true;
+            }
+        }
 
-#region Floating-Point Types
-#region float
-		public static bool checkType(IntPtr l, int p, out float v)
-		{
-			v = (float)LuaDLL.luaL_checknumber(l, p);
-			return true;
-		}
-
+#if false
 		public static void pushValue(IntPtr l, float o)
 		{
 			LuaDLL.lua_pushnumber(l, o);
 		}
+#endif
 
-#endregion
+        #endregion
 
-#region double
+#if false
+        #region double
 		static public bool checkType(IntPtr l, int p, out double v)
 		{
 			v = LuaDLL.luaL_checknumber(l, p);
@@ -226,10 +235,12 @@ namespace MRuby
 			LuaDLL.lua_pushnumber(l, d);
 		}
 
-#endregion
-#endregion
+        #endregion
+#endif
+        #endregion
 
-#region bool
+#if false
+        #region bool
 		static public bool checkType(IntPtr l, int p, out bool v)
 		{
 			LuaDLL.luaL_checktype(l, p, LuaTypes.LUA_TBOOLEAN);
@@ -242,11 +253,11 @@ namespace MRuby
 			LuaDLL.lua_pushboolean(l, b);
 		}
 
-#endregion
+        #endregion
 
 #endif
 
-#region string
+        #region string
         static public bool checkType(mrb_state l, int p, out string v)
         {
 #if false
@@ -268,15 +279,15 @@ namespace MRuby
             v = null;
             return false;
 #else
-			unsafe
-			{
-				mrb_value* args = DLL.mrb_get_argv(l);
-				v = DLL.mrb_as_string(l, args[p]);
-				return true;
-			}
-			return true;
+            unsafe
+            {
+                mrb_value* args = DLL.mrb_get_argv(l);
+                v = DLL.mrb_as_string(l, args[p]);
+                return true;
+            }
+            return true;
 #endif
-		}
+        }
 
         static public bool checkBinaryString(mrb_state l, int p, out byte[] bytes)
         {
@@ -289,10 +300,10 @@ namespace MRuby
             bytes = null;
             return false;
 #else
-			bytes = null;
-			return true;
+            bytes = null;
+            return true;
 #endif
-		}
+        }
 
         public static void pushValue(mrb_state l, string s)
         {
@@ -302,18 +313,18 @@ namespace MRuby
         }
 
 
-		#endregion
+        #endregion
 
 #if false
-		#region IntPtr
+        #region IntPtr
 		static public bool checkType(IntPtr l, int p, out IntPtr v)
 		{
 			v = LuaDLL.lua_touserdata(l, p);
 			return true;
 		}
-		#endregion
+        #endregion
 
-		#region LuaType
+        #region LuaType
 		static public bool checkType(IntPtr l, int p, out LuaDelegate f)
 		{
 			LuaState state = LuaState.get(l);
@@ -397,9 +408,9 @@ namespace MRuby
 			else
 				t.push(l);
 		}
-		#endregion
+        #endregion
 
-		#region Type
+        #region Type
 		private static Type MonoType = typeof(Type).GetType();
 
 		public static Type FindType(string qualifiedTypeName)
@@ -472,15 +483,15 @@ namespace MRuby
 			}
 			return t != null;
 		}
-		#endregion
+        #endregion
 
-		#region struct
+        #region struct
 		static public bool checkValueType<T>(IntPtr l, int p, out T v) where T : struct
 		{
 			v = (T)checkObj(l, p);
 			return true;
 		}
-		#endregion
+        #endregion
 
 		static public bool checkNullable<T>(IntPtr l, int p, out Nullable<T> v) where T : struct
 		{
@@ -496,9 +507,9 @@ namespace MRuby
 		}
 #endif
 
-		#region object
-		static public bool checkType<T>(mrb_state l, int p, out T o) where T : class
-		{
+        #region object
+        static public bool checkType<T>(mrb_state l, int p, out T o) where T : class
+        {
 #if false
 			object obj = checkVar(l, p);
 			if (obj == null)
@@ -513,11 +524,11 @@ namespace MRuby
 
 			return true;
 #else
-			o = null;
-			return false;
+            o = null;
+            return false;
 #endif
-		}
-#endregion
+        }
+        #endregion
 
 #if false
         static public bool checkType(IntPtr l, int p, out LuaDelegate f)
@@ -598,7 +609,7 @@ return true;
     }
 #endif
 
-	public static void pushValue(IntPtr l, LuaCSFunction f)
+        public static void pushValue(IntPtr l, LuaCSFunction f)
         {
 #if false
             LuaState.pushcsfunction(l, f);
@@ -615,50 +626,50 @@ return true;
 }
 #endif
 
-	public static void pushValue(IntPtr l, object o)
-		{
+        public static void pushValue(IntPtr l, object o)
+        {
 #if false
 			pushVar(l, o);
 #endif
-		}
+        }
 
-		public static void pushValue(IntPtr l, Array a)
-		{
+        public static void pushValue(IntPtr l, Array a)
+        {
 #if false
 			pushObject(l, a);
 #endif
-		}
+        }
 
-		static public mrb_value error(mrb_state l, Exception e)
-		{
+        static public mrb_value error(mrb_state l, Exception e)
+        {
 #if false
 			LuaDLL.lua_pushboolean(l, false);
 			LuaDLL.lua_pushstring(l, e.ToString());
 #endif
-			return default;
-		}
+            return default;
+        }
 
-		static public mrb_value error(mrb_state l, string err)
-		{
+        static public mrb_value error(mrb_state l, string err)
+        {
 #if false
 			LuaDLL.lua_pushboolean(l, false);
 			LuaDLL.lua_pushstring(l, err);
 #endif
-			return default;
-		}
+            return default;
+        }
 
-		static public int error(IntPtr l, string err, params object[] args)
-		{
+        static public int error(IntPtr l, string err, params object[] args)
+        {
 #if false
 			err = string.Format(err, args);
 			LuaDLL.lua_pushboolean(l, false);
 			LuaDLL.lua_pushstring(l, err);
 #endif
-			return 2;
-		}
+            return 2;
+        }
 
-		public static T checkSelf<T>(mrb_state l)
-		{
+        public static T checkSelf<T>(mrb_state l)
+        {
 #if false
 			object o = checkObj(l, 1);
 			if (o != null)
@@ -667,23 +678,23 @@ return true;
 			}
 			throw new Exception("arg 1 expect self, but get null");
 #endif
-			return default;
-		}
+            return default;
+        }
 
-		public static object checkSelf(mrb_state l, mrb_value self)
-		{
+        public static object checkSelf(mrb_state l, mrb_value self)
+        {
 #if false
 			object o = checkObj(l, 1);
 			if (o == null)
 				throw new Exception("expect self, but get null");
 			return o;
 #else
-			return ObjectCache.GetObject(l, self);
+            return ObjectCache.GetObject(l, self);
 #endif
-		}
+        }
 
-		public static bool matchType(IntPtr l, int p, MRubyType lt, Type t)
-		{
+        public static bool matchType(IntPtr l, int p, MRubyType lt, Type t)
+        {
 #if false
 			if (t == typeof(object))
 			{
@@ -737,141 +748,141 @@ return true;
 
 			}
 #endif
-			return false;
-		}
+            return false;
+        }
 
-		public static bool matchType(IntPtr l, int p, Type t1)
-		{
+        public static bool matchType(IntPtr l, int p, Type t1)
+        {
 #if false
 			MRubyType t = LuaDLL.lua_type(l, p);
 			return matchType(l, p, t, t1);
 #endif
-			return false;
-		}
+            return false;
+        }
 
-		public static bool matchType(IntPtr l, int total, int from, Type t1)
-		{
-			if (total - from + 1 != 1)
-				return false;
+        public static bool matchType(IntPtr l, int total, int from, Type t1)
+        {
+            if (total - from + 1 != 1)
+                return false;
 
-			return matchType(l, from, t1);
-		}
+            return matchType(l, from, t1);
+        }
 
-		public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2)
-		{
-			if (total - from + 1 != 2)
-				return false;
+        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2)
+        {
+            if (total - from + 1 != 2)
+                return false;
 
-			return matchType(l, from, t1) && matchType(l, from + 1, t2);
-		}
+            return matchType(l, from, t1) && matchType(l, from + 1, t2);
+        }
 
-		public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3)
-		{
-			if (total - from + 1 != 3)
-				return false;
+        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3)
+        {
+            if (total - from + 1 != 3)
+                return false;
 
-			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3);
-		}
+            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3);
+        }
 
-		public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4)
-		{
-			if (total - from + 1 != 4)
-				return false;
+        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4)
+        {
+            if (total - from + 1 != 4)
+                return false;
 
-			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4);
-		}
+            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4);
+        }
 
-		public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5)
-		{
-			if (total - from + 1 != 5)
-				return false;
+        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5)
+        {
+            if (total - from + 1 != 5)
+                return false;
 
-			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-				&& matchType(l, from + 4, t5);
-		}
+            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+                && matchType(l, from + 4, t5);
+        }
 
-		public static bool matchType
-			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6)
-		{
-			if (total - from + 1 != 6)
-				return false;
+        public static bool matchType
+            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6)
+        {
+            if (total - from + 1 != 6)
+                return false;
 
-			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-				&& matchType(l, from + 4, t5)
-				&& matchType(l, from + 5, t6);
-		}
+            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+                && matchType(l, from + 4, t5)
+                && matchType(l, from + 5, t6);
+        }
 
-		public static bool matchType
-			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7)
-		{
-			if (total - from + 1 != 7)
-				return false;
+        public static bool matchType
+            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7)
+        {
+            if (total - from + 1 != 7)
+                return false;
 
-			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-				&& matchType(l, from + 4, t5)
-				&& matchType(l, from + 5, t6)
-				&& matchType(l, from + 6, t7);
-		}
+            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+                && matchType(l, from + 4, t5)
+                && matchType(l, from + 5, t6)
+                && matchType(l, from + 6, t7);
+        }
 
-		public static bool matchType
-			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8)
-		{
-			if (total - from + 1 != 8)
-				return false;
+        public static bool matchType
+            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8)
+        {
+            if (total - from + 1 != 8)
+                return false;
 
-			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-				&& matchType(l, from + 4, t5)
-				&& matchType(l, from + 5, t6)
-				&& matchType(l, from + 6, t7)
-				&& matchType(l, from + 7, t8);
-		}
+            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+                && matchType(l, from + 4, t5)
+                && matchType(l, from + 5, t6)
+                && matchType(l, from + 6, t7)
+                && matchType(l, from + 7, t8);
+        }
 
 
-		public static bool matchType
-			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9)
-		{
-			if (total - from + 1 != 9)
-				return false;
+        public static bool matchType
+            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9)
+        {
+            if (total - from + 1 != 9)
+                return false;
 
-			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-				&& matchType(l, from + 4, t5)
-				&& matchType(l, from + 5, t6)
-				&& matchType(l, from + 6, t7)
-				&& matchType(l, from + 7, t8)
-				&& matchType(l, from + 8, t9);
-		}
+            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+                && matchType(l, from + 4, t5)
+                && matchType(l, from + 5, t6)
+                && matchType(l, from + 6, t7)
+                && matchType(l, from + 7, t8)
+                && matchType(l, from + 8, t9);
+        }
 
-		public static bool matchType
-			(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9, Type t10)
-		{
-			if (total - from + 1 != 10)
-				return false;
+        public static bool matchType
+            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9, Type t10)
+        {
+            if (total - from + 1 != 10)
+                return false;
 
-			return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-				&& matchType(l, from + 4, t5)
-					&& matchType(l, from + 5, t6)
-					&& matchType(l, from + 6, t7)
-					&& matchType(l, from + 7, t8)
-					&& matchType(l, from + 8, t9)
-					&& matchType(l, from + 9, t10);
-		}
+            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
+                && matchType(l, from + 4, t5)
+                    && matchType(l, from + 5, t6)
+                    && matchType(l, from + 6, t7)
+                    && matchType(l, from + 7, t8)
+                    && matchType(l, from + 8, t9)
+                    && matchType(l, from + 9, t10);
+        }
 
-		public static bool matchType(IntPtr l, int total, int from, params Type[] t)
-		{
-			if (total - from + 1 != t.Length)
-				return false;
+        public static bool matchType(IntPtr l, int total, int from, params Type[] t)
+        {
+            if (total - from + 1 != t.Length)
+                return false;
 
-			for (int i = 0; i < t.Length; ++i)
-			{
-				if (!matchType(l, from + i, t[i]))
-					return false;
-			}
+            for (int i = 0; i < t.Length; ++i)
+            {
+                if (!matchType(l, from + i, t[i]))
+                    return false;
+            }
 
-			return true;
-		}
+            return true;
+        }
 
-		public static bool matchType(IntPtr l, int total, int from, ParameterInfo[] pars)
-		{
+        public static bool matchType(IntPtr l, int total, int from, ParameterInfo[] pars)
+        {
 #if false
 			if (total - from + 1 != pars.Length)
 				return false;
@@ -884,101 +895,146 @@ return true;
 					return false;
 			}
 #endif
-			return true;
-		}
-
-		public static void define_method(mrb_state mrb, RClass cls, string funcName, LuaCSFunction func, mrb_aspec aspec)
-        {
-			DLL.mrb_define_method(mrb, cls, funcName, new DLL.mrb_func_t(func), aspec);
-		}
-
-		public static void define_class_method(mrb_state mrb, RClass cls, string funcName, LuaCSFunction func, mrb_aspec aspec)
-		{
-			DLL.mrb_define_class_method(mrb, cls, funcName, new DLL.mrb_func_t(func), aspec);
-		}
-
-		public static void define_property(mrb_state mrb, RClass cls, string name, LuaCSFunction getter, LuaCSFunction setter, bool isInstance)
-        {
-			DLL.mrb_define_method(mrb, cls, name, new DLL.mrb_func_t(getter), DLL.MRB_ARGS_NONE());
-			DLL.mrb_define_method(mrb, cls, name + "=", new DLL.mrb_func_t(setter), DLL.MRB_ARGS_REQ(1));
-		}
-
-		public static mrb_value make_value(mrb_state mrb, object obj)
-        {
-			return new Value(mrb, obj).val;
+            return true;
         }
 
-		public static string ToString(mrb_state mrb, mrb_value val)
+        public static void define_method(mrb_state mrb, RClass cls, string funcName, LuaCSFunction func, mrb_aspec aspec)
         {
-			return AsString(mrb, Send(mrb, val, "to_s"));
-		}
+            DLL.mrb_define_method(mrb, cls, funcName, new DLL.mrb_func_t(func), aspec);
+        }
 
-		public static string AsString(mrb_state mrb, mrb_value val)
-		{
-			var len = DLL.mrb_string_len(mrb, val);
-			var buf = new byte[len];
-			DLL.mrb_string_buf(mrb, val, buf, len);
-			return System.Text.Encoding.UTF8.GetString(buf);
-		}
-
-		public static mrb_value Send(mrb_state mrb, mrb_value val, string methodName)
+        public static void define_class_method(mrb_state mrb, RClass cls, string funcName, LuaCSFunction func, mrb_aspec aspec)
         {
-			return DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);
+            DLL.mrb_define_class_method(mrb, cls, funcName, new DLL.mrb_func_t(func), aspec);
+        }
 
-		}
-
-		static mrb_value[] argsCache = new mrb_value[16];
-
-		public static mrb_value Send(mrb_state mrb, mrb_value val, string methodName, params object[] args)
-		{
-			for (int i = 0; i < args.Length; i++)
-			{
-				argsCache[i] = new Value(mrb, args[i]).val;
-			}
-			return DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache);
-		}
-
-		public static mrb_value Exec(mrb_state mrb, string src)
-		{
-			mrbc_context ctx = DLL.mrbc_context_new(mrb);
-			var r = DLL.mrb_load_string_cxt(mrb, src, ctx);
-			var exc = DLL.mrb_mrb_state_exc(mrb);
-
-			if (!DLL.mrb_nil_p(exc))
-			{
-				throw new Exception(Converter.ToString(mrb, exc));
-			}
-
-			DLL.mrbc_context_free(mrb, ctx);
-
-			return r;
-		}
-
-		public static RClass DefineClass(mrb_state mrb, string name)
+        public static void define_property(mrb_state mrb, RClass cls, string name, LuaCSFunction getter, LuaCSFunction setter, bool isInstance)
         {
-			var baseClass = DLL.mrb_class_get(mrb, "Object");
+            DLL.mrb_define_method(mrb, cls, name, new DLL.mrb_func_t(getter), DLL.MRB_ARGS_NONE());
+            DLL.mrb_define_method(mrb, cls, name + "=", new DLL.mrb_func_t(setter), DLL.MRB_ARGS_REQ(1));
+        }
 
-			var names = name.Split('.');
-			if (names.Length <= 1)
-			{
-				return DLL.mrb_define_class(mrb, names[0], baseClass);
-			}
-			else
-			{
-				RClass module = new RClass();
-				for (int i = 0; i < names.Length - 1; i++)
-				{
-					if (i == 0)
-					{
-						module = DLL.mrb_define_module(mrb, names[i]);
-					}
-					else
-					{
-						module = DLL.mrb_define_module_under(mrb, module, names[i]);
-					}
-				}
-				return DLL.mrb_define_class_under(mrb, module, names[names.Length-1], baseClass);
-			}
-		}
-	}
+        public static mrb_value make_value(mrb_state mrb, object obj)
+        {
+            return new Value(mrb, obj).val;
+        }
+
+        public static string ToString(mrb_state mrb, mrb_value val)
+        {
+            return AsString(mrb, Send(mrb, val, "to_s"));
+        }
+
+        public static string AsString(mrb_state mrb, mrb_value val)
+        {
+            var len = DLL.mrb_string_len(mrb, val);
+            var buf = new byte[len];
+            DLL.mrb_string_buf(mrb, val, buf, len);
+            return System.Text.Encoding.UTF8.GetString(buf);
+        }
+
+        public static mrb_value Send(mrb_state mrb, mrb_value val, string methodName)
+        {
+            return DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);
+
+        }
+
+        static mrb_value[] argsCache = new mrb_value[16];
+
+        public static mrb_value Send(mrb_state mrb, mrb_value val, string methodName, params object[] args)
+        {
+            for (int i = 0; i < args.Length; i++)
+            {
+                argsCache[i] = new Value(mrb, args[i]).val;
+            }
+            return DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache);
+        }
+
+        public static mrb_value Exec(mrb_state mrb, string src)
+        {
+            mrbc_context ctx = DLL.mrbc_context_new(mrb);
+            var r = DLL.mrb_load_string_cxt(mrb, src, ctx);
+            var exc = DLL.mrb_mrb_state_exc(mrb);
+
+            if (!DLL.mrb_nil_p(exc))
+            {
+                throw new Exception(Converter.ToString(mrb, exc));
+            }
+
+            DLL.mrbc_context_free(mrb, ctx);
+
+            return r;
+        }
+
+        public static RClass GetClass(mrb_state mrb, string[] names)
+        {
+            RClass module = DLL.mrb_class_get(mrb, "Object");
+            for (int i = 0; i < names.Length; i++)
+            {
+                if (i == names.Length - 1)
+                {
+                    module = DLL.mrb_class_get_under(mrb, module, names[i]);
+                }
+                else
+                {
+                    module = DLL.mrb_module_get_under(mrb, module, names[i]);
+                }
+            }
+            return module;
+        }
+
+        public static RClass GetClass(mrb_state mrb, string name)
+        {
+            if (name == "System.Object" || name == "UnityEngine.MonoBehaviour")
+            {
+                return DLL.mrb_class_get(mrb, "Object");
+            }
+            else
+            {
+                return GetClass(mrb, name.Split('.'));
+            }
+        }
+
+        public static RClass CreateModule(mrb_state mrb, string[] names)
+        {
+            RClass module = DLL.mrb_module_get(mrb, "Object");
+            for (int i = 0; i < names.Length; i++)
+            {
+                module = DLL.mrb_define_module_under(mrb, module, names[i]);
+            }
+            return module;
+        }
+
+        public static RClass DefineClass(mrb_state mrb, RClass module, string name, RClass baseClass)
+        {
+            var names = name.Split('.');
+            return DLL.mrb_define_class_under(mrb, module, names[names.Length - 1], baseClass);
+        }
+
+        public struct ArenaLock : IDisposable
+        {
+            mrb_state mrb;
+            int arenaIndex;
+
+            public ArenaLock(mrb_state _mrb)
+            {
+                mrb = _mrb;
+                arenaIndex = DLL.mrb_gc_arena_save(mrb);
+            }
+
+            public void Dispose()
+            {
+                if (arenaIndex != -1)
+                {
+                    UnityEngine.Debug.Log("unlock");
+                    DLL.mrb_gc_arena_restore(mrb, arenaIndex);
+                    arenaIndex = -1;
+                }
+            }
+        }
+
+        public static ArenaLock LockArena(mrb_state mrb)
+        {
+            return new ArenaLock(mrb);
+        }
+    }
 }

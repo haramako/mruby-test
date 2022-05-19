@@ -44,7 +44,7 @@ namespace MRuby.CodeGen {
 		GC64 = 3,
 	}
 
-	public class SLuaSetting 
+	public class MRubySetting 
 	#if !SLUA_STANDALONE
 		: ScriptableObject
 	#endif
@@ -61,16 +61,17 @@ namespace MRuby.CodeGen {
 		// public int debugPort=10240;
 		// public string debugIP="0.0.0.0"; // no longer debugger built-in
 
-		private static SLuaSetting _instance=null;
-		public static SLuaSetting Instance{
+		private static MRubySetting _instance=null;
+		public static MRubySetting Instance
+		{
 			get{
 #if !SLUA_STANDALONE
 				if(_instance == null){
-					_instance = Resources.Load<SLuaSetting>("setting");
+					_instance = Resources.Load<MRubySetting>("setting");
 
 				#if UNITY_EDITOR
 					if(_instance == null){
-						_instance =  SLuaSetting.CreateInstance<SLuaSetting>();
+						_instance = MRubySetting.CreateInstance<MRubySetting>();
                         try
                         {
                             AssetDatabase.CreateAsset(_instance, "Assets/mruby-unity/Resources/setting.asset");
