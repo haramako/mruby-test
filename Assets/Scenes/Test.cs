@@ -54,12 +54,8 @@ public class Test : MonoBehaviour
 #endif
 
             MRubyUnity.Core.LoadPath = MRubyUnity.Core.LoadPath.Concat(new string[] { "../tcg2" }).ToArray();
-
-            MRubyUnity.Core.Require(mrb, "prelude");
+            MRubyUnity.Core.Require(mrb, "main");
         }
-
-
-        MRubyUnity.Core.Require(mrb, "main");
     }
 }
 

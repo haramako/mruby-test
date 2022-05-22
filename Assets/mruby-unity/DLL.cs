@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using mrb_int = System.Int64;
+using mrb_float = System.Double;
 
 namespace MRuby
 {
@@ -154,6 +155,9 @@ namespace MRuby
         [DllImport(Dll, EntryPoint = "mrb_unity_float_value")]
         public static extern mrb_value mrb_float_value(mrb_state mrb, double v);
 
+        [DllImport(Dll, EntryPoint = "mrb_unity_symbol_value")]
+        public static extern mrb_value mrb_symbol_value(mrb_sym v);
+
         [DllImport(Dll, EntryPoint = "mrb_unity_nil_value")]
         public static extern mrb_value mrb_nil_value();
 
@@ -182,7 +186,7 @@ namespace MRuby
         public static extern Int64 mrb_as_int(mrb_state mrb, mrb_value obj);
 
         [DllImport(Dll, EntryPoint = "mrb_unity_as_float")]
-        public static extern float mrb_as_float(mrb_state mrb, mrb_value obj);
+        public static extern mrb_float mrb_as_float(mrb_state mrb, mrb_value obj);
 
         [DllImport(Dll, EntryPoint = "mrb_unity_string_len")]
         public static extern Int64 mrb_string_len(mrb_state mrb, mrb_value obj);

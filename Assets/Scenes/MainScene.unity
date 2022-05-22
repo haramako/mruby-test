@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5689073de0a5f5542b4bff70175c0d8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Board: {fileID: 260355907}
+  View: {fileID: 260355907}
 --- !u!1 &260355903
 GameObject:
   m_ObjectHideFlags: 0
@@ -395,7 +395,7 @@ GameObject:
   - component: {fileID: 260355905}
   - component: {fileID: 260355907}
   m_Layer: 5
-  m_Name: Board
+  m_Name: BoardView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

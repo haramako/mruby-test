@@ -10,14 +10,15 @@ public class BoardObject : MonoBehaviour
 {
     public int ObjectID;
 
-    public void MoveTo(int x, int y, float duration)
+    public void MoveTo(float x, float y, float duration)
     {
+        transform.SetAsLastSibling();
         transform.DOLocalMove(new Vector3(x, y, 0), duration);
     }
 }
 
 [CustomMRubyClass]
-public class Board : MonoBehaviour
+public class BoardView : MonoBehaviour
 {
     [DoNotToLua]
     public BoardObject[] Templates;
@@ -34,11 +35,17 @@ public class Board : MonoBehaviour
 
     public BoardObject Create(string templateName, int id)
     {
+        if( objects.TryGetValue(id, out var bobj))
+        {
+            return bobj;
+        }
+
         var template = Templates.First(t => t.name == templateName);
         var obj = GameObject.Instantiate(template.gameObject);
         obj.transform.SetParent(transform, false);
+        obj.name = $"{templateName}:{id}";
 
-        var bobj = obj.GetComponent<BoardObject>();
+        bobj = obj.GetComponent<BoardObject>();
         bobj.ObjectID = id;
         objects.Add(id, bobj);
 

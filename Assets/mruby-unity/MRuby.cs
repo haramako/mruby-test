@@ -87,6 +87,12 @@ namespace MRuby
         {
             switch (_val)
             {
+                case Value v:
+                    val = v.val;
+                    break;
+                case mrb_value v:
+                    val = v;
+                    break;
                 case byte v:
                     val = DLL.mrb_fixnum_value(v);
                     break;
@@ -125,7 +131,11 @@ namespace MRuby
                         break;
 #endif
                 default:
-                    if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
+                    if (ObjectCache.TryToValue(mrb, _val, out var mrb_v))
+                    {
+                        val = mrb_v;
+                    }
+                    else  if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
                     {
 #if true
                         var obj = constructor(mrb, _val);
@@ -133,12 +143,12 @@ namespace MRuby
 #else
                         val = default;
 #endif
-                        break;
                     }
                     else
                     {
                         throw new ArgumentException();
                     }
+                    break;
             }
         }
 
@@ -146,6 +156,12 @@ namespace MRuby
         {
             switch( _val)
             {
+                case Value v:
+                    val = v.val;
+                    break;
+                case mrb_value v:
+                    val = v;
+                    break;
                 case byte v:
                     val = DLL.mrb_fixnum_value(v);
                     break;
@@ -177,17 +193,25 @@ namespace MRuby
                     val = DLL.mrb_float_value(mrb.mrb, v);
                     break;
                 default:
-                    if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
+                    if( _val == null)
+                    {
+                        val = DLL.mrb_nil_value();
+                    }
+                    else if (ObjectCache.TryToValue(mrb.mrb,  _val, out var mrb_v))
+                    {
+                        val = mrb_v;
+                    }
+                    else if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
                     {
                         if (mrb == null) throw new ArgumentException();
                         var obj = constructor(mrb.mrb, _val);
                         val = obj.val;
-                        break;
                     }
                     else
                     {
                         throw new ArgumentException();
                     }
+                    break;
             }
         }
 
@@ -253,6 +277,8 @@ namespace MRuby
 
             MRubySvr svr = new MRubySvr(this);
             MRubySvr.doBind(mrb);
+
+            DLL.mrb_load_string(mrb, prelude);
         }
 
         static void abortCallback(string msg)
@@ -281,6 +307,30 @@ namespace MRuby
         {
             return new Value(DLL.mrb_load_string(mrb, src));
         }
+
+
+        public static string prelude = @"
+class LoadError < Exception
+end
+
+$stdout = MRubyUnity::Console.new
+
+module Kernel
+  def puts(*args)
+    $stdout.write args.join(""\\n"")
+  end
+
+  def print(*args)
+    $stdout.write args.join("" "")
+  end
+end
+
+module Kernel
+  def p(*args)
+    args.each { |x| puts x.inspect }
+    end
+  end
+";
 
     }
 

@@ -1115,7 +1115,7 @@ namespace MRuby.Bind
     public class LuaUnityEvent_$CLS : CSObject
     {
 
-        [MRuby.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        [MRuby.MonoPInvokeCallbackAttribute(typeof(MRubyCSFunction))]
         static public int AddListener(IntPtr l)
         {
             try
@@ -1132,7 +1132,7 @@ namespace MRuby.Bind
 				return error(l,e);
             }
         }
-        [MRuby.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        [MRuby.MonoPInvokeCallbackAttribute(typeof(MRubyCSFunction))]
         static public int RemoveListener(IntPtr l)
         {
             try
@@ -1149,7 +1149,7 @@ namespace MRuby.Bind
                 return error(l,e);
             }
         }
-        [MRuby.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        [MRuby.MonoPInvokeCallbackAttribute(typeof(MRubyCSFunction))]
         static public int Invoke(IntPtr l)
         {
             try
@@ -1524,8 +1524,8 @@ namespace MRuby.Bind
             if (GetValidConstructor(t).Length > 0)
             {
                 Write(file, "Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(4));");
-                Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
             }
+            Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
 
             //Write(file, "getTypeTable(l,\"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
             foreach (string i in funcname)
@@ -1939,7 +1939,7 @@ namespace MRuby.Bind
 
         private void WriteFunctionAttr(StreamWriter file)
         {
-            Write(file, "[MRuby.MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]");
+            Write(file, "[MRuby.MonoPInvokeCallbackAttribute(typeof(MRubyCSFunction))]");
 #if UNITY_5_3_OR_NEWER
             Write(file, "[UnityEngine.Scripting.Preserve]");
 #endif
