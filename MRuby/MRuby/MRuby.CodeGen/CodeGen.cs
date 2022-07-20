@@ -34,7 +34,7 @@ namespace MRuby.CodeGen
     using System.Text.RegularExpressions;
     using System.Runtime.CompilerServices;
 
-    class CodeGenerator
+    public class CodeGenerator
     {
         static List<string> memberFilter = new List<string>
         {
@@ -809,9 +809,33 @@ namespace MRuby.Bind
             return false;
         }
 
-        string RubyMethodName(string name)
+        public static string RubyMethodName(string name)
         {
-            return name.ToLower();
+            var sb = new StringBuilder();
+            var prevIsUpper = true;
+            for( int i=0; i<name.Length; i++)
+            {
+                var c = name[i];
+                if( char.IsUpper(c))
+                {
+                    if (prevIsUpper)
+                    {
+                        sb.Append(char.ToLower(c));
+                    }
+                    else
+                    {
+                        sb.Append('_');
+                        sb.Append(char.ToLower(c));
+                    }
+                    prevIsUpper = true;
+                }
+                else
+                {
+                    sb.Append(c);
+                    prevIsUpper = false;
+                }
+            }
+            return sb.ToString();
         }
 
         void RegFunction(Type t, StreamWriter file)
@@ -874,7 +898,7 @@ namespace MRuby.Bind
                 PropPair pp = propname[f];
                 trygetOverloadedVersion(t, ref pp.get);
                 trygetOverloadedVersion(t, ref pp.set);
-                Write(file, "Converter.define_property(mrb, _cls,\"{0}\",{1},{2},{3});", f, pp.get, pp.set, pp.isInstance ? "true" : "false");
+                Write(file, "Converter.define_property(mrb, _cls,\"{0}\",{1},{2},{3});", RubyMethodName(f), pp.get, pp.set, pp.isInstance ? "true" : "false");
                 //Write(file, "addMember(l,\"{0}\",{1},{2},{3});", f, pp.get, pp.set, pp.isInstance ? "true" : "false");
             }
             // TODO
