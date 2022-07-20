@@ -57,7 +57,7 @@ public class MainScene : MonoSingleton<MainScene>
             r = r.Send(mrbState, "board").Send(mrbState, "root").Send(mrbState, "redraw_all", View);
 
 
-            Debug.Log(r.ToString(mrbState));
+            //Debug.Log(r.ToString(mrbState));
         }
 
 

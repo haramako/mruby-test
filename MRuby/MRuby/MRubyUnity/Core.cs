@@ -1,0 +1,128 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using MRuby;
+using System.IO;
+using IO_File = System.IO.File;
+
+namespace MRubyUnity
+{
+    public static class Core
+    {
+        public static string[] LoadPath = new string[] { ".", "RubyLib" };
+        public static string currentLoadingFile;
+
+        public static mrb_value _require(mrb_state mrb, mrb_value _self)
+        {
+            System.String name;
+            Converter.checkType(mrb, 0, out name);
+            Require(mrb, name);
+            return DLL.mrb_nil_value();
+        }
+
+        public static void Require(mrb_state mrb, string name)
+        {
+            if (!name.EndsWith(".rb"))
+            {
+                name += ".rb";
+            }
+            if (name.StartsWith("./"))
+            {
+                if (requireInner(mrb, Path.Combine(Path.GetDirectoryName(currentLoadingFile), name)))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                foreach (var path in LoadPath)
+                {
+                    if (requireInner(mrb, Path.Combine(path, name)))
+                    {
+                        return;
+                    }
+                }
+            }
+            throw new System.Exception($"{name} not found");
+        }
+
+        private static bool requireInner(mrb_state mrb, string fullPath)
+        {
+            if (IO_File.Exists(fullPath))
+            {
+                var src = IO_File.ReadAllText(fullPath, System.Text.Encoding.UTF8);
+                var old = currentLoadingFile;
+                currentLoadingFile = fullPath;
+                try
+                {
+                    Converter.Exec(mrb, src);
+                }
+                finally
+                {
+                    currentLoadingFile = old;
+                }
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+    }
+
+    [MRuby.CustomMRubyClass]
+    public class IO
+    {
+        public static string Read(string path)
+        {
+            return System.IO.File.ReadAllText(path);
+        }
+    }
+
+    [MRuby.CustomMRubyClass]
+    public class Console
+    {
+        static Console instance;
+        public Console()
+        {
+            instance = this;
+        }
+
+        public void Write(string s)
+        {
+            Debug.Log(s);
+        }
+
+        public void Flush()
+        {
+
+        }
+    }
+
+    [MRuby.CustomMRubyClass]
+    public class File
+    {
+        System.IO.FileStream f;
+
+        public File(string path)
+        {
+            f = System.IO.File.Open(path, System.IO.FileMode.Open);
+        }
+
+        public static File Open(string path) => new File(path);
+
+        public string Read()
+        {
+            byte[] buf = new byte[8192];
+            var len = f.Read(buf, 0, buf.Length);
+            return System.Text.Encoding.UTF8.GetString(buf, 0, len);
+        }
+
+        public void Flush()
+        {
+        }
+    }
+}
+
