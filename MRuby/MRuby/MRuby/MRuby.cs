@@ -263,7 +263,7 @@ namespace MRuby
     public class MrbState : IDisposable
     {
         bool disposed;
-        internal mrb_state mrb;
+        public mrb_state mrb;
 
         public MrbState()
         {
@@ -313,7 +313,7 @@ namespace MRuby
 class LoadError < Exception
 end
 
-$stdout = MRubyUnity::Console.new
+# $stdout = MRubyUnity::Console.new
 
 module Kernel
   def puts(*args)

@@ -11,7 +11,7 @@ namespace MRuby
 
         public static void AddType(Type type, ConstructorFunc cls)
         {
-            cache.Add(type, cls);
+            cache[type] = cls;
         }
 
         public static ConstructorFunc GetClass(Type type)
