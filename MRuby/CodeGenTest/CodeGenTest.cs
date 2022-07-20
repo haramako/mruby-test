@@ -32,7 +32,7 @@ class CodeGenTest
     [TestCase("Hoge::CodeGenSample.new(1,'a').get_int_value()", "99")]
     [TestCase("Hoge::CodeGenSample.new(1,'a').overloaded_method(1)", "1")]
     [TestCase("Hoge::CodeGenSample.static_method(2)", "2")]
-    public void TestSample(string src, string expect)
+    public void TestSample2(string src, string expect)
     {
         MRuby_Hoge_CodeGenSample.reg(mrb.mrb);
 
