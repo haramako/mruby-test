@@ -63,7 +63,9 @@ namespace MRuby.CodeGen
         // public int debugPort=10240;
         // public string debugIP="0.0.0.0"; // no longer debugger built-in
 
+#if !SLUA_STANDALONE
         private static MRubySetting _instance = null;
+#endif
         public static MRubySetting Instance
         {
             get
@@ -85,10 +87,10 @@ namespace MRuby.CodeGen
 #endif
 
 				}
+                return _instance;
 #else
                 return new MRubySetting();
 #endif
-                return _instance;
             }
         }
 

@@ -37,7 +37,7 @@ class CodeGenTest
         MRuby_Hoge_CodeGenSample.reg(mrb.mrb);
 
         var r = mrb.LoadString(src);
-        var rstr = r.ToString(mrb);
+        var rstr = r.ToString();
         Assert.AreEqual(expect, rstr);
     }
 

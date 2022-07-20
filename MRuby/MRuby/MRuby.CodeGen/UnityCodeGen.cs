@@ -49,9 +49,9 @@ namespace MRuby.CodeGen
         static public string WrapperName = "sluaWrapper.dll";
         public delegate void ExportGenericDelegate(Type t, string ns);
 
+#if !SLUA_STANDALONE
         static bool autoRefresh = true;
 
-#if !SLUA_STANDALONE
         static bool IsCompiling
         {
             get

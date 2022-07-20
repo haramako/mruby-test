@@ -11,6 +11,13 @@ namespace MRuby
         bool disposed;
         public mrb_state mrb;
 
+        static Dictionary<mrb_state, MrbState> mrbStateCache = new Dictionary<mrb_state, MrbState>();
+
+        public static MrbState FindCache(mrb_state mrb)
+        {
+            return mrbStateCache[mrb];
+        }
+
         public MrbState()
         {
             mrb = DLL.mrb_open();
@@ -51,7 +58,7 @@ namespace MRuby
 
         public Value LoadString(string src)
         {
-            return new Value(DLL.mrb_load_string(mrb, src));
+            return new Value(mrb, DLL.mrb_load_string(mrb, src));
         }
 
 

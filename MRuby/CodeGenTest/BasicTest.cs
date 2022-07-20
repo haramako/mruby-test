@@ -25,7 +25,7 @@ public class BasicTest
 
         using (var arena = Converter.LockArena(mrb.mrb))
         {
-            var r = mrb.LoadString("1+1").ToString(mrb);
+            var r = mrb.LoadString("1+1").ToString();
             Assert.AreEqual("2", r);
         }
     }

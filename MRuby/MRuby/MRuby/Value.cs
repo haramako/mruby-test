@@ -6,17 +6,22 @@ namespace MRuby
 {
     public struct Value
     {
+        public readonly mrb_state mrb;
         public readonly mrb_value val;
 
-        public Value(mrb_value _val)
+        public Value(mrb_state _mrb, mrb_value _val)
         {
+            mrb = _mrb;
             val = _val;
         }
 
-        public Value(object _val) : this(null, _val) { }
+        //public Value(object _val) : this(null, _val) { }
 
-        public Value(mrb_state mrb, object _val)
+        public Value(MrbState _mrb, object _val) : this(_mrb.mrb, _val) { }
+
+        public Value(mrb_state _mrb, object _val)
         {
+            mrb = _mrb;
             switch (_val)
             {
                 case Value v:
@@ -52,91 +57,18 @@ namespace MRuby
                 case double v:
                     val = DLL.mrb_float_value(mrb, v);
                     break;
-                case CSObject o:
-                    throw new Exception();
-#if false
-                    var obj = ObjectCache.GetObject(mrb, o.val);
-                    if( obj != null)
-                    {
-
-                    }
-                        break;
-#endif
-                default:
-                    if (ObjectCache.TryToValue(mrb, _val, out var mrb_v))
-                    {
-                        val = mrb_v;
-                    }
-                    else if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
-                    {
-#if true
-                        var obj = constructor(mrb, _val);
-                        val = obj.val;
-#else
-                        val = default;
-#endif
-                    }
-                    else
-                    {
-                        throw new ArgumentException();
-                    }
-                    break;
-            }
-        }
-
-        public Value(MrbState mrb, object _val)
-        {
-            switch (_val)
-            {
-                case Value v:
-                    val = v.val;
-                    break;
-                case mrb_value v:
-                    val = v;
-                    break;
-                case byte v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case UInt16 v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case Int16 v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case UInt32 v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case Int32 v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case bool v:
-                    val = DLL.mrb_bool_value(v);
-                    break;
-                case string v:
-                    if (mrb == null) throw new ArgumentException();
-                    val = DLL.mrb_str_new_cstr(mrb.mrb, v);
-                    break;
-                case float v:
-                    if (mrb == null) throw new ArgumentException();
-                    val = DLL.mrb_float_value(mrb.mrb, v);
-                    break;
-                case double v:
-                    if (mrb == null) throw new ArgumentException();
-                    val = DLL.mrb_float_value(mrb.mrb, v);
-                    break;
                 default:
                     if (_val == null)
                     {
                         val = DLL.mrb_nil_value();
                     }
-                    else if (ObjectCache.TryToValue(mrb.mrb, _val, out var mrb_v))
+                    else if (ObjectCache.TryToValue(mrb, _val, out var mrb_v))
                     {
                         val = mrb_v;
                     }
                     else if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
                     {
-                        if (mrb == null) throw new ArgumentException();
-                        var obj = constructor(mrb.mrb, _val);
+                        var obj = constructor(_mrb, _val);
                         val = obj.val;
                     }
                     else
@@ -149,45 +81,45 @@ namespace MRuby
 
         static mrb_value[] argsCache = new mrb_value[16];
 
-        public Value Send(MrbState mrb, string methodName)
+        public Value Send(string methodName)
         {
-            return new Value(DLL.mrb_funcall_argv(mrb.mrb, val, methodName, 0, null));
+            return new Value(mrb, DLL.mrb_funcall_argv(mrb, val, methodName, 0, null));
         }
 
-        public Value Send(MrbState mrb, string methodName, params object[] args)
+        public Value Send(string methodName, params object[] args)
         {
             for (int i = 0; i < args.Length; i++)
             {
                 argsCache[i] = new Value(mrb, args[i]).val;
             }
-            return new Value(DLL.mrb_funcall_argv(mrb.mrb, val, methodName, args.Length, argsCache));
+            return new Value(mrb, DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache));
         }
 
-        public Value Send(MrbState mrb, string methodName, params Value[] args)
+        public Value Send(string methodName, params Value[] args)
         {
             for (int i = 0; i < args.Length; i++)
             {
                 argsCache[i] = args[i].val;
             }
-            return new Value(DLL.mrb_funcall_argv(mrb.mrb, val, methodName, args.Length, argsCache));
+            return new Value(mrb, DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache));
         }
 
-        public string ToString(MrbState mrb)
+        public override string ToString()
         {
-            return Send(mrb, "to_s").AsString(mrb);
+            return Send("to_s").AsString();
         }
 
-        public string AsString(MrbState mrb)
+        public string AsString()
         {
-            var len = DLL.mrb_string_len(mrb.mrb, val);
+            var len = DLL.mrb_string_len(mrb, val);
             var buf = new byte[len];
-            DLL.mrb_string_buf(mrb.mrb, val, buf, len);
+            DLL.mrb_string_buf(mrb, val, buf, len);
             return System.Text.Encoding.UTF8.GetString(buf);
         }
 
-        public Int64 AsInteger(MrbState mrb)
+        public Int64 AsInteger()
         {
-            return DLL.mrb_as_int(mrb.mrb, val);
+            return DLL.mrb_as_int(mrb, val);
         }
 
     }
