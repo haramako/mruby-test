@@ -27,7 +27,7 @@ public class BoardView : MonoBehaviour
 
     private void Awake()
     {
-        foreach(var t in Templates)
+        foreach (var t in Templates)
         {
             t.gameObject.SetActive(false);
         }
@@ -35,7 +35,7 @@ public class BoardView : MonoBehaviour
 
     public BoardObject Create(string templateName, int id)
     {
-        if( objects.TryGetValue(id, out var bobj))
+        if (objects.TryGetValue(id, out var bobj))
         {
             return bobj;
         }

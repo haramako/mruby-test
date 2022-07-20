@@ -27,7 +27,8 @@ namespace MRuby.CodeGen
 
     public class CustomExport
     {
-        public static void OnGetAssemblyToGenerateExtensionMethod(out List<string> list) {
+        public static void OnGetAssemblyToGenerateExtensionMethod(out List<string> list)
+        {
             list = new List<string> {
 #if !SLUA_STANDALONE
                 "Assembly-CSharp",
@@ -50,7 +51,7 @@ namespace MRuby.CodeGen
             //add(typeof(Dictionary<int, string>), "DictIntStr");
             add(typeof(string), "String");
 #endif
-            
+
             // add your custom class here
             // add( type, typename)
             // type is what you want to export
@@ -98,7 +99,7 @@ namespace MRuby.CodeGen
         public static void OnGetNoUseList(out List<string> list)
         {
             list = new List<string>
-            {      
+            {
                 "HideInInspector",
                 "ExecuteInEditMode",
                 "AddComponentMenu",
@@ -107,7 +108,7 @@ namespace MRuby.CodeGen
                 "DisallowMultipleComponent",
                 "SerializeField",
                 "AssemblyIsEditorAssembly",
-                "Attribute", 
+                "Attribute",
                 "Types",
                 "UnitySurrogateSelector",
                 "TrackedReference",
@@ -130,7 +131,7 @@ namespace MRuby.CodeGen
                 "TextClipping",
                 "Gizmos",
                 "ADBannerView",
-                "ADInterstitialAd",            
+                "ADInterstitialAd",
                 "Android",
                 "Tizen",
                 "jvalue",
@@ -146,7 +147,7 @@ namespace MRuby.CodeGen
                 "Handheld",
                 "LocalNotification",
                 "NotificationServices",
-                "RemoteNotificationType",      
+                "RemoteNotificationType",
                 "RemoteNotification",
                 "SamsungTV",
                 "TextureCompressionQuality",
@@ -154,7 +155,7 @@ namespace MRuby.CodeGen
                 "TouchScreenKeyboard",
                 "MovieTexture",
                 "UnityEngineInternal",
-                "Terrain",                            
+                "Terrain",
                 "Tree",
                 "SplatPrototype",
                 "DetailPrototype",
@@ -162,8 +163,8 @@ namespace MRuby.CodeGen
                 "MeshSubsetCombineUtility",
                 "AOT",
                 "Social",
-                "Enumerator",       
-                "SendMouseEvents",               
+                "Enumerator",
+                "SendMouseEvents",
                 "Cursor",
                 "Flash",
                 "ActionScript",
@@ -175,15 +176,15 @@ namespace MRuby.CodeGen
                 "GraphicRebuildTracker",
                 "Advertisements",
                 "UnityEditor",
-			    "WSA",
-			    "EventProvider",
-			    "Apple",
-			    "ClusterInput",
-				"Motion",
+                "WSA",
+                "EventProvider",
+                "Apple",
+                "ClusterInput",
+                "Motion",
                 "UnityEngine.UI.ReflectionMethodsCache",
-				"NativeLeakDetection",
-				"NativeLeakDetectionMode",
-				"WWWAudioExtensions",
+                "NativeLeakDetection",
+                "NativeLeakDetectionMode",
+                "WWWAudioExtensions",
                 "UnityEngine.Experimental",
                 "Unity.Jobs",
                 "Unity.Collections",

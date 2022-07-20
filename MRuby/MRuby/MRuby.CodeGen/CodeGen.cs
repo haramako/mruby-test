@@ -34,7 +34,7 @@ namespace MRuby.CodeGen
     using System.Text.RegularExpressions;
     using System.Runtime.CompilerServices;
 
-        class CodeGenerator
+    class CodeGenerator
     {
         static List<string> memberFilter = new List<string>
         {
@@ -675,7 +675,7 @@ namespace MRuby.Bind
             Write(file, "[UnityEngine.Scripting.Preserve]");
 #endif
             Write(file, "public class {0} {{", ExportName(t));
-            
+
             Write(file, "static RClass _cls;");
             Write(file, "static mrb_value _cls_value;");
             Write(file, "readonly {0} obj;", FullName(t));
@@ -831,13 +831,13 @@ namespace MRuby.Bind
             var fullname = string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace;
             var fullnames = fullname.Split('.');
             Write(file, "RClass module = DLL.mrb_class_get(mrb, \"Object\");");
-            for ( int i=0; i<fullnames.Length - 1; i++)
+            for (int i = 0; i < fullnames.Length - 1; i++)
             {
                 Write(file, "module = DLL.mrb_define_module_under(mrb, module, \"{0}\");", fullnames[i]);
             }
 
             Write(file, "var baseClass = Converter.GetClass(mrb, \"{0}\");", FullName(t.BaseType));
-            Write(file, "_cls = DLL.mrb_define_class_under(mrb, module, \"{0}\", baseClass);", fullnames[fullnames.Length-1]);
+            Write(file, "_cls = DLL.mrb_define_class_under(mrb, module, \"{0}\", baseClass);", fullnames[fullnames.Length - 1]);
             Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
 
             if (GetValidConstructor(t).Length > 0)
@@ -850,7 +850,7 @@ namespace MRuby.Bind
             foreach (string i in funcname)
             {
                 string f = i;
-                var isStatic = t.GetMethods().Any(m=>m.Name == f && m.IsStatic); // TODO
+                var isStatic = t.GetMethods().Any(m => m.Name == f && m.IsStatic); // TODO
                 trygetOverloadedVersion(t, ref f);
                 if (isStatic)
                 {
@@ -1784,7 +1784,6 @@ namespace MRuby.Bind
         {
 
             bool isExtension = IsExtensionMethod(m) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
-            bool hasref = false;
             ParameterInfo[] pars = m.GetParameters();
 
 
@@ -1806,7 +1805,6 @@ namespace MRuby.Bind
                 string pn = p.ParameterType.Name;
                 if (pn.EndsWith("&"))
                 {
-                    hasref = true;
                 }
 
                 bool hasParams = p.IsDefined(typeof(ParamArrayAttribute), false);
@@ -1972,132 +1970,133 @@ namespace MRuby.Bind
         {
             return (p.IsOut || p.IsDefined(typeof(System.Runtime.InteropServices.OutAttribute), false)) && !p.ParameterType.IsArray;
         }
-		
-		private void CheckArgument(StreamWriter file, Type t, int n, int argstart, bool isout, bool isparams)
-		{
-			Write(file, "{0} a{1};", TypeDecl(t), n + 1);
-			
-			if (!isout)
-			{
-				if (t.IsEnum)
-					Write(file, "a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n + 1, TypeDecl(t), n + argstart);
-				else if (t.BaseType == typeof(System.MulticastDelegate))
-				{
-					tryMake(t);
-					Write(file, "Converter.checkDelegate(l,{0},out a{1});", n + argstart, n + 1);
-				}
-				else if (isparams)
-				{
-					if(t.GetElementType().IsValueType && !IsBaseType(t.GetElementType()))
-						Write(file, "Converter.checkValueParams(l,{0},out a{1});", n + argstart, n + 1);
-					else
-						Write(file, "Converter.checkParams(l,{0},out a{1});", n + argstart, n + 1);
-				}
-				else if(t.IsArray)
-					Write(file, "Converter.checkArray(l,{0},out a{1});", n + argstart, n + 1);
-				else if (IsValueType(t)) {
-					if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-						Write(file, "Converter.checkNullable(l,{0},out a{1});", n + argstart, n + 1);
-					else
-						Write(file, "Converter.checkValueType(l,{0},out a{1});", n + argstart, n + 1);
-				}
-				else
-					Write(file, "Converter.checkType(l,{0},out a{1});", n /* + argstart */, n + 1);
-			}
-		}
 
-		bool IsValueType(Type t)
-		{
+        private void CheckArgument(StreamWriter file, Type t, int n, int argstart, bool isout, bool isparams)
+        {
+            Write(file, "{0} a{1};", TypeDecl(t), n + 1);
+
+            if (!isout)
+            {
+                if (t.IsEnum)
+                    Write(file, "a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n + 1, TypeDecl(t), n + argstart);
+                else if (t.BaseType == typeof(System.MulticastDelegate))
+                {
+                    tryMake(t);
+                    Write(file, "Converter.checkDelegate(l,{0},out a{1});", n + argstart, n + 1);
+                }
+                else if (isparams)
+                {
+                    if (t.GetElementType().IsValueType && !IsBaseType(t.GetElementType()))
+                        Write(file, "Converter.checkValueParams(l,{0},out a{1});", n + argstart, n + 1);
+                    else
+                        Write(file, "Converter.checkParams(l,{0},out a{1});", n + argstart, n + 1);
+                }
+                else if (t.IsArray)
+                    Write(file, "Converter.checkArray(l,{0},out a{1});", n + argstart, n + 1);
+                else if (IsValueType(t))
+                {
+                    if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
+                        Write(file, "Converter.checkNullable(l,{0},out a{1});", n + argstart, n + 1);
+                    else
+                        Write(file, "Converter.checkValueType(l,{0},out a{1});", n + argstart, n + 1);
+                }
+                else
+                    Write(file, "Converter.checkType(l,{0},out a{1});", n /* + argstart */, n + 1);
+            }
+        }
+
+        bool IsValueType(Type t)
+        {
             if (t.IsByRef) t = t.GetElementType();
             return t.BaseType == typeof(ValueType) && !IsBaseType(t);
-		}
+        }
 
-		bool IsBaseType(Type t)
-		{
-			return t.IsPrimitive || CSObject.isImplByLua(t);
-		}
-		
-		string FullName(string str)
-		{
-			if (str == null)
-			{
-				throw new NullReferenceException();
-			}
-			return RemoveRef(str.Replace("+", "."));
-		}
-		
-		string TypeDecl(Type t)
-		{
-			if (t.IsGenericType)
-			{
-				string ret = GenericBaseName(t);
-				
-				string gs = "";
-				gs += "<";
-				Type[] types = t.GetGenericArguments();
-				for (int n = 0; n < types.Length; n++)
-				{
-					gs += TypeDecl(types[n]);
-					if (n < types.Length - 1)
-						gs += ",";
-				}
-				gs += ">";
-				
-				ret = Regex.Replace(ret, @"`\d", gs);
-				
-				return ret;
-			}
-			if (t.IsArray)
-			{
-				return TypeDecl(t.GetElementType()) + "[]";
-			}
-			else
-				return RemoveRef(t.ToString(), false);
-		}
-		
-		string ExportName(Type t)
-		{
-			if (t.IsGenericType)
-			{
-				return string.Format("MRuby_{0}_{1}", _Name(GenericBaseName(t)), _Name(GenericName(t)));
-			}
-			else
-			{
-				string name = RemoveRef(t.FullName, true);
-				name = "MRuby_" + name;
-				return name.Replace(".", "_");
-			}
-		}
-		
-		string FullName(Type t)
-		{
-			if (t.FullName == null)
-			{
-				Debug.Log(t.Name);
-				return t.Name;
-			}
-			return FullName(t.FullName);
-		}
-		
-		string FuncCall(MethodBase m,int parOffset = 0)
-		{
-			
-			string str = "";
-			ParameterInfo[] pars = m.GetParameters();
-			for (int n = parOffset; n < pars.Length; n++)
-			{
-				ParameterInfo p = pars[n];
-				if (p.ParameterType.IsByRef && p.IsOut)
-					str += string.Format("out a{0}", n + 1);
-				else if (p.ParameterType.IsByRef)
-					str += string.Format("ref a{0}", n + 1);
-				else
-					str += string.Format("a{0}", n + 1);
-				if (n < pars.Length - 1)
-					str += ",";
-			}
-			return str;
-		}
-		
-	}
+        bool IsBaseType(Type t)
+        {
+            return t.IsPrimitive || CSObject.isImplByLua(t);
+        }
+
+        string FullName(string str)
+        {
+            if (str == null)
+            {
+                throw new NullReferenceException();
+            }
+            return RemoveRef(str.Replace("+", "."));
+        }
+
+        string TypeDecl(Type t)
+        {
+            if (t.IsGenericType)
+            {
+                string ret = GenericBaseName(t);
+
+                string gs = "";
+                gs += "<";
+                Type[] types = t.GetGenericArguments();
+                for (int n = 0; n < types.Length; n++)
+                {
+                    gs += TypeDecl(types[n]);
+                    if (n < types.Length - 1)
+                        gs += ",";
+                }
+                gs += ">";
+
+                ret = Regex.Replace(ret, @"`\d", gs);
+
+                return ret;
+            }
+            if (t.IsArray)
+            {
+                return TypeDecl(t.GetElementType()) + "[]";
+            }
+            else
+                return RemoveRef(t.ToString(), false);
+        }
+
+        string ExportName(Type t)
+        {
+            if (t.IsGenericType)
+            {
+                return string.Format("MRuby_{0}_{1}", _Name(GenericBaseName(t)), _Name(GenericName(t)));
+            }
+            else
+            {
+                string name = RemoveRef(t.FullName, true);
+                name = "MRuby_" + name;
+                return name.Replace(".", "_");
+            }
+        }
+
+        string FullName(Type t)
+        {
+            if (t.FullName == null)
+            {
+                Debug.Log(t.Name);
+                return t.Name;
+            }
+            return FullName(t.FullName);
+        }
+
+        string FuncCall(MethodBase m, int parOffset = 0)
+        {
+
+            string str = "";
+            ParameterInfo[] pars = m.GetParameters();
+            for (int n = parOffset; n < pars.Length; n++)
+            {
+                ParameterInfo p = pars[n];
+                if (p.ParameterType.IsByRef && p.IsOut)
+                    str += string.Format("out a{0}", n + 1);
+                else if (p.ParameterType.IsByRef)
+                    str += string.Format("ref a{0}", n + 1);
+                else
+                    str += string.Format("a{0}", n + 1);
+                if (n < pars.Length - 1)
+                    str += ",";
+            }
+            return str;
+        }
+
+    }
 }

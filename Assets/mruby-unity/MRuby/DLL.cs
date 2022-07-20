@@ -57,7 +57,7 @@ namespace MRuby
         public static mrb_aspec MRB_ARGS_OPT(int n) => new mrb_aspec(((UInt64)n & 0x1fUL) << 13);
         public static mrb_aspec MRB_ARGS_NONE() => new mrb_aspec(0);
 
-#region Ruby original
+        #region Ruby original
         [DllImport(Dll)]
         public static extern mrb_state mrb_open();
 
@@ -209,9 +209,9 @@ namespace MRuby
             DLL.mrb_string_buf(mrb, str, buf, len);
             return System.Text.Encoding.UTF8.GetString(buf);
         }
-#endregion
+        #endregion
 
-#region Others
+        #region Others
         public delegate void AbortFunc(string msg);
 
         [DllImport(Dll)]
@@ -219,7 +219,7 @@ namespace MRuby
 
         [DllImport(Dll, EntryPoint = "mrb_unity_funcall_argv")]
         public static extern mrb_value mrb_funcall_argv(mrb_state mrb, mrb_value val, string name, mrb_int argc, mrb_value[] vals);
-#endregion
+        #endregion
     }
 
 

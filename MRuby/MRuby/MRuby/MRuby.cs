@@ -135,7 +135,7 @@ namespace MRuby
                     {
                         val = mrb_v;
                     }
-                    else  if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
+                    else if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
                     {
 #if true
                         var obj = constructor(mrb, _val);
@@ -154,7 +154,7 @@ namespace MRuby
 
         public Value(MrbState mrb, object _val)
         {
-            switch( _val)
+            switch (_val)
             {
                 case Value v:
                     val = v.val;
@@ -193,11 +193,11 @@ namespace MRuby
                     val = DLL.mrb_float_value(mrb.mrb, v);
                     break;
                 default:
-                    if( _val == null)
+                    if (_val == null)
                     {
                         val = DLL.mrb_nil_value();
                     }
-                    else if (ObjectCache.TryToValue(mrb.mrb,  _val, out var mrb_v))
+                    else if (ObjectCache.TryToValue(mrb.mrb, _val, out var mrb_v))
                     {
                         val = mrb_v;
                     }
@@ -260,7 +260,7 @@ namespace MRuby
 
     }
 
-    public class MrbState: IDisposable
+    public class MrbState : IDisposable
     {
         bool disposed;
         internal mrb_state mrb;
@@ -288,7 +288,7 @@ namespace MRuby
 
         public void check()
         {
-            if( disposed)
+            if (disposed)
             {
                 throw new InvalidOperationException("mrb_state already disposed");
             }
@@ -296,7 +296,7 @@ namespace MRuby
 
         public void Dispose()
         {
-            if( !disposed )
+            if (!disposed)
             {
                 DLL.mrb_close(mrb);
                 disposed = true;

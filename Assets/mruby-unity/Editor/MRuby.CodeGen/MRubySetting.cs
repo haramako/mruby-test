@@ -28,72 +28,79 @@ using UnityEditor;
 using UnityEngine;
 #endif
 
-namespace MRuby.CodeGen {
-	public enum EOL{
-		Native,
-		CRLF,
-		CR,
-		LF,
-	}
+namespace MRuby.CodeGen
+{
+    public enum EOL
+    {
+        Native,
+        CRLF,
+        CR,
+        LF,
+    }
 
-	public enum JITBUILDTYPE : int
-	{
-		none = 0,
-		X86 = 1,
-		X64 = 2,
-		GC64 = 3,
-	}
+    public enum JITBUILDTYPE : int
+    {
+        none = 0,
+        X86 = 1,
+        X64 = 2,
+        GC64 = 3,
+    }
 
-	public class MRubySetting 
-	#if !SLUA_STANDALONE
-		: ScriptableObject
-	#endif
-	{
+    public class MRubySetting
+#if !SLUA_STANDALONE
+        : ScriptableObject
+#endif
+    {
 
-		public EOL eol = EOL.Native;
-		public bool exportExtensionMethod = true;
-		public string UnityEngineGeneratePath = "Assets/mruby-unity/MRubyObject/";
+        public EOL eol = EOL.Native;
+        public bool exportExtensionMethod = true;
+        public string UnityEngineGeneratePath = "Assets/mruby-unity/MRubyObject/";
 
         public bool PrintTrace = true;
 
-		public JITBUILDTYPE jitType = JITBUILDTYPE.none;
+        public JITBUILDTYPE jitType = JITBUILDTYPE.none;
 
-		// public int debugPort=10240;
-		// public string debugIP="0.0.0.0"; // no longer debugger built-in
+        // public int debugPort=10240;
+        // public string debugIP="0.0.0.0"; // no longer debugger built-in
 
-		private static MRubySetting _instance=null;
-		public static MRubySetting Instance
-		{
-			get{
+        private static MRubySetting _instance = null;
+        public static MRubySetting Instance
+        {
+            get
+            {
 #if !SLUA_STANDALONE
-				if(_instance == null){
-					_instance = Resources.Load<MRubySetting>("setting");
+                if (_instance == null)
+                {
+                    _instance = Resources.Load<MRubySetting>("setting");
 
-				#if UNITY_EDITOR
-					if(_instance == null){
-						_instance = MRubySetting.CreateInstance<MRubySetting>();
+#if UNITY_EDITOR
+                    if (_instance == null)
+                    {
+                        _instance = MRubySetting.CreateInstance<MRubySetting>();
                         try
                         {
                             AssetDatabase.CreateAsset(_instance, "Assets/mruby-unity/Resources/setting.asset");
                         }
-                        catch {
+                        catch
+                        {
                         }
-					}
-				#endif
+                    }
+#endif
 
-				}
-				#endif
-				return _instance;
-			}
-		}
+                }
+#endif
+                return _instance;
+            }
+        }
 
-		#if UNITY_EDITOR && !SLUA_STANDALONE
-		[MenuItem("MRuby/Setting")]
-		public static void Open(){
-			Selection.activeObject = Instance;
-		}
-		#endif
+#if UNITY_EDITOR && !SLUA_STANDALONE
+        [MenuItem("MRuby/Setting")]
+        public static void Open()
+        {
+            Selection.activeObject = Instance;
+        }
+#endif
 
-	}
+    }
 
 }

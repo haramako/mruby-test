@@ -26,27 +26,29 @@
 
 namespace MRuby
 {
-	using System;
-	using System.Threading;
-	using System.Collections;
-	using System.Collections.Generic;
-	using System.Reflection;
-	#if !SLUA_STANDALONE
-	using UnityEngine;
-	using Debug = UnityEngine.Debug;
-	#endif
+    using System;
+    using System.Threading;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Reflection;
+#if !SLUA_STANDALONE
+    using UnityEngine;
+    using Debug = UnityEngine.Debug;
+#endif
 
-	public enum LuaSvrFlag {
-		LSF_BASIC = 0,
-		LSF_EXTLIB = 1,
-		LSF_3RDDLL = 2,
-	};
+    public enum LuaSvrFlag
+    {
+        LSF_BASIC = 0,
+        LSF_EXTLIB = 1,
+        LSF_3RDDLL = 2,
+    };
 
-	public class MRubySvr 
-	{
-		static public MrbState mainState;
+    public class MRubySvr
+    {
+        static public MrbState mainState;
 
-		public class MainState : MrbState {
+        public class MainState : MrbState
+        {
 
 #if false
 			int errorReported = 0;
@@ -60,8 +62,8 @@ namespace MRuby
 			}
 #endif
 
-			internal void checkTop()
-			{
+            internal void checkTop()
+            {
 #if false
 				if (LuaDLL.lua_gettop(L) != errorReported)
 				{
@@ -69,63 +71,65 @@ namespace MRuby
 					Logger.LogError(string.Format("Some function not remove temp value({0}) from lua stack. You should fix it.",LuaDLL.luaL_typename(L,errorReported)));
 				}
 #endif
-			}
-		}
+            }
+        }
 
-		public MRubySvr(MrbState _mainState)
-		{
+        public MRubySvr(MrbState _mainState)
+        {
 #if false
 			mainState = new MainState();
 			mainState.Name = "main";
 #else
-			mainState = _mainState;
+            mainState = _mainState;
 #endif
-		}
+        }
 
-		static List<Action<mrb_state>> collectBindInfo() {
+        static List<Action<mrb_state>> collectBindInfo()
+        {
 
-			List<Action<mrb_state>> list = new List<Action<mrb_state>>();
+            List<Action<mrb_state>> list = new List<Action<mrb_state>>();
 
 #if !SLUA_STANDALONE
 #if !USE_STATIC_BINDER
-			Assembly[] ams = AppDomain.CurrentDomain.GetAssemblies();
+            Assembly[] ams = AppDomain.CurrentDomain.GetAssemblies();
 
-			List<Type> bindlist = new List<Type>();
-			for (int n = 0; n < ams.Length;n++ )
-			{
-				Assembly a = ams[n];
-				Type[] ts = null;
-				try
-				{
-					ts = a.GetExportedTypes();
-				}
-				catch
-				{
-					continue;
-				}
-				for (int k = 0; k < ts.Length; k++)
-				{
-					Type t = ts[k];
-					if (t.IsDefined(typeof(LuaBinderAttribute), false))
-					{
-						bindlist.Add(t);
-					}
-				}
-			}
+            List<Type> bindlist = new List<Type>();
+            for (int n = 0; n < ams.Length; n++)
+            {
+                Assembly a = ams[n];
+                Type[] ts = null;
+                try
+                {
+                    ts = a.GetExportedTypes();
+                }
+                catch
+                {
+                    continue;
+                }
+                for (int k = 0; k < ts.Length; k++)
+                {
+                    Type t = ts[k];
+                    if (t.IsDefined(typeof(LuaBinderAttribute), false))
+                    {
+                        bindlist.Add(t);
+                    }
+                }
+            }
 
-			bindlist.Sort(new System.Comparison<Type>((Type a, Type b) => {
-				LuaBinderAttribute la = System.Attribute.GetCustomAttribute( a, typeof(LuaBinderAttribute) ) as LuaBinderAttribute;
-				LuaBinderAttribute lb = System.Attribute.GetCustomAttribute( b, typeof(LuaBinderAttribute) ) as LuaBinderAttribute;
+            bindlist.Sort(new System.Comparison<Type>((Type a, Type b) =>
+            {
+                LuaBinderAttribute la = System.Attribute.GetCustomAttribute(a, typeof(LuaBinderAttribute)) as LuaBinderAttribute;
+                LuaBinderAttribute lb = System.Attribute.GetCustomAttribute(b, typeof(LuaBinderAttribute)) as LuaBinderAttribute;
 
-				return la.order.CompareTo(lb.order);
-			}));
+                return la.order.CompareTo(lb.order);
+            }));
 
-			for (int n = 0; n < bindlist.Count; n++)
-			{
-				Type t = bindlist[n];
-				var sublist = (Action<mrb_state>[])t.GetMethod("GetBindList").Invoke(null, null);
-				list.AddRange(sublist);
-			}
+            for (int n = 0; n < bindlist.Count; n++)
+            {
+                Type t = bindlist[n];
+                var sublist = (Action<mrb_state>[])t.GetMethod("GetBindList").Invoke(null, null);
+                list.AddRange(sublist);
+            }
 #else
 			var assemblyName = "Assembly-CSharp";
 			Assembly assembly = Assembly.Load(assemblyName);
@@ -136,64 +140,67 @@ namespace MRuby
 #endif
 #endif
 
-			return list;
+            return list;
 
-		}
-
-
-		static internal void doBind(mrb_state L)
-		{
-			var list = collectBindInfo ();
-
-			int count = list.Count;
-			for (int n = 0; n < count; n++)
-			{
-				Action<mrb_state> action = list[n];
-				action(L);
-			}
-		}
+        }
 
 
+        static internal void doBind(mrb_state L)
+        {
+            var list = collectBindInfo();
 
-		static internal IEnumerator doBind(mrb_state L,Action<int> _tick,Action complete)
-		{
-			Action<int> tick = (int p) => {
-				if (_tick != null)
-					_tick (p);
-			};
+            int count = list.Count;
+            for (int n = 0; n < count; n++)
+            {
+                Action<mrb_state> action = list[n];
+                action(L);
+            }
+        }
 
-			tick (0);
-			var list = collectBindInfo ();
 
-			tick (2);
 
-			int bindProgress = 2;
-			int lastProgress = bindProgress;
-			for (int n = 0; n < list.Count; n++)
-			{
-				Action<mrb_state> action = list[n];
-				action(L);
-				bindProgress = (int)(((float)n / list.Count) * 98.0) + 2;
-				if (_tick!=null && lastProgress != bindProgress && bindProgress % 5 == 0) {
+        static internal IEnumerator doBind(mrb_state L, Action<int> _tick, Action complete)
+        {
+            Action<int> tick = (int p) =>
+            {
+                if (_tick != null)
+                    _tick(p);
+            };
+
+            tick(0);
+            var list = collectBindInfo();
+
+            tick(2);
+
+            int bindProgress = 2;
+            int lastProgress = bindProgress;
+            for (int n = 0; n < list.Count; n++)
+            {
+                Action<mrb_state> action = list[n];
+                action(L);
+                bindProgress = (int)(((float)n / list.Count) * 98.0) + 2;
+                if (_tick != null && lastProgress != bindProgress && bindProgress % 5 == 0)
+                {
                     lastProgress = bindProgress;
-					tick (bindProgress);
-					yield return null;
-				}
-			}
+                    tick(bindProgress);
+                    yield return null;
+                }
+            }
 
-			tick (100);
-			complete ();
-		}
+            tick(100);
+            complete();
+        }
 
-		Action<IntPtr>[] getBindList(Assembly assembly,string ns) {
-			Type t=assembly.GetType(ns);
-			if(t!=null)
-				return (Action<IntPtr>[]) t.GetMethod("GetBindList").Invoke(null, null);
-			return new Action<IntPtr>[0];
-		}
+        Action<IntPtr>[] getBindList(Assembly assembly, string ns)
+        {
+            Type t = assembly.GetType(ns);
+            if (t != null)
+                return (Action<IntPtr>[])t.GetMethod("GetBindList").Invoke(null, null);
+            return new Action<IntPtr>[0];
+        }
 
-        protected void doinit(MrbState L,LuaSvrFlag flag)
-		{
+        protected void doinit(MrbState L, LuaSvrFlag flag)
+        {
 #if false
 			L.openSluaLib ();
 			LuaValueType.reg(L.L);
@@ -204,10 +211,10 @@ namespace MRuby
 			if((flag & LuaSvrFlag.LSF_3RDDLL)!=0)
 				Lua3rdDLL.open(L.L);
 #endif
-		}
+        }
 
-		public void init(Action<int> tick,Action complete,LuaSvrFlag flag=LuaSvrFlag.LSF_BASIC|LuaSvrFlag.LSF_EXTLIB)
-		{
+        public void init(Action<int> tick, Action complete, LuaSvrFlag flag = LuaSvrFlag.LSF_BASIC | LuaSvrFlag.LSF_EXTLIB)
+        {
 #if false
 			IntPtr L = mainState.L;
 			LuaObject.init(L);
@@ -242,10 +249,10 @@ namespace MRuby
 			}
 #endif
 #endif
-		}
+        }
 
-		public object start(string main)
-		{
+        public object start(string main)
+        {
 #if false
 			if (main != null)
 			{
@@ -253,7 +260,7 @@ namespace MRuby
                 return mainState.run("main");
 			}
 #endif
-			return null;
-		}
-	}
+            return null;
+        }
+    }
 }

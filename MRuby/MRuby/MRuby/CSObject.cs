@@ -47,7 +47,7 @@ namespace MRuby
                 || t == typeof(Vector4)
                 || t == typeof(Quaternion);
 #else
-		    return false;
+            return false;
 #endif
         }
 
@@ -68,5 +68,5 @@ namespace MRuby
             return result;
         }
 
-	}
+    }
 }
