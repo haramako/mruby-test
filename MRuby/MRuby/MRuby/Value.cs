@@ -83,7 +83,8 @@ namespace MRuby
 
         public Value Send(string methodName)
         {
-            return new Value(mrb, DLL.mrb_funcall_argv(mrb, val, methodName, 0, null));
+            var r = DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);
+            return new Value(mrb, r);
         }
 
         public Value Send(string methodName, params object[] args)
@@ -120,6 +121,28 @@ namespace MRuby
         public Int64 AsInteger()
         {
             return DLL.mrb_as_int(mrb, val);
+        }
+
+        public Int64 ToInteger()
+        {
+            if (DLL.mrb_type(val) == mrb_vtype.MRB_TT_INTEGER)
+            {
+                return DLL.mrb_as_int(mrb, val);
+            }
+            else
+            {
+                return Send("to_i").AsInteger();
+            }
+        }
+
+        public float AsFloat()
+        {
+            return (float)DLL.mrb_as_float(mrb, val);
+        }
+
+        public double AsDouble()
+        {
+            return DLL.mrb_as_float(mrb, val);
         }
 
     }
