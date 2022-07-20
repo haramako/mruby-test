@@ -25,8 +25,6 @@
 namespace MRuby.CodeGen
 {
     using UnityEngine;
-    using UnityEditor;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.IO;
@@ -36,9 +34,7 @@ namespace MRuby.CodeGen
     using System.Text.RegularExpressions;
     using System.Runtime.CompilerServices;
 
-    public interface ICustomExportPost { }
-
-    class CodeGenerator
+        class CodeGenerator
     {
         static List<string> memberFilter = new List<string>
         {

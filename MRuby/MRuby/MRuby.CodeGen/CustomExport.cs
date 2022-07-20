@@ -29,7 +29,11 @@ namespace MRuby.CodeGen
     {
         public static void OnGetAssemblyToGenerateExtensionMethod(out List<string> list) {
             list = new List<string> {
+#if !SLUA_STANDALONE
                 "Assembly-CSharp",
+#else
+"MrubyLib",
+#endif
             };
         }
 

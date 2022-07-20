@@ -7,6 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MRubyLib", "MRuby\MRubyLib.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeGen", "CodeGen\CodeGen.csproj", "{CC1608BD-F532-4BB5-AC30-8D8B027E4EE2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeGenTest", "CodeGenTest\CodeGenTest.csproj", "{D98337AF-22B9-440B-89D7-007253EFF25F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CC1608BD-F532-4BB5-AC30-8D8B027E4EE2} = {CC1608BD-F532-4BB5-AC30-8D8B027E4EE2}
+		{9BDA3DEC-55A7-41B5-9287-D686A4C929D9} = {9BDA3DEC-55A7-41B5-9287-D686A4C929D9}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +27,10 @@ Global
 		{CC1608BD-F532-4BB5-AC30-8D8B027E4EE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC1608BD-F532-4BB5-AC30-8D8B027E4EE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC1608BD-F532-4BB5-AC30-8D8B027E4EE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D98337AF-22B9-440B-89D7-007253EFF25F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D98337AF-22B9-440B-89D7-007253EFF25F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D98337AF-22B9-440B-89D7-007253EFF25F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D98337AF-22B9-440B-89D7-007253EFF25F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -69,7 +69,7 @@ namespace MRuby.CodeGen {
 				if(_instance == null){
 					_instance = Resources.Load<MRubySetting>("setting");
 
-				#if UNITY_EDITOR
+#if UNITY_EDITOR
 					if(_instance == null){
 						_instance = MRubySetting.CreateInstance<MRubySetting>();
                         try
@@ -79,10 +79,12 @@ namespace MRuby.CodeGen {
                         catch {
                         }
 					}
-				#endif
+#endif
 
 				}
-				#endif
+#else
+				return new MRubySetting();
+#endif
 				return _instance;
 			}
 		}
