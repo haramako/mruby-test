@@ -813,10 +813,10 @@ namespace MRuby.Bind
         {
             var sb = new StringBuilder();
             var prevIsUpper = true;
-            for( int i=0; i<name.Length; i++)
+            for (int i = 0; i < name.Length; i++)
             {
                 var c = name[i];
-                if( char.IsUpper(c))
+                if (char.IsUpper(c))
                 {
                     if (prevIsUpper)
                     {

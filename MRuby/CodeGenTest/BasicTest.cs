@@ -12,7 +12,7 @@ public class BasicTest
 
         using (var arena = Converter.LockArena(mrb))
         {
-            var r  = DLL.mrb_load_string(mrb, "1+1");
+            var r = DLL.mrb_load_string(mrb, "1+1");
             var n = DLL.mrb_as_int(mrb, r);
             Assert.AreEqual(2, n);
         }

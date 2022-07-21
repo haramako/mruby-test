@@ -15,7 +15,7 @@ class CodeGenTest
         mrb = new MrbState();
     }
 
-    [TestCase("hoge","hoge")]
+    [TestCase("hoge", "hoge")]
     [TestCase("A", "a")]
     [TestCase("Hoge", "hoge")]
     [TestCase("HogeFuga", "hoge_fuga")]
