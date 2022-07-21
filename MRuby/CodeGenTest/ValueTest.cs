@@ -28,7 +28,7 @@ class ValueTest
         var v = new Value(mrb, 1);
         Assert.AreEqual(2, v.Send("+", 1).AsInteger());
         Assert.AreEqual(2, v.Send("succ").AsInteger());
-        Assert.Throws<Exception>(() =>v.Send("invalid"));
+        Assert.Throws<Exception>(() => v.Send("invalid"));
     }
 
     [Test]
