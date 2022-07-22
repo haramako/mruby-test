@@ -966,19 +966,12 @@ return true;
 
         public static RClass GetClass(mrb_state mrb, string[] names)
         {
-            RClass module = DLL.mrb_class_get(mrb, "Object");
+            mrb_value module = DLL.mrb_obj_value(DLL.mrb_class_get(mrb, "Object").val);
             for (int i = 0; i < names.Length; i++)
             {
-                if (i == names.Length - 1)
-                {
-                    module = DLL.mrb_class_get_under(mrb, module, names[i]);
-                }
-                else
-                {
-                    module = DLL.mrb_module_get_under(mrb, module, names[i]);
-                }
+                module = DLL.mrb_const_get(mrb, module, DLL.mrb_intern_cstr(mrb, names[i]));
             }
-            return module;
+            return DLL.mrb_class_ptr(module);
         }
 
         public static RClass GetClass(mrb_state mrb, string name)
@@ -991,6 +984,16 @@ return true;
             {
                 return GetClass(mrb, name.Split('.'));
             }
+        }
+
+        public static RClass GetModule(mrb_state mrb, string[] names)
+        {
+            RClass module = DLL.mrb_class_get(mrb, "Object");
+            for (int i = 0; i < names.Length; i++)
+            {
+                module = DLL.mrb_module_get_under(mrb, module, names[i]);
+            }
+            return module;
         }
 
         public static RClass CreateModule(mrb_state mrb, string[] names)

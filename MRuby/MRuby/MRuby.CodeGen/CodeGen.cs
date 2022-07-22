@@ -178,43 +178,6 @@ namespace MRuby.CodeGen
 
         int indent = 0;
 
-        public void GenerateBind(List<Type> list, string name, int order)
-        {
-            HashSet<Type> exported = new HashSet<Type>();
-            string f = System.IO.Path.Combine(path, name + ".cs");
-            StreamWriter file = new StreamWriter(f, false, Encoding.UTF8);
-            file.NewLine = NewLine;
-            Write(file, "#if true");
-            Write(file, "using System;");
-            Write(file, "using System.Collections.Generic;");
-            Write(file, "namespace MRuby {");
-            Write(file, "[LuaBinder({0})]", order);
-            Write(file, "public class {0} {{", name);
-            Write(file, "public static Action<mrb_state>[] GetBindList() {");
-            Write(file, "Action<mrb_state>[] list= {");
-            foreach (Type t in list)
-            {
-                WriteBindType(file, t, list, exported);
-            }
-            Write(file, "};");
-            Write(file, "return list;");
-            Write(file, "}");
-            Write(file, "}");
-            Write(file, "}");
-            Write(file, "#endif");
-            file.Close();
-        }
-
-        void WriteBindType(StreamWriter file, Type t, List<Type> exported, HashSet<Type> binded)
-        {
-            if (t == null || binded.Contains(t) || !exported.Contains(t))
-                return;
-
-            WriteBindType(file, t.BaseType, exported, binded);
-            Write(file, "{0}.reg,", ExportName(t), binded);
-            binded.Add(t);
-        }
-
         public string DelegateExportFilename(string path, Type t)
         {
             string f;
@@ -229,9 +192,12 @@ namespace MRuby.CodeGen
             return f;
         }
 
+        private Registry registry;
 
-        public bool Generate(Type t)
+        public bool Generate(Type t, Registry _registry)
         {
+            registry = _registry;
+
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
@@ -270,6 +236,8 @@ namespace MRuby.CodeGen
                     funcname.Clear();
                     propname.Clear();
                     directfunc.Clear();
+
+                    RegisterNamespaces(registry, t);
 
                     StreamWriter file = Begin(t);
                     WriteHead(t, file);
@@ -418,7 +386,7 @@ namespace MRuby
                 if (File.Exists(cg.DelegateExportFilename(LuaCodeGen.GenPath + "Unity/", t)))
                     return;
                 cg.path = this.path;
-                cg.Generate(t);
+                cg.Generate(t, null); // TODO: add registry.
             }
         }
 
@@ -488,7 +456,7 @@ namespace MRuby.Bind
                 return error(l,e);
             }
         }
-        static public void reg(IntPtr l)
+        static public void RegisterMembers(IntPtr l)
         {
             getTypeTable(l, typeof(LuaUnityEvent_$CLS).FullName);
             addMember(l, AddListener);
@@ -838,30 +806,43 @@ namespace MRuby.Bind
             return sb.ToString();
         }
 
+        void RegisterNamespaces(Registry r, Type t)
+        {
+            var curNs = r.RootNamespace;
+            var nameList = t.Namespace.Split(".");
+            foreach( var name in nameList)
+            {
+                if( curNs.Children.TryGetValue(name, out var found))
+                {
+                    curNs = found;
+                }
+                else
+                {
+                    curNs = new NamespaceInfo(curNs, name, null);
+                }
+            }
+
+            new NamespaceInfo(curNs, t.Name, t);
+        }
+
         void RegFunction(Type t, StreamWriter file)
         {
 #if UNITY_5_3_OR_NEWER
             Write(file, "[UnityEngine.Scripting.Preserve]");
 #endif
 
+            var fullname = string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace;
+            var fullnames = fullname.Split('.');
+
             // Write export function
-            Write(file, "static public void reg(mrb_state mrb) {");
+            Write(file, "static public void RegisterMembers(mrb_state mrb) {");
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
                 Write(file, "LuaUnityEvent_{1}.reg(l);", FullName(t), _Name((GenericName(t.BaseType))));
             }
 
-            var fullname = string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace;
-            var fullnames = fullname.Split('.');
-            Write(file, "RClass module = DLL.mrb_class_get(mrb, \"Object\");");
-            for (int i = 0; i < fullnames.Length - 1; i++)
-            {
-                Write(file, "module = DLL.mrb_define_module_under(mrb, module, \"{0}\");", fullnames[i]);
-            }
-
-            Write(file, "var baseClass = Converter.GetClass(mrb, \"{0}\");", FullName(t.BaseType));
-            Write(file, "_cls = DLL.mrb_define_class_under(mrb, module, \"{0}\", baseClass);", fullnames[fullnames.Length - 1]);
+            Write(file, "_cls = Converter.GetClass(mrb, \"{0}\");", FullName(t));
             Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
 
             if (GetValidConstructor(t).Length > 0)
@@ -2096,7 +2077,6 @@ namespace MRuby.Bind
         {
             if (t.FullName == null)
             {
-                Debug.Log(t.Name);
                 return t.Name;
             }
             return FullName(t.FullName);

@@ -237,6 +237,8 @@ namespace MRuby
         [DllImport(Dll, EntryPoint = "mrb_unity_gc_arena_restore")]
         public static extern void mrb_gc_arena_restore(mrb_state mrb, int idx);
 
+        [DllImport(Dll, EntryPoint = "mrb_unity_class_ptr")]
+        public static extern RClass mrb_class_ptr(mrb_value o);
 
         public static string mrb_as_string(mrb_state mrb, mrb_value str)
         {

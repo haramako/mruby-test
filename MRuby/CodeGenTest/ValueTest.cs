@@ -52,6 +52,6 @@ class ValueTest
         Assert.AreEqual(1, new Value(mrb, 1).ToInteger());
         Assert.AreEqual(1, new Value(mrb, "1").ToInteger());
         Assert.AreEqual(0, new Value(mrb, "hoge").ToInteger());
-    }
+    }   
 
 }

@@ -34,7 +34,9 @@ class CodeGenTest
     [TestCase("Hoge::CodeGenSample.static_method(2)", "2")]
     public void TestSample2(string src, string expect)
     {
-        MRuby_Hoge_CodeGenSample.reg(mrb.mrb);
+        //MRuby_Hoge_CodeGenSample.RegisterClasses(mrb.mrb);
+        _Binder.RegisterNamespaces(mrb.mrb);
+        MRuby_Hoge_CodeGenSample.RegisterMembers(mrb.mrb);
 
         var r = mrb.LoadString(src);
         var rstr = r.ToString();
