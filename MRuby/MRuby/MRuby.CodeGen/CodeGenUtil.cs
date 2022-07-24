@@ -41,6 +41,8 @@ namespace MRuby.CodeGen
         {
             List<Type> exports = new List<Type>();
 
+            exports.Add(typeof(System.Object));
+
             foreach (string asemblyName in asemblyNames)
             {
                 Assembly assembly;

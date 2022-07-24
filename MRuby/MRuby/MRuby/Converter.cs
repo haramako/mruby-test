@@ -982,7 +982,7 @@ return true;
             }
             else
             {
-                return GetClass(mrb, name.Split('.'));
+                return GetClass(mrb, name.Split("::"));
             }
         }
 

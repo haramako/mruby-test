@@ -646,7 +646,7 @@ namespace MRuby.Bind
 
             Write(file, "static RClass _cls;");
             Write(file, "static mrb_value _cls_value;");
-            Write(file, "readonly {0} obj;", FullName(t));
+            //Write(file, "readonly {0} obj;", FullName(t));
         }
 
         // add namespace for extension method
@@ -842,7 +842,7 @@ namespace MRuby.Bind
                 Write(file, "LuaUnityEvent_{1}.reg(l);", FullName(t), _Name((GenericName(t.BaseType))));
             }
 
-            Write(file, "_cls = Converter.GetClass(mrb, \"{0}\");", FullName(t));
+            Write(file, "_cls = Converter.GetClass(mrb, \"{0}\");", FullName(t).Replace(".","::"));
             Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
 
             if (GetValidConstructor(t).Length > 0)
