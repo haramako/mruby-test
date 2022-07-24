@@ -12,6 +12,7 @@ namespace MRuby.CodeGen
         public readonly string Name;
         public Type Type { get; private set; }
         public readonly Dictionary<string, NamespaceInfo> Children = new Dictionary<string, NamespaceInfo>();
+        public bool Ordered;
 
         private NamespaceInfo(string name, Type type)
         {
@@ -21,6 +22,7 @@ namespace MRuby.CodeGen
 
         public bool IsRoot => (Parent == null);
         public bool IsNamespace => (Type == null);
+        public Type BaseType => IsNamespace ? null : (Type?.BaseType ?? typeof(System.Object));
 
         public string FullName
         {

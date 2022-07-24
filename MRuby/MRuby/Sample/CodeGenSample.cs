@@ -56,15 +56,15 @@ namespace Hoge
     }
 
     [MRuby.CustomMRubyClass]
-    public class BaseClass
-    {
-        public int A() => 1;
-    }
-
-    [MRuby.CustomMRubyClass]
     public class DerivedClass : BaseClass
     {
         public int B() => 2;
+    }
+
+    [MRuby.CustomMRubyClass]
+    public class BaseClass
+    {
+        public int A() => 1;
     }
 
     [MRuby.CustomMRubyClass]
