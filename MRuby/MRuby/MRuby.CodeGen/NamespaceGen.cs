@@ -8,18 +8,13 @@ namespace MRuby.CodeGen
 {
     public class NamespaceInfo
     {
-        public readonly NamespaceInfo Parent;
+        public NamespaceInfo Parent { get; private set; }
         public readonly string Name;
-        public readonly Type Type;
+        public Type Type { get; private set; }
         public readonly Dictionary<string, NamespaceInfo> Children = new Dictionary<string, NamespaceInfo>();
 
-        public NamespaceInfo(NamespaceInfo parent, string name, Type type)
+        private NamespaceInfo(string name, Type type)
         {
-            if (parent != null)
-            {
-                Parent = parent;
-                Parent.Children.Add(name, this);
-            }
             Name = name;
             Type = type;
         }
@@ -31,11 +26,11 @@ namespace MRuby.CodeGen
         {
             get
             {
-                if( IsRoot )
+                if (IsRoot)
                 {
                     return "";
                 }
-                else if( Parent.IsRoot)
+                else if (Parent.IsRoot)
                 {
                     return Name;
                 }
@@ -53,11 +48,37 @@ namespace MRuby.CodeGen
         /// </summary>
         public string VarFullName => FullName.Replace(".", "_");
 
+
+        public static NamespaceInfo CreateRoot() => new NamespaceInfo("", null);
+        public static NamespaceInfo CreateOrGet(NamespaceInfo parent, string name, Type type)
+        {
+            NamespaceInfo ns;
+            if (parent == null)
+            {
+                ns = new NamespaceInfo(name, type);
+            }
+            else
+            {
+                if (parent.Children.TryGetValue(name, out var found))
+                {
+                    ns = found;
+                    ns.Type = type;
+                }
+                else
+                {
+                    ns = new NamespaceInfo(name, type);
+                    ns.Parent = parent;
+                    parent.Children.Add(name, ns);
+                }
+            }
+            return ns;
+        }
+
     }
 
     public class Registry
     {
-        public NamespaceInfo RootNamespace = new NamespaceInfo(null, "", null);
+        public NamespaceInfo RootNamespace = NamespaceInfo.CreateRoot();
 
         public NamespaceInfo FindByType(Type t)
         {
@@ -67,9 +88,9 @@ namespace MRuby.CodeGen
         public IEnumerable<NamespaceInfo> AllNamespaces(NamespaceInfo cur)
         {
             yield return cur;
-            foreach ( var child in cur.Children.Values)
+            foreach (var child in cur.Children.Values)
             {
-                foreach( var childNs in AllNamespaces(child))
+                foreach (var childNs in AllNamespaces(child))
                 {
                     yield return childNs;
                 }
@@ -114,7 +135,7 @@ namespace MRuby.CodeGen
 
         public void Dispose()
         {
-            if( w != null)
+            if (w != null)
             {
                 w.Close();
                 w = null;
@@ -151,7 +172,7 @@ namespace MRuby.CodeGen
         CodeWriter w;
         Registry reg;
 
-        public NamespaceGen(Registry _reg, string path) 
+        public NamespaceGen(Registry _reg, string path)
         {
             reg = _reg;
             w = new CodeWriter(path);
@@ -183,7 +204,7 @@ namespace MRuby.CodeGen
 
         string modName(NamespaceInfo ns)
         {
-            if(ns.IsRoot)
+            if (ns.IsRoot)
             {
                 return "__Root__";
             }
@@ -207,7 +228,7 @@ namespace MRuby.CodeGen
             {
                 var baseType = ns.Type.BaseType;
                 var baseTypeNs = reg.FindByType(baseType);
-                if( baseTypeNs == null)
+                if (baseTypeNs == null)
                 {
                     w.Write("baseClass = Converter.GetClass(mrb, \"{0}\");", "System.Object");
                 }
@@ -217,7 +238,7 @@ namespace MRuby.CodeGen
                 }
                 w.Write("var _mod_{0} = DLL.mrb_define_class_under(mrb, _mod_{1}, \"{2}\", baseClass);", ns.VarFullName, ns.Parent.VarFullName, ns.Name);
             }
-            foreach( var child in ns.Children.Values)
+            foreach (var child in ns.Children.Values)
             {
                 generateNamespace(child);
             }

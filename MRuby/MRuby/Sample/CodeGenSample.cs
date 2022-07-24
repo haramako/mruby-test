@@ -67,4 +67,17 @@ namespace Hoge
         public int B() => 2;
     }
 
+    [MRuby.CustomMRubyClass]
+    public class ClassInClass
+    {
+        [MRuby.CustomMRubyClass]
+        public class ClassInClassChild
+        {
+            public ClassInClassChild() { }
+            public int Num() => 99;
+        }
+
+        public int Num() => 1;
+    }
+
 }
