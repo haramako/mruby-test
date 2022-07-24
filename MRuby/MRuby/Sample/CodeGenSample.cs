@@ -59,12 +59,14 @@ namespace Hoge
     public class DerivedClass : BaseClass
     {
         public int B() => 2;
+        public override int Virtual() => 2;
     }
 
     [MRuby.CustomMRubyClass]
     public class BaseClass
     {
         public int A() => 1;
+        public virtual int Virtual() => 1;
     }
 
     [MRuby.CustomMRubyClass]

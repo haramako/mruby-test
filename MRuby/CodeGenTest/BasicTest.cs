@@ -19,6 +19,21 @@ public class BasicTest
     }
 
     [Test]
+    [Ignore("MRuby problem, error not reported in mrb_load_string")]
+    public void TestMrbLoadStringWithError()
+    {
+        MrbState _mrb = new MrbState();
+        var mrb = _mrb.mrb;
+
+        using (var arena = Converter.LockArena(mrb))
+        {
+            var r = DLL.mrb_load_string(mrb, "hoge");
+            var n = DLL.mrb_as_int(mrb, r);
+            Assert.AreEqual(2, n);
+        }
+    }
+
+    [Test]
     public void TestMrbState()
     {
         MrbState mrb = new MrbState();
