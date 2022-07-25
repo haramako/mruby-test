@@ -19,7 +19,6 @@ public class BasicTest
     }
 
     [Test]
-    [Ignore("MRuby problem, error not reported in mrb_load_string")]
     public void TestMrbLoadStringWithError()
     {
         MrbState _mrb = new MrbState();
@@ -28,8 +27,8 @@ public class BasicTest
         using (var arena = Converter.LockArena(mrb))
         {
             var r = DLL.mrb_load_string(mrb, "hoge");
-            var n = DLL.mrb_as_int(mrb, r);
-            Assert.AreEqual(2, n);
+            Assert.AreEqual(true, r.IsNil); // mrb_load_string() returns nil when error occured.
+            Assert.AreEqual(false, DLL.mrb_mrb_state_exc(mrb).IsNil); // mrb->exc is set when error occured.
         }
     }
 

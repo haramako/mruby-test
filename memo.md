@@ -1,4 +1,4 @@
-* module, classをリストアップして、先に作るようにする
+- module, classをリストアップして、先に作るようにする
 * ConverterをConverter,Utilに分割
 
 * overload対応

@@ -27,8 +27,21 @@ class ValueTest
     {
         var v = new Value(mrb, 1);
         Assert.AreEqual(2, v.Send("+", 1).AsInteger());
+        Assert.AreEqual(2, v.Send("+", new Value(mrb, 1)).AsInteger());
         Assert.AreEqual(2, v.Send("succ").AsInteger());
         Assert.Throws<Exception>(() => v.Send("invalid"));
+    }
+
+    [Test]
+    public void TestSendAfterError()
+    {
+        var v = new Value(mrb, 1);
+        Assert.Throws<Exception>(() => v.Send("invalid"));
+        Assert.AreEqual("1", v.Send("to_s").ToString());
+        Assert.Throws<Exception>(() => v.Send("invalid", 0));
+        Assert.AreEqual("1", v.Send("to_s").ToString());
+        Assert.Throws<Exception>(() => v.Send("invalid", new Value(mrb, 0)));
+        Assert.AreEqual("1", v.Send("to_s").ToString());
     }
 
     [Test]

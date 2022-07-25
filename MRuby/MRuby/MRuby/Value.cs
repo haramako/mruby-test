@@ -84,7 +84,16 @@ namespace MRuby
         public Value Send(string methodName)
         {
             var r = DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);
-            return new Value(mrb, r);
+            var exc = DLL.mrb_mrb_state_exc(mrb);
+            if (!exc.IsNil)
+            {
+                DLL.mrb_mrb_state_clear_exc(mrb);
+                throw new Exception(new Value(mrb, exc).ToString());
+            }
+            else
+            {
+                return new Value(mrb, r);
+            }
         }
 
         public Value Send(string methodName, params object[] args)
@@ -93,7 +102,18 @@ namespace MRuby
             {
                 argsCache[i] = new Value(mrb, args[i]).val;
             }
-            return new Value(mrb, DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache));
+            var r = DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache);
+
+            var exc = DLL.mrb_mrb_state_exc(mrb);
+            if (!exc.IsNil)
+            {
+                DLL.mrb_mrb_state_clear_exc(mrb);
+                throw new Exception(new Value(mrb, exc).ToString());
+            }
+            else
+            {
+                return new Value(mrb, r);
+            }
         }
 
         public Value Send(string methodName, params Value[] args)
@@ -102,7 +122,18 @@ namespace MRuby
             {
                 argsCache[i] = args[i].val;
             }
-            return new Value(mrb, DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache));
+            var r = DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache);
+
+            var exc = DLL.mrb_mrb_state_exc(mrb);
+            if (!exc.IsNil)
+            {
+                DLL.mrb_mrb_state_clear_exc(mrb);
+                throw new Exception(new Value(mrb, exc).ToString());
+            }
+            else
+            {
+                return new Value(mrb, r);
+            }
         }
 
         public override string ToString()

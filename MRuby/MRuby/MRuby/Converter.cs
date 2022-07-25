@@ -933,8 +933,16 @@ return true;
 
         public static mrb_value Send(mrb_state mrb, mrb_value val, string methodName)
         {
-            return DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);
-
+            var r = DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);
+            var exc = DLL.mrb_mrb_state_exc(mrb);
+            if (!exc.IsNil)
+            {
+                throw new Exception(new Value(mrb, exc).ToString());
+            }
+            else
+            {
+                return r;
+            }
         }
 
         static mrb_value[] argsCache = new mrb_value[16];

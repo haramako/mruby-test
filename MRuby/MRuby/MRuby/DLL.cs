@@ -208,6 +208,9 @@ namespace MRuby
         [DllImport(Dll, EntryPoint = "mrb_unity_mrb_state_exc")]
         public static extern mrb_value mrb_mrb_state_exc(mrb_state mrb);
 
+        [DllImport(Dll, EntryPoint = "mrb_unity_mrb_state_clear_exc")]
+        public static extern void mrb_mrb_state_clear_exc(mrb_state mrb);
+
         [DllImport(Dll, EntryPoint = "mrb_unity_nil_p")]
         public static extern bool mrb_nil_p(mrb_value v);
 
