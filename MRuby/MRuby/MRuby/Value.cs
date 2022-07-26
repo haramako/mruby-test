@@ -88,7 +88,7 @@ namespace MRuby
             if (!exc.IsNil)
             {
                 DLL.mrb_mrb_state_clear_exc(mrb);
-                throw new Exception(new Value(mrb, exc).ToString());
+                throw new RubyException(mrb, exc);
             }
             else
             {
@@ -108,7 +108,7 @@ namespace MRuby
             if (!exc.IsNil)
             {
                 DLL.mrb_mrb_state_clear_exc(mrb);
-                throw new Exception(new Value(mrb, exc).ToString());
+                throw new RubyException(mrb, exc);
             }
             else
             {
@@ -128,7 +128,7 @@ namespace MRuby
             if (!exc.IsNil)
             {
                 DLL.mrb_mrb_state_clear_exc(mrb);
-                throw new Exception(new Value(mrb, exc).ToString());
+                throw new RubyException(mrb, exc);
             }
             else
             {

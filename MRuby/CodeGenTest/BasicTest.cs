@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using MRuby;
 using System.Linq;
+using System;
 
 public class BasicTest
 {
@@ -33,6 +34,19 @@ public class BasicTest
     }
 
     [Test]
+    public void TestAbortCallback()
+    {
+        MrbState _mrb = new MrbState();
+        var mrb = _mrb.mrb;
+
+        using (var arena = Converter.LockArena(mrb))
+        {
+            var r = DLL.mrb_load_string(mrb, "1");
+            Assert.Throws<AbortException>(() => DLL.mrb_as_string(mrb, r));
+        }
+    }
+
+    [Test]
     public void TestMrbState()
     {
         MrbState mrb = new MrbState();
@@ -43,4 +57,29 @@ public class BasicTest
             Assert.AreEqual("2", r);
         }
     }
+
+    [Test]
+    public void TestStacktrace()
+    {
+        MrbState mrb = new MrbState();
+
+        using (var arena = Converter.LockArena(mrb.mrb))
+        {
+            try
+            {
+                mrb.LoadString(@"
+def rec(n)
+  if n <= 0 then raise 'ERROR' else rec(n-1) end
+end
+rec(10)
+");
+            }
+            catch (RubyException ex)
+            {
+                Assert.AreEqual("ERROR", ex.ToString());
+                Assert.AreEqual(12, ex.StackTrace.Split("\n").Length);
+            }
+        }
+    }
+
 }

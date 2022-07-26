@@ -253,7 +253,7 @@ namespace MRuby
         #endregion
 
         #region Others
-        public delegate void AbortFunc(string msg);
+        public delegate void AbortFunc(mrb_state mrb, mrb_value exc);
 
         [DllImport(Dll)]
         public static extern void mrb_unity_set_abort_func(mrb_state mrb, AbortFunc f);

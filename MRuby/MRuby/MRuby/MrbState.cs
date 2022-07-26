@@ -6,6 +6,33 @@ using UnityEngine;
 
 namespace MRuby
 {
+    public class RubyException : Exception
+    {
+        mrb_state mrb;
+        Value exc;
+
+        public RubyException(mrb_state _mrb, mrb_value _exc) : base()
+        {
+            mrb = _mrb;
+            exc = new Value(mrb, _exc);
+        }
+
+        public override string ToString()
+        {
+            return exc.ToString();
+        }
+
+        public override string StackTrace => exc.Send("backtrace").Send("join","\n").ToString();
+
+        public Value Exception => exc;
+    }
+
+    public class AbortException : RubyException 
+    {
+        public AbortException(mrb_state _mrb, mrb_value _exc) : base(_mrb, _exc) { }
+    }
+
+
     public class MrbState : IDisposable
     {
         bool disposed;
@@ -34,9 +61,9 @@ namespace MRuby
             DLL.mrb_load_string(mrb, prelude);
         }
 
-        static void abortCallback(string msg)
+        static void abortCallback(mrb_state mrb, mrb_value exc)
         {
-            throw new Exception(msg);
+            throw new AbortException(mrb, exc);
         }
 
         public void check()
@@ -58,7 +85,18 @@ namespace MRuby
 
         public Value LoadString(string src)
         {
-            return new Value(mrb, DLL.mrb_load_string(mrb, src));
+            var r = DLL.mrb_load_string(mrb, src);
+
+            var exc = DLL.mrb_mrb_state_exc(mrb);
+            if (!exc.IsNil)
+            {
+                DLL.mrb_mrb_state_clear_exc(mrb);
+                throw new RubyException(mrb, exc);
+            }
+            else
+            {
+                return new Value(mrb, r);
+            }
         }
 
 

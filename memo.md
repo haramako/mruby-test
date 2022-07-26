@@ -1,6 +1,8 @@
 - module, classをリストアップして、先に作るようにする
 * ConverterをConverter,Utilに分割
 
+* rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
+
 * overload対応
 * generic対応
 * 引数がDLL.MRB_ARGS_OPT(4)固定になってるのを修正
