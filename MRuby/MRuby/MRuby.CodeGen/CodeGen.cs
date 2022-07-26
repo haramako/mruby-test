@@ -809,7 +809,7 @@ namespace MRuby.Bind
         void RegisterNamespaces(Registry r, Type t)
         {
             var curNs = r.RootNamespace;
-            var nameList = t.Namespace.Split(".");
+            var nameList = t.FullName.Split(new char[] { '.', '+' }).SkipLast(1);
             foreach( var name in nameList)
             {
                 if( curNs.Children.TryGetValue(name, out var found))

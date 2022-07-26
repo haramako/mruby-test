@@ -30,9 +30,19 @@ namespace MRuby.CodeGen
             w.Write("using System;");
             w.Write("using System.Collections.Generic;");
             w.Write("namespace MRuby {");
+            w.Write("[LuaBinder({0})]", 0);
+            w.Write("public class _Binder {");
+
+            w.Write("public static void Bind(mrb_state mrb){");
+            w.Write("registerNamespaces(mrb);");
+            w.Write("registerClasses(mrb);");
+            w.Write("}");
+            w.Write("");
 
             generateNamespaces(list);
+            generateClassBinders(list);
 
+            w.Write("}");
             w.Write("}");
 
             w.Dispose();
@@ -63,21 +73,17 @@ namespace MRuby.CodeGen
 
         void generateNamespaces(List<NamespaceInfo> list)
         {
-            w.Write("[LuaBinder({0})]", 0);
-            w.Write("public class _Binder {");
-            w.Write("");
-            w.Write("public static void DefineModule(mrb_state mrb, string name, string ns){");
+            w.Write("static void defineModule(mrb_state mrb, string name, string ns){");
             w.Write("DLL.mrb_define_module_under(mrb, Converter.GetClass(mrb, ns), name);");
             w.Write("}");
-            w.Write("public static void DefineClass(mrb_state mrb, string name, string ns, string baseClass){");
+            w.Write("static void defineClass(mrb_state mrb, string name, string ns, string baseClass){");
             w.Write("DLL.mrb_define_class_under(mrb, Converter.GetClass(mrb, ns), name, Converter.GetClass(mrb, baseClass));");
             w.Write("}");
             w.Write("");
-            w.Write("public static void RegisterNamespaces(mrb_state mrb) {");
+            w.Write("static void registerNamespaces(mrb_state mrb) {");
             foreach( var ns in list ){
                 generateNamespace(ns);
             }
-            w.Write("}");
             w.Write("}");
         }
 
@@ -89,14 +95,28 @@ namespace MRuby.CodeGen
             }
             else if (ns.IsNamespace)
             {
-                w.Write("DefineModule(mrb, \"{0}\", \"{1}\");", ns.Name, ns.Parent.RubyFullName);
+                w.Write("defineModule(mrb, \"{0}\", \"{1}\");", ns.Name, ns.Parent.RubyFullName);
             }
             else
             {
                 var baseType = ns.Type.BaseType ?? typeof(System.Object);
                 var baseTypeNs = reg.FindByType(baseType);
-                w.Write("DefineClass(mrb, \"{0}\", \"{1}\", \"{2}\");", ns.Name, ns.Parent.RubyFullName, baseTypeNs.RubyFullName);
+                w.Write("defineClass(mrb, \"{0}\", \"{1}\", \"{2}\");", ns.Name, ns.Parent.RubyFullName, baseTypeNs.RubyFullName);
             }
+        }
+
+        void generateClassBinders(List<NamespaceInfo> list)
+        {
+            w.Write("static void registerClasses(mrb_state mrb) {");
+            foreach (var ns in list)
+            {
+                if (!ns.IsNamespace)
+                {
+                    w.Write("{0}.RegisterMembers(mrb);", ns.BinderClassName);
+                }
+            }
+            w.Write("}");
+
         }
 
 #if false

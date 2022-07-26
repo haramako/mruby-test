@@ -13,6 +13,7 @@ class CodeGenTest
     public void Setup()
     {
         mrb = new MrbState();
+        _Binder.Bind(mrb.mrb);
     }
 
     [TestCase("hoge", "hoge")]
@@ -34,14 +35,7 @@ class CodeGenTest
     [TestCase("Hoge::CodeGenSample.static_method(2)", "2")]
     public void TestSample2(string src, string expect)
     {
-        _Binder.RegisterNamespaces(mrb.mrb);
-        MRuby_Hoge_CodeGenSample.RegisterMembers(mrb.mrb);
-        MRuby_Hoge_DerivedClass.RegisterMembers(mrb.mrb);
-        MRuby_Hoge_BaseClass.RegisterMembers(mrb.mrb);
-
-        var r = mrb.LoadString(src);
-        var rstr = r.ToString();
-        Assert.AreEqual(expect, rstr);
+        Assert.AreEqual(expect, mrb.LoadString(src).ToString());
     }
 
 
@@ -52,11 +46,13 @@ class CodeGenTest
     [TestCase("Hoge::BaseClass.new.virtual", "1")]
     public void TestInheritance(string src, string expect)
     {
-        _Binder.RegisterNamespaces(mrb.mrb);
-        MRuby_Hoge_CodeGenSample.RegisterMembers(mrb.mrb);
-        MRuby_Hoge_DerivedClass.RegisterMembers(mrb.mrb);
-        MRuby_Hoge_BaseClass.RegisterMembers(mrb.mrb);
+        Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+    }
 
+    [TestCase("Hoge::ClassInClass::ClassInClassChild.new.num", "99")]
+    [TestCase("Hoge::ClassInClass.new.num", "1")]
+    public void TestClassInClass(string src, string expect)
+    {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
     }
 

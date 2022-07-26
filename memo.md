@@ -17,5 +17,5 @@
 - 名前をスネークケースに
 - 継承が動いていないのを修正
 
-* mrb_load_string()がエラー時にnilを返すのが困る。raiseしてほしい
+- mrb_load_string()がエラー時にnilを返すのが困る。raiseしてほしい
   

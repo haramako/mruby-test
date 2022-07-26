@@ -36,19 +36,21 @@ namespace MRuby.CodeGen
                 {
                     return Name;
                 }
+                else if (!IsNamespace)
+                {
+                    return Type.FullName;
+                }
                 else
                 {
+
                     return Parent.FullName + "." + Name;
                 }
             }
         }
 
-        public string RubyFullName => IsRoot ? "Object" : FullName.Replace(".", "::");
+        public string RubyFullName => IsRoot ? "Object" : FullName.Replace(".", "::").Replace("+", "::");
+        public string BinderClassName => "MRuby_" + FullName.Replace('.', '_').Replace('+', '_');
 
-        /// <summary>
-        /// Name of c# variable name.
-        /// </summary>
-        public string VarFullName => FullName.Replace(".", "_");
 
 
         public static NamespaceInfo CreateRoot() => new NamespaceInfo("", null);
