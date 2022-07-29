@@ -125,6 +125,11 @@ namespace MRuby
             unsafe
             {
                 mrb_value* args = DLL.mrb_get_argv(l);
+                var argc = DLL.mrb_get_argc(l);
+                if( argc <= p)
+                {
+                    throw new Exception("wrong number of arguments");
+                }
                 v = (int)DLL.mrb_as_int(l, args[p]);
                 return true;
             }
@@ -641,11 +646,9 @@ return true;
 
         static public mrb_value error(mrb_state l, Exception e)
         {
-#if false
-			LuaDLL.lua_pushboolean(l, false);
-			LuaDLL.lua_pushstring(l, e.ToString());
-#endif
-            return default;
+            var excClass = DLL.mrb_class_get(l, "RuntimeError");
+            var exc = DLL.mrb_exc_new_str(l, excClass, DLL.mrb_str_new_cstr(l,e.Message));
+            return exc;
         }
 
         static public mrb_value error(mrb_state l, string err)

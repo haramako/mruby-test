@@ -15,11 +15,19 @@ namespace Hoge
         public int IntProperty { get; set; }
         public string StringProperty { get; set; }
 
+        public CodeGenSample()
+        {
+            IntField = 1;
+            StringField = "a";
+        }
+
+#if false
         public CodeGenSample(int i, string s)
         {
             IntField = i;
             StringField = s;
         }
+#endif
 
         public string GetStringValue()
         {

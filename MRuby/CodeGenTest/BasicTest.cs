@@ -76,7 +76,7 @@ rec(10)
             }
             catch (RubyException ex)
             {
-                Assert.AreEqual("ERROR", ex.ToString());
+                Assert.AreEqual("ERROR", ex.Message);
                 Assert.AreEqual(12, ex.StackTrace.Split("\n").Length);
             }
         }

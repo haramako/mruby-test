@@ -27,15 +27,33 @@ class CodeGenTest
     }
 
     [TestCase("1+1", "2")]
-    [TestCase("Hoge::CodeGenSample.new(1,'a').int_field", "1")]
-    [TestCase("Hoge::CodeGenSample.new(1,'a').string_field", "a")]
-    [TestCase("Hoge::CodeGenSample.new(1,'a').get_string_value", "str")]
-    [TestCase("Hoge::CodeGenSample.new(1,'a').get_int_value()", "99")]
-    [TestCase("Hoge::CodeGenSample.new(1,'a').overloaded_method(1)", "1")]
+    [TestCase("Hoge::CodeGenSample.new.int_field", "1")]
+    [TestCase("Hoge::CodeGenSample.new.string_field", "a")]
+    [TestCase("Hoge::CodeGenSample.new.get_string_value", "str")]
+    [TestCase("Hoge::CodeGenSample.new.get_int_value", "99")]
+    [TestCase("Hoge::CodeGenSample.new.overloaded_method(1)", "1")]
     [TestCase("Hoge::CodeGenSample.static_method(2)", "2")]
     public void TestSample2(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+    }
+
+    [TestCase("Hoge::CodeGenSample.new.get_int_value(1)", "wrong number of arguments (given 1, expected 0)")] // Over argument
+    [TestCase("Hoge::CodeGenSample.new.overloaded_method()", "wrong number of arguments")] // Less argument
+    [TestCase("Hoge::CodeGenSample.new.overloaded_method(1,2)", "wrong number of arguments (given 2, expected 1)")] // Over argument
+    [TestCase("Hoge::CodeGenSample.new.overloaded_method('a')", "String cannot be converted to Integer")] // Invalid type of argument
+    public void TestArgumentError(string src, string errorMessage)
+    {
+        try
+        {
+            mrb.LoadString(src);
+        }
+        catch (Exception ex)
+        {
+            Assert.AreEqual(errorMessage, ex.Message);
+            return;
+        }
+        Assert.Fail();
     }
 
 

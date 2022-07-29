@@ -17,10 +17,7 @@ namespace MRuby
             exc = new Value(mrb, _exc);
         }
 
-        public override string ToString()
-        {
-            return exc.ToString();
-        }
+        public override string Message => exc.ToString();
 
         public override string StackTrace => exc.Send("backtrace").Send("join","\n").ToString();
 

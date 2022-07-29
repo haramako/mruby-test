@@ -847,7 +847,7 @@ namespace MRuby.Bind
 
             if (GetValidConstructor(t).Length > 0)
             {
-                Write(file, "Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(4));");
+                Write(file, "Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(16));");
             }
             Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
 
@@ -859,11 +859,11 @@ namespace MRuby.Bind
                 trygetOverloadedVersion(t, ref f);
                 if (isStatic)
                 {
-                    Write(file, "Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(4));", RubyMethodName(f), f);
+                    Write(file, "Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", RubyMethodName(f), f);
                 }
                 else
                 {
-                    Write(file, "Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(4));", RubyMethodName(f), f);
+                    Write(file, "Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", RubyMethodName(f), f);
                 }
                 //Write(file, "addMember(l,{0});", f);
             }
@@ -1219,7 +1219,8 @@ namespace MRuby.Bind
         {
             Write(file, "}");
             Write(file, "catch(Exception e) {");
-            Write(file, "return Converter.error(l,e);");
+            Write(file, "DLL.mrb_exc_raise(l, Converter.error(l, e));");
+            Write(file, "return default;");
             Write(file, "}");
             WriteFinaly(file);
         }
@@ -1791,6 +1792,11 @@ namespace MRuby.Bind
             bool isExtension = IsExtensionMethod(m) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
             ParameterInfo[] pars = m.GetParameters();
 
+
+            Write(file, "var _argc = DLL.mrb_get_argc(l);");
+            Write(file, "if (_argc > {0}){{", m.GetParameters().Length);
+            Write(file, "  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", m.GetParameters().Length);
+            Write(file, "}");
 
             int argIndex = 1;
             int parOffset = 0;

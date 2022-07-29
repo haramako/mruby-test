@@ -112,7 +112,7 @@ namespace MRuby
         public static extern mrb_value mrb_const_get(mrb_state mrb, mrb_value v, mrb_sym sym);
 
         [DllImport(Dll)]
-        public static extern RClass mrb_class_get(mrb_state mrb, RClass outer);
+        public static extern RClass mrb_class_get(mrb_state mrb, string name);
 
         [DllImport(Dll)]
         public static extern RClass mrb_class_get_under(mrb_state mrb, RClass outer, string name);
@@ -145,10 +145,14 @@ namespace MRuby
         public static extern void mrb_define_method(mrb_state mrb, RClass c, string name, MRubyCSFunction func, mrb_aspec aspec);
 
         [DllImport(Dll)]
-        public static extern RClass mrb_class_get(mrb_state mrb, string name);
+        public static extern RClass mrb_module_get(mrb_state mrb, string name);
 
         [DllImport(Dll)]
-        public static extern RClass mrb_module_get(mrb_state mrb, string name);
+        public static extern void mrb_exc_raise(mrb_state mrb, mrb_value exc);
+
+        [DllImport(Dll)]
+        public static extern mrb_value mrb_exc_new_str(mrb_state mrb, RClass c, mrb_value str);
+
 
 
         [DllImport(Dll)]
