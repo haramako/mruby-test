@@ -49,6 +49,11 @@ namespace Hoge
             return n;
         }
 
+        public string WithDefaultValue(int n, int m = 2, string s = "def")
+        {
+            return $"{n},{m},{s}";
+        }
+
 #if false
     public int OverloadedMethod(int n, int m)
     {

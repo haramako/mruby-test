@@ -125,11 +125,6 @@ namespace MRuby
             unsafe
             {
                 mrb_value* args = DLL.mrb_get_argv(l);
-                var argc = DLL.mrb_get_argc(l);
-                if( argc <= p)
-                {
-                    throw new Exception("wrong number of arguments");
-                }
                 v = (int)DLL.mrb_as_int(l, args[p]);
                 return true;
             }

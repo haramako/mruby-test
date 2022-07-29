@@ -810,9 +810,9 @@ namespace MRuby.Bind
         {
             var curNs = r.RootNamespace;
             var nameList = t.FullName.Split(new char[] { '.', '+' }).SkipLast(1);
-            foreach( var name in nameList)
+            foreach (var name in nameList)
             {
-                if( curNs.Children.TryGetValue(name, out var found))
+                if (curNs.Children.TryGetValue(name, out var found))
                 {
                     curNs = found;
                 }
@@ -842,7 +842,7 @@ namespace MRuby.Bind
                 Write(file, "LuaUnityEvent_{1}.reg(l);", FullName(t), _Name((GenericName(t.BaseType))));
             }
 
-            Write(file, "_cls = Converter.GetClass(mrb, \"{0}\");", FullName(t).Replace(".","::"));
+            Write(file, "_cls = Converter.GetClass(mrb, \"{0}\");", FullName(t).Replace(".", "::"));
             Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
 
             if (GetValidConstructor(t).Length > 0)
@@ -1387,7 +1387,7 @@ namespace MRuby.Bind
                     {
                         ParameterInfo p = pars[k];
                         bool hasParams = p.IsDefined(typeof(ParamArrayAttribute), false);
-                        CheckArgument(file, p.ParameterType, k, 2, IsOutArg(p), hasParams);
+                        CheckArgument(file, p.ParameterType, k, 2, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
                     }
                     Write(file, "o=new {0}({1});", TypeDecl(t), FuncCall(ci));
                     Write(file, "ObjectCache.NewObjectByVal(l, _self, o);");
@@ -1792,10 +1792,14 @@ namespace MRuby.Bind
             bool isExtension = IsExtensionMethod(m) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
             ParameterInfo[] pars = m.GetParameters();
 
-
+            // Is argument number more than parameter number?
+            var requireParameterNum = m.GetParameters().ToArray().TakeWhile(p => !p.HasDefaultValue).Count();
             Write(file, "var _argc = DLL.mrb_get_argc(l);");
             Write(file, "if (_argc > {0}){{", m.GetParameters().Length);
             Write(file, "  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", m.GetParameters().Length);
+            Write(file, "}");
+            Write(file, "else if (_argc < {0}){{", requireParameterNum);
+            Write(file, "  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", requireParameterNum);
             Write(file, "}");
 
             int argIndex = 1;
@@ -1819,7 +1823,7 @@ namespace MRuby.Bind
                 }
 
                 bool hasParams = p.IsDefined(typeof(ParamArrayAttribute), false);
-                CheckArgument(file, p.ParameterType, n, argIndex, IsOutArg(p), hasParams);
+                CheckArgument(file, p.ParameterType, n, argIndex, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
             }
 
             string ret = "";
@@ -1982,12 +1986,42 @@ namespace MRuby.Bind
             return (p.IsOut || p.IsDefined(typeof(System.Runtime.InteropServices.OutAttribute), false)) && !p.ParameterType.IsArray;
         }
 
-        private void CheckArgument(StreamWriter file, Type t, int n, int argstart, bool isout, bool isparams)
+        public string DefaultValueToString(object v)
+        {
+            if (v == null)
+            {
+                return "null";
+            }
+
+            var type = v.GetType();
+            if (type == typeof(int) || type == typeof(bool) || type == typeof(float))
+            {
+                return v.ToString();
+            }
+            else if (type == typeof(string))
+            {
+                return $"\"{v}\"";
+
+            }
+            else
+            {
+                throw new Exception($"Can't support defaultValueType {v}, type = {type}");
+            }
+        }
+
+        private void CheckArgument(StreamWriter file, Type t, int n, int argstart, bool isout, bool isparams, bool hasDefaultValue, object defaultValue)
         {
             Write(file, "{0} a{1};", TypeDecl(t), n + 1);
 
             if (!isout)
             {
+                if (hasDefaultValue)
+                {
+                    Write(file, "if (_argc < {0}) {{", n + 1);
+                    Write(file, "    a{0} = {1};", n + 1, DefaultValueToString(defaultValue));
+                    Write(file, "} else {");
+                }
+
                 if (t.IsEnum)
                     Write(file, "a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n + 1, TypeDecl(t), n + argstart);
                 else if (t.BaseType == typeof(System.MulticastDelegate))
@@ -2012,7 +2046,14 @@ namespace MRuby.Bind
                         Write(file, "Converter.checkValueType(l,{0},out a{1});", n + argstart, n + 1);
                 }
                 else
+                {
                     Write(file, "Converter.checkType(l,{0},out a{1});", n /* + argstart */, n + 1);
+                }
+
+                if (hasDefaultValue)
+                {
+                    Write(file, "}");
+                }
             }
         }
 

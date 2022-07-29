@@ -39,7 +39,7 @@ class CodeGenTest
     }
 
     [TestCase("Hoge::CodeGenSample.new.get_int_value(1)", "wrong number of arguments (given 1, expected 0)")] // Over argument
-    [TestCase("Hoge::CodeGenSample.new.overloaded_method()", "wrong number of arguments")] // Less argument
+    [TestCase("Hoge::CodeGenSample.new.overloaded_method()", "wrong number of arguments (given 0, expected 1)")] // Less argument
     [TestCase("Hoge::CodeGenSample.new.overloaded_method(1,2)", "wrong number of arguments (given 2, expected 1)")] // Over argument
     [TestCase("Hoge::CodeGenSample.new.overloaded_method('a')", "String cannot be converted to Integer")] // Invalid type of argument
     public void TestArgumentError(string src, string errorMessage)
@@ -72,6 +72,22 @@ class CodeGenTest
     public void TestClassInClass(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+    }
+
+    [TestCase("Hoge::CodeGenSample.new.with_default_value(1)", "1,2,def")]
+    [TestCase("Hoge::CodeGenSample.new.with_default_value(1,99)", "1,99,def")] 
+    [TestCase("Hoge::CodeGenSample.new.with_default_value(1,99,\"hoge\")", "1,99,hoge")] 
+    public void TestDefaultParameters(string src, string expect)
+    {
+        Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+    }
+
+    [TestCase("Hoge::CodeGenSample.new.with_default_value()")] // Less argument
+    [TestCase("Hoge::CodeGenSample.new.with_default_value(1,\"a\")")] // Invalid type
+    [TestCase("Hoge::CodeGenSample.new.with_default_value(1,99,\"hoge\",3)")] // Over argument
+    public void TestDefaultParameterErrors(string src)
+    {
+        Assert.Throws<RubyException>(() => mrb.LoadString(src));
     }
 
 }
