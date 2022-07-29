@@ -529,6 +529,173 @@ namespace MRuby
         }
         #endregion
 
+        static public bool checkArray<T>(mrb_state mrb, int p, out T[] ta)
+        {
+            unsafe
+            {
+                mrb_value* args = DLL.mrb_get_argv(mrb);
+                mrb_value ary = args[p];
+                if (DLL.mrb_type(ary) == mrb_vtype.MRB_TT_ARRAY)
+                {
+                    uint n = DLL.mrb_rarray_len(ary);
+                    mrb_value* ptr = DLL.mrb_rarray_ptr(ary);
+                    ta = new T[n];
+                    for (int k = 0; k < n; k++)
+                    {
+                        object obj = checkVar(mrb, ptr[k]);
+                        if (obj is IConvertible)
+                        {
+                            ta[k] = (T)Convert.ChangeType(obj, typeof(T));
+                        }
+                        else
+                        {
+                            ta[k] = (T)obj;
+                        }
+                    }
+                    return true;
+                }
+                else
+                {
+                    Array array = checkVar(mrb, ary) as Array;
+                    ta = array as T[];
+                    return ta != null;
+                }
+            }
+        }
+
+        static public mrb_value make_value(mrb_state mrb, object val)
+        {
+            switch (val)
+            {
+                case Value v:
+                    return v.val;
+                case mrb_value v:
+                    return v;
+                case byte v:
+                    return DLL.mrb_fixnum_value(v);
+                case UInt16 v:
+                    return DLL.mrb_fixnum_value(v);
+                case Int16 v:
+                    return DLL.mrb_fixnum_value(v);
+                case UInt32 v:
+                    return DLL.mrb_fixnum_value(v);
+                case Int32 v:
+                    return DLL.mrb_fixnum_value(v);
+                case bool v:
+                    return DLL.mrb_bool_value(v);
+                case string v:
+                    return DLL.mrb_str_new_cstr(mrb, v);
+                case float v:
+                    return DLL.mrb_float_value(mrb, v);
+                case double v:
+                    return DLL.mrb_float_value(mrb, v);
+                default:
+                    if (val == null)
+                    {
+                        return DLL.mrb_nil_value();
+                    }
+                    else if (ObjectCache.TryToValue(mrb, val, out var mrb_v))
+                    {
+                        return mrb_v;
+                    }
+                    else if (TypeCache.TryGetClass(val.GetType(), out TypeCache.ConstructorFunc constructor))
+                    {
+                        var obj = constructor(mrb, val);
+                        return obj.val;
+                    }
+                    else
+                    {
+                        throw new ArgumentException();
+                    }
+            }
+        }
+
+        static public object checkVar(mrb_state mrb, mrb_value v)
+        {
+            var type = DLL.mrb_type(v);
+            switch (type)
+            {
+                case mrb_vtype.MRB_TT_INTEGER:
+                    return DLL.mrb_as_int(mrb, v);
+                case mrb_vtype.MRB_TT_STRING:
+                    return DLL.mrb_as_string(mrb, v);
+                case mrb_vtype.MRB_TT_TRUE:
+                    return true;
+                case mrb_vtype.MRB_TT_FALSE:
+                    return false;
+#if false
+                case LuaTypes.LUA_TFUNCTION:
+                    {
+                        LuaFunction v;
+                        LuaObject.checkType(l, p, out v);
+                        return v;
+                    }
+                case LuaTypes.LUA_TTABLE:
+                    {
+                        if (isLuaValueType(l, p))
+                        {
+#if !SLUA_STANDALONE
+                            if (luaTypeCheck(l, p, "Vector2"))
+                            {
+                                Vector2 v;
+                                checkType(l, p, out v);
+                                return v;
+                            }
+                            else if (luaTypeCheck(l, p, "Vector3"))
+                            {
+                                Vector3 v;
+                                checkType(l, p, out v);
+                                return v;
+                            }
+                            else if (luaTypeCheck(l, p, "Vector4"))
+                            {
+                                Vector4 v;
+                                checkType(l, p, out v);
+                                return v;
+                            }
+                            else if (luaTypeCheck(l, p, "Quaternion"))
+                            {
+                                Quaternion v;
+                                checkType(l, p, out v);
+                                return v;
+                            }
+                            else if (luaTypeCheck(l, p, "Color"))
+                            {
+                                Color c;
+                                checkType(l, p, out c);
+                                return c;
+                            }
+#endif
+                            Logger.LogError("unknown lua value type");
+                            return null;
+                        }
+                        else if (isLuaClass(l, p))
+                        {
+                            return checkObj(l, p);
+                        }
+                        else
+                        {
+                            LuaTable v;
+                            checkType(l, p, out v);
+                            return v;
+                        }
+                    }
+                case LuaTypes.LUA_TUSERDATA:
+                    return LuaObject.checkObj(l, p);
+                case LuaTypes.LUA_TTHREAD:
+                    {
+                        LuaThread lt;
+                        LuaObject.checkType(l, p, out lt);
+                        return lt;
+                    }
+#endif
+                default:
+                    return new Exception($"unsupported type {type}"); // TODO
+                    //return null;
+            }
+        }
+
+
 #if false
         static public bool checkType(IntPtr l, int p, out LuaDelegate f)
         {
@@ -642,7 +809,7 @@ return true;
         static public mrb_value error(mrb_state l, Exception e)
         {
             var excClass = DLL.mrb_class_get(l, "RuntimeError");
-            var exc = DLL.mrb_exc_new_str(l, excClass, DLL.mrb_str_new_cstr(l,e.Message));
+            var exc = DLL.mrb_exc_new_str(l, excClass, DLL.mrb_str_new_cstr(l, e.Message));
             return exc;
         }
 
@@ -909,11 +1076,6 @@ return true;
         {
             DLL.mrb_define_method(mrb, cls, name, getter, DLL.MRB_ARGS_NONE());
             DLL.mrb_define_method(mrb, cls, name + "=", setter, DLL.MRB_ARGS_REQ(1));
-        }
-
-        public static mrb_value make_value(mrb_state mrb, object obj)
-        {
-            return new Value(mrb, obj).val;
         }
 
         public static string ToString(mrb_state mrb, mrb_value val)

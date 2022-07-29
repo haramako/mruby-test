@@ -22,61 +22,7 @@ namespace MRuby
         public Value(mrb_state _mrb, object _val)
         {
             mrb = _mrb;
-            switch (_val)
-            {
-                case Value v:
-                    val = v.val;
-                    break;
-                case mrb_value v:
-                    val = v;
-                    break;
-                case byte v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case UInt16 v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case Int16 v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case UInt32 v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case Int32 v:
-                    val = DLL.mrb_fixnum_value(v);
-                    break;
-                case bool v:
-                    val = DLL.mrb_bool_value(v);
-                    break;
-                case string v:
-                    val = DLL.mrb_str_new_cstr(mrb, v);
-                    break;
-                case float v:
-                    val = DLL.mrb_float_value(mrb, v);
-                    break;
-                case double v:
-                    val = DLL.mrb_float_value(mrb, v);
-                    break;
-                default:
-                    if (_val == null)
-                    {
-                        val = DLL.mrb_nil_value();
-                    }
-                    else if (ObjectCache.TryToValue(mrb, _val, out var mrb_v))
-                    {
-                        val = mrb_v;
-                    }
-                    else if (TypeCache.TryGetClass(_val.GetType(), out TypeCache.ConstructorFunc constructor))
-                    {
-                        var obj = constructor(_mrb, _val);
-                        val = obj.val;
-                    }
-                    else
-                    {
-                        throw new ArgumentException();
-                    }
-                    break;
-            }
+            val = Converter.make_value(_mrb, _val);
         }
 
         static mrb_value[] argsCache = new mrb_value[16];
@@ -174,6 +120,11 @@ namespace MRuby
         public double AsDouble()
         {
             return DLL.mrb_as_float(mrb, val);
+        }
+
+        public object AsObject()
+        {
+            return Converter.checkVar(mrb, val);
         }
 
     }

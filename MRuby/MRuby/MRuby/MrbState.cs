@@ -88,7 +88,7 @@ namespace MRuby
             if (!exc.IsNil)
             {
                 DLL.mrb_mrb_state_clear_exc(mrb);
-                throw new RubyException(mrb, exc);
+                throw new RubyException(mrb, exc);  
             }
             else
             {

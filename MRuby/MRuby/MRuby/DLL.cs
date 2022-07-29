@@ -264,9 +264,12 @@ namespace MRuby
 
         [DllImport(Dll, EntryPoint = "mrb_unity_funcall_argv")]
         public static extern mrb_value mrb_funcall_argv(mrb_state mrb, mrb_value val, string name, mrb_int argc, mrb_value[] vals);
+
+        [DllImport(Dll, EntryPoint = "mrb_rarray_len_noinline")]
+        public static extern uint mrb_rarray_len(mrb_value v);
+
+        [DllImport(Dll, EntryPoint = "mrb_rarray_ptr_noinline")]
+        public static unsafe extern mrb_value* mrb_rarray_ptr(mrb_value v);
         #endregion
     }
-
-
-
 }

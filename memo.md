@@ -1,5 +1,11 @@
+* 引数のarray対応
 * overload対応
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
+* CodeGenのコード整理: overload, 拡張メソッドなどの対応をしやすくするために、一度独自のクラスにクラスの情報をいれる
+* a*の番号を1はじまりから、0はじまりにする
+
+? ArrayをC#オブジェクトのまま返すか, RubyのArrayに変換するか・・・
+? Value の継承を検討する(ArrayValue, DictionaryValue ...)
 
 * ConverterをConverter,Utilに分割
 

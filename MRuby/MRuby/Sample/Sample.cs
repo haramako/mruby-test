@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MRuby;
 using System.IO;
+using System.Linq;
 
 [MRuby.CustomMRubyClass]
 public class Sample
@@ -50,6 +51,26 @@ public class Sample
     public string WithDefaultValue(int n, int m = 2, string s = "def")
     {
         return $"{n},{m},{s}";
+    }
+
+    public int IntArray(int[] ary)
+    {
+        return ary.Sum();
+    }
+
+    public string StrArray(string[] ary)
+    {
+        return string.Join(',', ary);
+    }
+
+    public int[] IntArrayResult(int n)
+    {
+        return Enumerable.Repeat<int>(1, n).ToArray();
+    }
+
+    public string[] StrArrayResult(int n)
+    {
+        return Enumerable.Repeat<string>("a",n).ToArray();
     }
 
 #if false

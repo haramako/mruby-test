@@ -689,6 +689,13 @@ namespace MRuby.Bind
             }
             foreach (MethodInfo mi in methods)
             {
+                // ˆêŽž“I‚É override ‚ð–³Œø‰»
+                MethodBase[] cons = GetMethods(t, mi.Name, bf);
+                if( cons.Length > 1)
+                {
+                    continue;
+                }
+
                 bool instanceFunc;
                 if (writeStatic && isPInvoke(mi, out instanceFunc))
                 {
@@ -779,6 +786,13 @@ namespace MRuby.Bind
 
         public static string RubyMethodName(string name)
         {
+            // Special names.
+            switch (name)
+            {
+                case "ToString":
+                    return "to_s";
+            }
+
             var sb = new StringBuilder();
             var prevIsUpper = true;
             for (int i = 0; i < name.Length; i++)
@@ -1590,7 +1604,7 @@ namespace MRuby.Bind
         bool isUsefullMethod(MethodInfo method)
         {
             if (method.Name != "GetType" && method.Name != "GetHashCode" && method.Name != "Equals" &&
-                method.Name != "ToString" && method.Name != "Clone" &&
+                /* method.Name != "ToString" && */ method.Name != "Clone" &&
                 method.Name != "GetEnumerator" && method.Name != "CopyTo" &&
                 method.Name != "op_Implicit" && method.Name != "op_Explicit" &&
                 !method.Name.StartsWith("get_", StringComparison.Ordinal) &&
@@ -1676,7 +1690,6 @@ namespace MRuby.Bind
             }
             else // 2 or more override function
             {
-
                 Write(file, "int argc = LuaDLL.lua_gettop(l);");
 
                 bool first = true;
@@ -2037,7 +2050,7 @@ namespace MRuby.Bind
                         Write(file, "Converter.checkParams(l,{0},out a{1});", n + argstart, n + 1);
                 }
                 else if (t.IsArray)
-                    Write(file, "Converter.checkArray(l,{0},out a{1});", n + argstart, n + 1);
+                    Write(file, "Converter.checkArray(l,{0},out a{1});", n, n + 1);
                 else if (IsValueType(t))
                 {
                     if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
