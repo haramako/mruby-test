@@ -27,21 +27,21 @@ class CodeGenTest
     }
 
     [TestCase("1+1", "2")]
-    [TestCase("Hoge::CodeGenSample.new.int_field", "1")]
-    [TestCase("Hoge::CodeGenSample.new.string_field", "a")]
-    [TestCase("Hoge::CodeGenSample.new.get_string_value", "str")]
-    [TestCase("Hoge::CodeGenSample.new.get_int_value", "99")]
-    [TestCase("Hoge::CodeGenSample.new.overloaded_method(1)", "1")]
-    [TestCase("Hoge::CodeGenSample.static_method(2)", "2")]
+    [TestCase("Sample.new.int_field", "1")]
+    [TestCase("Sample.new.string_field", "a")]
+    [TestCase("Sample.new.get_string_value", "str")]
+    [TestCase("Sample.new.get_int_value", "99")]
+    [TestCase("Sample.new.overloaded_method(1)", "1")]
+    [TestCase("Sample.static_method(2)", "2")]
     public void TestSample2(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
     }
 
-    [TestCase("Hoge::CodeGenSample.new.get_int_value(1)", "wrong number of arguments (given 1, expected 0)")] // Over argument
-    [TestCase("Hoge::CodeGenSample.new.overloaded_method()", "wrong number of arguments (given 0, expected 1)")] // Less argument
-    [TestCase("Hoge::CodeGenSample.new.overloaded_method(1,2)", "wrong number of arguments (given 2, expected 1)")] // Over argument
-    [TestCase("Hoge::CodeGenSample.new.overloaded_method('a')", "String cannot be converted to Integer")] // Invalid type of argument
+    [TestCase("Sample.new.get_int_value(1)", "wrong number of arguments (given 1, expected 0)")] // Over argument
+    [TestCase("Sample.new.overloaded_method()", "wrong number of arguments (given 0, expected 1)")] // Less argument
+    [TestCase("Sample.new.overloaded_method(1,2)", "wrong number of arguments (given 2, expected 1)")] // Over argument
+    [TestCase("Sample.new.overloaded_method('a')", "String cannot be converted to Integer")] // Invalid type of argument
     public void TestArgumentError(string src, string errorMessage)
     {
         try
@@ -57,38 +57,44 @@ class CodeGenTest
     }
 
 
-    [TestCase("Hoge::DerivedClass.new.a", "1")]
-    [TestCase("Hoge::DerivedClass.new.b", "2")]
-    [TestCase("Hoge::DerivedClass.new.virtual", "2")]
-    [TestCase("Hoge::BaseClass.new.a", "1")]
-    [TestCase("Hoge::BaseClass.new.virtual", "1")]
+    [TestCase("DerivedClass.new.a", "1")]
+    [TestCase("DerivedClass.new.b", "2")]
+    [TestCase("DerivedClass.new.virtual", "2")]
+    [TestCase("BaseClass.new.a", "1")]
+    [TestCase("BaseClass.new.virtual", "1")]
     public void TestInheritance(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
     }
 
-    [TestCase("Hoge::ClassInClass::ClassInClassChild.new.num", "99")]
-    [TestCase("Hoge::ClassInClass.new.num", "1")]
+    [TestCase("ClassInClass::ClassInClassChild.new.num", "99")]
+    [TestCase("ClassInClass.new.num", "1")]
     public void TestClassInClass(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
     }
 
-    [TestCase("Hoge::CodeGenSample.new.with_default_value(1)", "1,2,def")]
-    [TestCase("Hoge::CodeGenSample.new.with_default_value(1,99)", "1,99,def")] 
-    [TestCase("Hoge::CodeGenSample.new.with_default_value(1,99,\"hoge\")", "1,99,hoge")] 
+    [TestCase("Sample.new.with_default_value(1)", "1,2,def")]
+    [TestCase("Sample.new.with_default_value(1,99)", "1,99,def")] 
+    [TestCase("Sample.new.with_default_value(1,99,\"hoge\")", "1,99,hoge")] 
     public void TestDefaultParameters(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
     }
 
-    [TestCase("Hoge::CodeGenSample.new.with_default_value()")] // Less argument
-    [TestCase("Hoge::CodeGenSample.new.with_default_value(1,\"a\")")] // Invalid type
-    [TestCase("Hoge::CodeGenSample.new.with_default_value(1,99,\"hoge\",3)")] // Over argument
+    [TestCase("Sample.new.with_default_value()")] // Less argument
+    [TestCase("Sample.new.with_default_value(1,\"a\")")] // Invalid type
+    [TestCase("Sample.new.with_default_value(1,99,\"hoge\",3)")] // Over argument
     public void TestDefaultParameterErrors(string src)
     {
         Assert.Throws<RubyException>(() => mrb.LoadString(src));
     }
 
+
+    [TestCase("NSSample::NSClass.new.func", "1")]
+    public void TestNamespace(string src, string expect)
+    {
+        Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+    }
 }
 
