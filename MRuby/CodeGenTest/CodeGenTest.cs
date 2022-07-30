@@ -99,7 +99,9 @@ class CodeGenTest
 
     [TestCase("Sample.new.int_array([1,2,3])", "6")]
     [TestCase("Sample.new.str_array(['1','2','3'])", "1,2,3")]
+    [TestCase("Sample.new.int_array_result(3)", "System.Int32[]")]
     [TestCase("Sample.new.str_array_result(3)", "System.String[]")]
+    [TestCase("Sample.new.str_array_result(3) .length", "3")]
     public void TestArray(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
