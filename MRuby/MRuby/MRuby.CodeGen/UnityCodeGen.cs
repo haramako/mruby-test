@@ -694,18 +694,6 @@ namespace MRuby.CodeGen
         }
 
 #endif
-        static bool Generate(Type t, string path)
-        {
-            return Generate(t, null, path);
-        }
-
-        static bool Generate(Type t, string ns, string path)
-        {
-            CodeGenerator cg = new CodeGenerator();
-            cg.givenNamespace = ns;
-            cg.path = path;
-            return cg.Generate(t, null); // TODO: set registry
-        }
 
         static void GenerateBind(List<Type> list, string name, int order, string path)
         {

@@ -203,85 +203,9 @@ namespace MRuby.CodeGen
             WriteConstructor(t, file);
             WriteFunction(cls, file, false);
             //WriteFunction(cls, file, true);
-            WriteField(t, file);
+            WriteField(cls, file);
             RegFunction(cls, file);
             End(file);
-        }
-
-        public bool Generate(Type t, Registry _registry)
-        {
-            registry = _registry;
-
-
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-
-            if (!t.IsGenericTypeDefinition && (!IsObsolete(t) && t != typeof(YieldInstruction) && t != typeof(Coroutine))
-                || (t.BaseType != null && t.BaseType == typeof(System.MulticastDelegate)))
-            {
-                if (t.IsNested
-                    && ((!t.DeclaringType.IsNested && t.DeclaringType.IsPublic == false)
-                    || (t.DeclaringType.IsNested && t.DeclaringType.IsNestedPublic == false)))
-                    return false;
-
-                if (t.IsEnum)
-                {
-                    StreamWriter file = Begin(t);
-                    WriteHead(t, file);
-                    RegEnumFunction(t, file);
-                    End(file);
-                }
-                else if (t.BaseType == typeof(System.MulticastDelegate))
-                {
-                    if (t.ContainsGenericParameters)
-                        return false;
-
-                    string f = DelegateExportFilename(path, t);
-
-                    StreamWriter file = new StreamWriter(f, false, Encoding.UTF8);
-                    file.NewLine = NewLine;
-                    WriteDelegate(t, file);
-                    file.Close();
-                    return false;
-                }
-                else
-                {
-                    funcname.Clear();
-                    propname.Clear();
-                    directfunc.Clear();
-
-                    RegisterNamespaces(registry, t);
-
-                    StreamWriter file = Begin(t);
-                    WriteHead(t, file);
-                    WriteCSConstructor(t, file);
-                    WriteConstructor(t, file);
-                    //WriteFunction(t, file, false);
-                    //WriteFunction(t, file, true);
-                    WriteField(t, file);
-                    //RegFunction(t, file);
-                    End(file);
-
-                    if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
-                    {
-                        string basename = "LuaUnityEvent_" + _Name(GenericName(t.BaseType)) + ".cs";
-                        string f = path + basename;
-                        string checkf = LuaCodeGen.GenPath + "Unity/" + basename;
-                        if (!File.Exists(checkf)) // if had exported
-                        {
-                            file = new StreamWriter(f, false, Encoding.UTF8);
-                            file.NewLine = NewLine;
-                            WriteEvent(t, file);
-                            file.Close();
-                        }
-                    }
-                }
-
-                return true;
-            }
-            return false;
         }
 
         struct ArgMode
@@ -390,19 +314,6 @@ namespace MRuby
 
             }
             return str;
-        }
-
-        void tryMake(Type t)
-        {
-
-            if (t.BaseType == typeof(System.MulticastDelegate))
-            {
-                CodeGenerator cg = new CodeGenerator();
-                if (File.Exists(cg.DelegateExportFilename(LuaCodeGen.GenPath + "Unity/", t)))
-                    return;
-                cg.path = this.path;
-                cg.Generate(t, null); // TODO: add registry.
-            }
         }
 
         void WriteEvent(Type t, StreamWriter file)
@@ -871,9 +782,9 @@ namespace MRuby.Bind
                     continue;
                 }
 
-                if (md.IsStatic())
+                if (md.IsStatic)
                 {
-                    //Write(file, "Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", RubyMethodName(f), f); // TODO
+                    Write(file, "Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", RubyMethodName(f), f); // TODO
                 }
                 else
                 {
@@ -885,6 +796,18 @@ namespace MRuby.Bind
                 // TODO
                 bool instance = directfunc[f];
                 Write(file, "addMember(l,{0},{1});", f, instance ? "true" : "false");
+            }
+
+            foreach (var f in cls.Fields.Values)
+            {
+                if (f.CanRead)
+                {
+                    Write(file, "Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", f.RubyName, f.GetterName);
+                }
+                if(f.CanWrite)
+                {
+                    Write(file, "Converter.define_method(mrb, _cls, \"{0}=\", {1}, DLL.MRB_ARGS_OPT(16));", f.RubyName, f.SetterName);
+                }
             }
 
             foreach (string f in propname.Keys)
@@ -974,75 +897,74 @@ namespace MRuby.Bind
             return name;
         }
 
-        private void WriteField(Type t, StreamWriter file)
+        private void WriteField(ClassDesc cls, StreamWriter file)
         {
-            // Write field set/get
+            var t = cls.Type;
 
-            FieldInfo[] fields = t.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            foreach (FieldInfo fi in fields)
+            foreach (FieldDesc f in cls.Fields.Values)
             {
-                if (DontExport(fi) || IsObsolete(fi))
-                    continue;
+                // TODO
+                //if (DontExport(fi) || IsObsolete(fi))
+                //  continue;
 
                 PropPair pp = new PropPair();
-                pp.isInstance = !fi.IsStatic;
+                pp.isInstance = !f.IsStatic;
 
-                if (fi.FieldType.BaseType != typeof(MulticastDelegate))
+                if (f.Type.BaseType != typeof(MulticastDelegate))
                 {
                     WriteFunctionAttr(file);
-                    Write(file, "static public mrb_value get_{0}(mrb_state l, mrb_value _self) {{", fi.Name);
+                    Write(file, "static public mrb_value get_{0}(mrb_state l, mrb_value _self) {{", f.Name);
                     WriteTry(file);
 
-                    if (fi.IsStatic)
+                    if (f.IsStatic)
                     {
-                        WriteReturn(fi.FieldType, file, string.Format("{0}.{1}", TypeDecl(t), NormalName(fi.Name)));
+                        WriteReturn(f.Type, file, string.Format("{0}.{1}", TypeDecl(t), f.Name));
                     }
                     else
                     {
                         WriteCheckSelf(file, t);
-                        WriteReturn(fi.FieldType, file, string.Format("self.{0}", NormalName(fi.Name)));
+                        WriteReturn(f.Type, file, string.Format("self.{0}", f.Name));
                     }
 
                     WriteCatchExecption(file);
                     Write(file, "}");
 
-                    pp.get = "get_" + fi.Name;
+                    pp.get = "get_" + f.Name;
                 }
 
-
-
-
-                if (!fi.IsLiteral && !fi.IsInitOnly)
+                if (f.CanWrite)
                 {
                     WriteFunctionAttr(file);
-                    Write(file, "static public mrb_value set_{0}(mrb_state l, mrb_value _self) {{", fi.Name);
+                    Write(file, "static public mrb_value set_{0}(mrb_state l, mrb_value _self) {{", f.Name);
                     WriteTry(file);
-                    if (fi.IsStatic)
+                    if (f.IsStatic)
                     {
-                        Write(file, "{0} v;", TypeDecl(fi.FieldType));
-                        WriteCheckType(file, fi.FieldType, 2);
-                        WriteSet(file, fi.FieldType, TypeDecl(t), NormalName(fi.Name), true);
+                        Write(file, "{0} v;", TypeDecl(f.Type));
+                        WriteCheckType(file, f.Type, 2);
+                        WriteSet(file, f.Type, TypeDecl(t), f.Name, true);
                     }
                     else
                     {
                         WriteCheckSelf(file, t);
-                        Write(file, "{0} v;", TypeDecl(fi.FieldType));
-                        WriteCheckType(file, fi.FieldType, 2);
-                        WriteSet(file, fi.FieldType, t.FullName, NormalName(fi.Name));
+                        Write(file, "{0} v;", TypeDecl(f.Type));
+                        WriteCheckType(file, f.Type, 2);
+                        WriteSet(file, f.Type, t.FullName, f.Name);
                     }
 
-                    if (t.IsValueType && !fi.IsStatic)
+                    if (t.IsValueType && !f.IsStatic)
                         Write(file, "setBack(l,self);");
                     Write(file, "return DLL.mrb_nil_value();");
                     WriteCatchExecption(file);
                     Write(file, "}");
 
-                    pp.set = "set_" + fi.Name;
+                    pp.set = "set_" + f.Name;
                 }
 
                 //propname.Add(fi.Name, pp); // TODO
-                tryMake(fi.FieldType);
+                //tryMake(fi.FieldType);
             }
+
+#if false
             //for this[]
             List<PropertyInfo> getter = new List<PropertyInfo>();
             List<PropertyInfo> setter = new List<PropertyInfo>();
@@ -1123,11 +1045,13 @@ namespace MRuby.Bind
                 pp.isInstance = isInstance;
 
                 //propname.Add(fi.Name, pp); // TODO
-                tryMake(fi.PropertyType);
+                //tryMake(fi.PropertyType);
             }
             //for this[]
             WriteItemFunc(t, file, getter, setter);
+#endif
         }
+
         void WriteItemFunc(Type t, StreamWriter file, List<PropertyInfo> getter, List<PropertyInfo> setter)
         {
 
@@ -2037,7 +1961,7 @@ namespace MRuby.Bind
                     Write(file, "a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n + 1, TypeDecl(t), n + argstart);
                 else if (t.BaseType == typeof(System.MulticastDelegate))
                 {
-                    tryMake(t);
+                    //tryMake(t);
                     Write(file, "Converter.checkDelegate(l,{0},out a{1});", n + argstart, n + 1);
                 }
                 else if (isparams)

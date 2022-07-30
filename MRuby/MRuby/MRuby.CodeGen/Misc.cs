@@ -68,12 +68,16 @@ namespace MRuby.CodeGen
         List<ConstructorInfo> constructors = new List<ConstructorInfo>();
         public readonly IReadOnlyList<ConstructorInfo> Constructors;
 
+        Dictionary<string, FieldDesc> fields = new Dictionary<string, FieldDesc>();
+        public readonly IReadOnlyDictionary<string, FieldDesc> Fields;
+
         private ClassDesc(string name, Type type)
         {
             Name = name;
             Type = type;
             MethodDescs = methodDescs;
             Constructors = constructors;
+            Fields = fields;
         }
 
         public bool IsRoot => (Parent == null);
@@ -124,6 +128,16 @@ namespace MRuby.CodeGen
             constructors.Add(c);
         }
 
+        public void AddField(FieldInfo f)
+        {
+            fields.Add(f.Name, new FieldDesc(f));
+        }
+
+        public void AddProperty(PropertyInfo p)
+        {
+            fields.Add(p.Name, new FieldDesc(p));
+        }
+
         public static ClassDesc CreateRoot() => new ClassDesc("", null);
         public static ClassDesc CreateOrGet(ClassDesc parent, string name, Type type)
         {
@@ -170,10 +184,7 @@ namespace MRuby.CodeGen
             methods.Add(m);
         }
 
-        public bool IsStatic()
-        {
-            return methods.All(m => m.IsStatic);
-        }
+        public bool IsStatic => methods.All(m => m.IsStatic);
 
         public (int,int) ParameterNum()
         {
@@ -192,6 +203,42 @@ namespace MRuby.CodeGen
         public string RubyName => Naming.ToSnakeCase(Name);
 
     }
+
+    public class FieldDesc
+    {
+        public readonly string Name;
+        public readonly FieldInfo Field;
+        public readonly PropertyInfo Property;
+        public readonly MemberInfo MemberInfo;
+
+        public FieldDesc(FieldInfo f)
+        {
+            Name = f.Name;
+            Field = f;
+            MemberInfo = f;
+        }
+
+        public FieldDesc(PropertyInfo p)
+        {
+            Name = p.Name;
+            Property = p;
+            MemberInfo = p;
+        }
+
+        public bool IsProperty => (Property != null);
+            
+        public Type Type => IsProperty ? Property.PropertyType : Field.FieldType;
+        public bool CanRead => IsProperty ? Property.CanRead : Field.IsPublic;
+        public bool CanWrite => IsProperty ? Property.CanWrite : !(Field.IsLiteral || Field.IsInitOnly);
+        public bool IsStatic => IsProperty ? false : Field.IsStatic;
+
+        public string RubyName => Naming.ToSnakeCase(Name);
+
+        public string GetterName => "get_" + Name;
+        public string SetterName => "get_" + Name;
+
+    }
+
 
     public class Registry
     {

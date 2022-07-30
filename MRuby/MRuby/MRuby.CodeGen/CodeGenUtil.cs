@@ -35,9 +35,15 @@ namespace MRuby.CodeGen
             verbose = _verbose;
         }
 
+        void write(string msg)
+        {
+            Console.Write(new string(' ', indent * 2));
+            Console.WriteLine(msg);
+        }
+
         public void PrintRegistry(Registry reg)
         {
-            foreach( var cls in reg.AllNamespaces(reg.RootNamespace))
+            foreach (var cls in reg.AllNamespaces(reg.RootNamespace))
             {
                 write(new string('=', 40));
                 PrintClassDesc(cls);
@@ -56,9 +62,13 @@ namespace MRuby.CodeGen
             }
 
             indent++;
-            foreach( var m in cls.MethodDescs.Values)
+            foreach (var m in cls.MethodDescs.Values)
             {
                 PrintMethodDesc(m);
+            }
+            foreach (var f in cls.Fields.Values)
+            {
+                PrintField(f);
             }
             indent--;
         }
@@ -66,7 +76,7 @@ namespace MRuby.CodeGen
         public void PrintMethodDesc(MethodDesc m)
         {
             var (min, max) = m.ParameterNum();
-            var isStatic = m.IsStatic() ? "s" : " ";
+            var isStatic = m.IsStatic ? "s" : " ";
             write($"{isStatic} {m.Name} => {m.RubyName} ({m.Methods.Count}) {min}..{max}");
 
             if (verbose)
@@ -74,16 +84,18 @@ namespace MRuby.CodeGen
                 indent++;
                 foreach (var method in m.Methods)
                 {
-                    write($"{method}");
+                    write($"  {method} {method.Attributes}");
                 }
                 indent--;
             }
         }
 
-        void write(string msg)
+        public void PrintField(FieldDesc f)
         {
-            Console.Write(new string(' ', indent * 2));
-            Console.WriteLine(msg);
+            var kind = f.IsProperty ? "p" : "f";
+            var canRead = f.CanRead ? "r" : "-";
+            var canWrite = f.CanWrite ? "w" : "-";
+            write($"{kind} {f.Name} {canRead}{canWrite}");
         }
     }
 
@@ -158,7 +170,22 @@ namespace MRuby.CodeGen
                     var methods = t.GetMethods();
                     foreach (var m in methods)
                     {
+                        if ((m.Attributes & MethodAttributes.SpecialName) != 0) {
+                            continue;
+                        }
                         cls.AddMethod(m);
+                    }
+
+                    var fields = t.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                    foreach (var f in fields)
+                    {
+                        cls.AddField(f);
+                    }
+
+                    var properties = t.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                    foreach (var p in properties)
+                    {
+                        cls.AddProperty(p);
                     }
                 }
 
@@ -290,13 +317,18 @@ namespace MRuby.CodeGen
             //return name + "_s";
         }
 
+        private void RegisterClassFields(Type t)
+        {
+
+        }
+
 
         public static bool Generate(Registry reg, string ns, string path)
         {
             CodeGenerator cg = new CodeGenerator();
             cg.givenNamespace = ns;
             cg.path = path;
-            foreach( var cls in reg.AllNamespaces())
+            foreach (var cls in reg.AllNamespaces())
             {
                 if (!cls.IsNamespace)
                 {
