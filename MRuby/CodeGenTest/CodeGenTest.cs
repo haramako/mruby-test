@@ -23,7 +23,7 @@ class CodeGenTest
     [TestCase("HogeFUGA", "hoge_fuga")]
     public void TestRubyMethodName(string input, string expect)
     {
-        Assert.AreEqual(expect, CodeGenerator.RubyMethodName(input));
+        Assert.AreEqual(expect, Naming.ToSnakeCase(input));
     }
 
     [TestCase("1+1", "2")]

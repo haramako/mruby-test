@@ -13,6 +13,12 @@
 * GCまわりをちゃんとする
 * generic対応 => Genericクラスだけ対応。Generic関数は無理か
 
+* extension methodに対応
+* enumに対応
+* delegate対応
+* eventに対応
+* directFuncは消したけど、なんだっけ？
+* [], []=に対応
 * 拡張メソッドに対応 => いらん？
 * ref, out, inに対応 => いらん？
 * 予約語の回避(CodeGenerator.NormalName)
