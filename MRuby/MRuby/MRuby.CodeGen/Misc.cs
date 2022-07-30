@@ -8,6 +8,52 @@ using System.Diagnostics;
 
 namespace MRuby.CodeGen
 {
+    public static class Naming
+    {
+        public static string RubyName(string name)
+        {
+            return name.Replace(".", "::").Replace("+", "::");
+        }
+
+        public static string ToSnakeCase(string name)
+        {
+            // Special names.
+            switch (name)
+            {
+                case "ToString":
+                    return "to_s";
+            }
+
+            var sb = new StringBuilder();
+            var prevIsUpper = true;
+            var prevIsUnderscore = false;
+            for (int i = 0; i < name.Length; i++)
+            {
+                var c = name[i];
+                if (char.IsUpper(c))
+                {
+                    if (prevIsUpper || prevIsUnderscore)
+                    {
+                        sb.Append(char.ToLower(c));
+                    }
+                    else
+                    {
+                        sb.Append('_');
+                        sb.Append(char.ToLower(c));
+                    }
+                    prevIsUpper = true;
+                }
+                else
+                {
+                    sb.Append(c);
+                    prevIsUpper = false;
+                    prevIsUnderscore = (c == '_');
+                }
+            }
+            return sb.ToString();
+        }
+    }
+
     public class ClassDesc
     {
         public ClassDesc Parent { get; private set; }
@@ -17,6 +63,7 @@ namespace MRuby.CodeGen
         public bool Ordered;
 
         Dictionary<string, MethodDesc> methodDescs = new Dictionary<string, MethodDesc>();
+        public readonly IReadOnlyDictionary<string, MethodDesc> MethodDescs;
 
         List<ConstructorInfo> constructors = new List<ConstructorInfo>();
         public readonly IReadOnlyList<ConstructorInfo> Constructors;
@@ -25,6 +72,7 @@ namespace MRuby.CodeGen
         {
             Name = name;
             Type = type;
+            MethodDescs = methodDescs;
             Constructors = constructors;
         }
 
@@ -67,6 +115,7 @@ namespace MRuby.CodeGen
                 found = new MethodDesc(this, m.Name);
                 methodDescs.Add(m.Name, found);
             }
+            found.AddMethodInfo(m);
             return found;
         }
 
@@ -117,9 +166,23 @@ namespace MRuby.CodeGen
 
         public void AddMethodInfo(MethodInfo m)
         {
-            Debug.Assert(m.Name != Name);
+            Debug.Assert(m.Name == Name);
             methods.Add(m);
         }
+
+        public (int,int) ParameterNum()
+        {
+            var min = methods.Min(m => requireParam(m));
+            var max = methods.Max(m => m.GetParameters().Length);
+            return (min, max);
+        }
+
+        int requireParam(MethodInfo m)
+        {
+            return m.GetParameters().TakeWhile(p => !p.HasDefaultValue).Count();
+        }
+
+        public string RubyName => Naming.ToSnakeCase(Name);
 
     }
 

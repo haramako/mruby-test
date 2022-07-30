@@ -25,6 +25,67 @@ namespace MRuby.CodeGen
         }
     }
 
+    public class RegistryPrinter
+    {
+        int indent;
+        bool verbose;
+
+        public RegistryPrinter(bool _verbose = false)
+        {
+            verbose = _verbose;
+        }
+
+        public void PrintRegistry(Registry reg)
+        {
+            foreach( var cls in reg.AllNamespaces(reg.RootNamespace))
+            {
+                write(new string('=', 40));
+                PrintClassDesc(cls);
+            }
+        }
+
+        public void PrintClassDesc(ClassDesc cls)
+        {
+            if (cls.IsNamespace)
+            {
+                write($"namespace {cls.FullName} => {cls.RubyFullName}");
+            }
+            else
+            {
+                write($"class {cls.FullName} => {cls.RubyFullName}");
+            }
+
+            indent++;
+            foreach( var m in cls.MethodDescs.Values)
+            {
+                PrintMethodDesc(m);
+            }
+            indent--;
+        }
+
+        public void PrintMethodDesc(MethodDesc m)
+        {
+            var (min, max) = m.ParameterNum();
+            write($"{m.Name} => {m.RubyName} ({m.Methods.Count}) {min}..{max}");
+
+            if (verbose)
+            {
+                indent++;
+                foreach (var method in m.Methods)
+                {
+                    write($"{method}");
+                }
+                indent--;
+            }
+        }
+
+        void write(string msg)
+        {
+            Console.Write(new string(' ', indent * 2));
+            Console.WriteLine(msg);
+        }
+    }
+
     public class CodeGenUtil
     {
         public CodeGenUtil()
@@ -91,6 +152,12 @@ namespace MRuby.CodeGen
                     foreach (var c in constructors)
                     {
                         cls.AddConstructor(c);
+                    }
+
+                    var methods = t.GetMethods();
+                    foreach (var m in methods)
+                    {
+                        cls.AddMethod(m);
                     }
                 }
 
@@ -212,7 +279,6 @@ namespace MRuby.CodeGen
                 return a.GetParameters().Length - b.GetParameters().Length;
             });
             return methods.ToArray();
-
         }
 
         static string staticName(string name)
