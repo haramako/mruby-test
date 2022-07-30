@@ -7,24 +7,6 @@ using System.Text;
 
 namespace MRuby.CodeGen
 {
-    public static class Logger
-    {
-        public static void Log(string msg)
-        {
-            Console.WriteLine(msg);
-        }
-
-        public static void LogError(string msg)
-        {
-            Console.WriteLine(msg);
-        }
-
-        public static void LogError(object msg)
-        {
-            Console.WriteLine(msg);
-        }
-    }
-
     public class RegistryPrinter
     {
         int indent;
@@ -315,29 +297,6 @@ namespace MRuby.CodeGen
                 return name;
             return name;
             //return name + "_s";
-        }
-
-        private void RegisterClassFields(Type t)
-        {
-
-        }
-
-
-        public static bool Generate(Registry reg, string ns, string path)
-        {
-            CodeGenerator cg = new CodeGenerator();
-            cg.givenNamespace = ns;
-            cg.path = path;
-            foreach (var cls in reg.AllNamespaces())
-            {
-                if (!cls.IsNamespace)
-                {
-                    cg.GenerateClass(cls);
-                }
-            }
-            //var ok = cg.Generate(t, reg);
-
-            return true;
         }
 
         public static void GenerateBind(Registry reg, string path)

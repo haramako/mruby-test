@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace MRuby.CodeGen
 {
@@ -54,6 +55,24 @@ namespace MRuby.CodeGen
         }
     }
 
+    public static class Logger
+    {
+        public static void Log(string msg)
+        {
+            Console.WriteLine(msg);
+        }
+
+        public static void LogError(string msg)
+        {
+            Console.WriteLine(msg);
+        }
+
+        public static void LogError(object msg)
+        {
+            Console.WriteLine(msg);
+        }
+    }
+
     class CodeWriter : IDisposable
     {
         public static EOL eol = MRubySetting.Instance.eol;
@@ -63,10 +82,8 @@ namespace MRuby.CodeGen
 
         public CodeWriter(string path)
         {
-            w = new StreamWriter(Path.Combine(path, "MRuby__Namespaces.cs"), false, Encoding.UTF8);
+            w = new StreamWriter(path, false, Encoding.UTF8);
         }
-
-
 
         string NewLine
         {
@@ -97,9 +114,11 @@ namespace MRuby.CodeGen
             }
         }
 
+        Regex NewLinePattern = new Regex(@"\r\n?|\n|\r");
+
         public void Write(string fmt, params object[] args)
         {
-            fmt = System.Text.RegularExpressions.Regex.Replace(fmt, @"\r\n?|\n|\r", NewLine);
+            fmt = NewLinePattern.Replace(fmt, NewLine);
 
             if (fmt.StartsWith("}")) indent--;
 

@@ -181,6 +181,9 @@ namespace MRuby.CodeGen
 
         public bool IsGeneric => methods.Any(m => m.IsGenericMethod);
 
+        public bool IsOverloaded => (methods.Count > 1);
+
+
         public string RubyName => Naming.ToSnakeCase(Name);
 
     }

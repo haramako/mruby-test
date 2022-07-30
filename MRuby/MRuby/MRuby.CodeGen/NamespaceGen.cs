@@ -14,7 +14,7 @@ namespace MRuby.CodeGen
         public NamespaceGen(Registry _reg, string path)
         {
             reg = _reg;
-            w = new CodeWriter(path);
+            w = new CodeWriter(Path.Combine(path, "MRuby__Namespaces.cs"));
         }
 
         public void Generate()

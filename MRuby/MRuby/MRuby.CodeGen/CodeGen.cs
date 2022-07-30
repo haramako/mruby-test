@@ -37,74 +37,71 @@ namespace MRuby.CodeGen
     public class CodeGenerator
     {
         public string givenNamespace;
-        public string path;
         public bool includeExtension = MRubySetting.Instance.exportExtensionMethod;
-        public EOL eol = MRubySetting.Instance.eol;
 
-        int indent = 0;
+        CodeWriter w;
+        ClassDesc cls;
 
-        private Registry registry;
+        Registry reg;
 
-        public void GenerateClass(ClassDesc cls)
+        public CodeGenerator(Registry _reg, ClassDesc _cls, string path)
+        {
+            reg = _reg;
+            cls = _cls;
+            string clsname = ExportName(cls.Type);
+            string f = path + clsname + ".cs";
+            w = new CodeWriter(f);
+        }
+
+        public void Generate()
         {
             var t = cls.Type;
-            StreamWriter file = Begin(t);
-            WriteHead(t, file);
-            WriteCSConstructor(t, file);
-            WriteConstructor(cls, file);
-            WriteFunction(cls, file, false);
-            //WriteFunction(cls, file, true);
-            WriteField(cls, file);
-            RegFunction(cls, file);
-            End(file);
+            WriteHead(t);
+            WriteCSConstructor(t);
+            WriteConstructor(cls);
+            WriteFunction(cls, false);
+            //WriteFunction(cls, true);
+            WriteField(cls);
+            RegFunction(cls);
+            End();
         }
 
-        StreamWriter Begin(Type t)
+        private void End()
         {
-            string clsname = ExportName(t);
-            string f = path + clsname + ".cs";
-            StreamWriter file = new StreamWriter(f, false, Encoding.UTF8);
-            file.NewLine = NewLine;
-            return file;
+            w.Write("}");
+            w.Write("#endif");
+            w.Dispose();
         }
 
-        private void End(StreamWriter file)
-        {
-            Write(file, "}");
-            Write(file, "#endif");
-            file.Flush();
-            file.Close();
-        }
-
-        private void WriteHead(Type t, StreamWriter file)
+        private void WriteHead(Type t)
         {
             HashSet<string> nsset = new HashSet<string>();
-            Write(file, "#if true");
-            Write(file, "using System;");
-            Write(file, "using MRuby;");
-            Write(file, "using System.Collections.Generic;");
+            w.Write("#if true");
+            w.Write("using System;");
+            w.Write("using MRuby;");
+            w.Write("using System.Collections.Generic;");
             nsset.Add("System");
             nsset.Add("SLua");
             nsset.Add("System.Collections.Generic");
             //WriteExtraNamespace(file, t, nsset);
 #if UNITY_5_3_OR_NEWER
-            Write(file, "[UnityEngine.Scripting.Preserve]");
+            w.Write( "[UnityEngine.Scripting.Preserve]");
 #endif
-            Write(file, "public class {0} {{", ExportName(t));
+            w.Write("public class {0} {{", ExportName(t));
 
-            Write(file, "static RClass _cls;");
-            Write(file, "static mrb_value _cls_value;");
-            //Write(file, "readonly {0} obj;", FullName(t));
+            w.Write("static RClass _cls;");
+            w.Write("static mrb_value _cls_value;");
+            //w.Write( "readonly {0} obj;", FullName(t));
         }
 
-        private void WriteFunction(ClassDesc cls, StreamWriter file, bool writeStatic = false)
+        private void WriteFunction(ClassDesc cls, bool writeStatic = false)
         {
             var t = cls.Type;
 
             foreach (var m in cls.MethodDescs.Values)
             {
                 // ˆêŽž“I‚É override ‚ð–³Œø‰»
-                if (m.Methods.Count > 1)
+                if (m.IsOverloaded)
                 {
                     continue;
                 }
@@ -114,41 +111,15 @@ namespace MRuby.CodeGen
                     continue;
                 }
 
-                // TODO
-                if (m.Name.StartsWith("get_") || m.Name.StartsWith("set_"))
-                {
-                    continue;
-                }
-
-                WriteFunctionDec(file, m);
-                WriteFunctionImpl(file, cls, m);
+                WriteFunctionDec(m);
+                WriteFunctionImpl(cls, m);
             }
         }
 
-        string NewLine
-        {
-            get
-            {
-                switch (eol)
-                {
-                    case EOL.Native:
-                        return System.Environment.NewLine;
-                    case EOL.CRLF:
-                        return "\r\n";
-                    case EOL.CR:
-                        return "\r";
-                    case EOL.LF:
-                        return "\n";
-                    default:
-                        return "";
-                }
-            }
-        }
-
-        void RegFunction(ClassDesc cls, StreamWriter file)
+        void RegFunction(ClassDesc cls)
         {
 #if UNITY_5_3_OR_NEWER
-            Write(file, "[UnityEngine.Scripting.Preserve]");
+            w.Write( "[UnityEngine.Scripting.Preserve]");
 #endif
             var t = cls.Type;
 
@@ -156,21 +127,21 @@ namespace MRuby.CodeGen
             var fullnames = fullname.Split('.');
 
             // Write export function
-            Write(file, "static public void RegisterMembers(mrb_state mrb) {");
+            w.Write("static public void RegisterMembers(mrb_state mrb) {");
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
-                Write(file, "LuaUnityEvent_{1}.reg(l);", FullName(t), _Name((GenericName(t.BaseType))));
+                w.Write("LuaUnityEvent_{1}.reg(l);", FullName(t), _Name((GenericName(t.BaseType))));
             }
 
-            Write(file, "_cls = Converter.GetClass(mrb, \"{0}\");", FullName(t).Replace(".", "::"));
-            Write(file, "_cls_value = DLL.mrb_obj_value(_cls.val);");
+            w.Write("_cls = Converter.GetClass(mrb, \"{0}\");", FullName(t).Replace(".", "::"));
+            w.Write("_cls_value = DLL.mrb_obj_value(_cls.val);");
 
             if (cls.Constructors.Count > 0)
             {
-                Write(file, "Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(16));");
+                w.Write("Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(16));");
             }
-            Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
+            w.Write("TypeCache.AddType(typeof({0}), Construct);", FullName(t));
 
             foreach (var md in cls.MethodDescs.Values)
             {
@@ -180,18 +151,18 @@ namespace MRuby.CodeGen
                     continue;
                 }
                 // TODO
-                if (md.Methods.Count > 1)
+                if (md.IsOverloaded)
                 {
                     continue;
                 }
 
                 if (md.IsStatic)
                 {
-                    Write(file, "Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", md.RubyName, f); // TODO
+                    w.Write("Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", md.RubyName, f); // TODO
                 }
                 else
                 {
-                    Write(file, "Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", md.RubyName, f);
+                    w.Write("Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", md.RubyName, f);
                 }
             }
 
@@ -199,18 +170,18 @@ namespace MRuby.CodeGen
             {
                 if (f.CanRead)
                 {
-                    Write(file, "Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", f.RubyName, f.GetterName);
+                    w.Write("Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", f.RubyName, f.GetterName);
                 }
                 if (f.CanWrite)
                 {
-                    Write(file, "Converter.define_method(mrb, _cls, \"{0}=\", {1}, DLL.MRB_ARGS_OPT(16));", f.RubyName, f.SetterName);
+                    w.Write("Converter.define_method(mrb, _cls, \"{0}=\", {1}, DLL.MRB_ARGS_OPT(16));", f.RubyName, f.SetterName);
                 }
             }
 
-            Write(file, "}");
+            w.Write("}");
         }
 
-        private void WriteField(ClassDesc cls, StreamWriter file)
+        private void WriteField(ClassDesc cls)
         {
             var t = cls.Type;
 
@@ -222,133 +193,133 @@ namespace MRuby.CodeGen
 
                 if (f.Type.BaseType != typeof(MulticastDelegate))
                 {
-                    WriteFunctionAttr(file);
-                    Write(file, "static public mrb_value get_{0}(mrb_state l, mrb_value _self) {{", f.Name);
-                    WriteTry(file);
+                    WriteFunctionAttr();
+                    w.Write("static public mrb_value get_{0}(mrb_state l, mrb_value _self) {{", f.Name);
+                    WriteTry();
 
                     if (f.IsStatic)
                     {
-                        WriteReturn(f.Type, file, string.Format("{0}.{1}", TypeDecl(t), f.Name));
+                        WriteReturn(f.Type, string.Format("{0}.{1}", TypeDecl(t), f.Name));
                     }
                     else
                     {
-                        WriteCheckSelf(file, t);
-                        WriteReturn(f.Type, file, string.Format("self.{0}", f.Name));
+                        WriteCheckSelf(t);
+                        WriteReturn(f.Type, string.Format("self.{0}", f.Name));
                     }
 
-                    WriteCatchExecption(file);
-                    Write(file, "}");
+                    WriteCatchExecption();
+                    w.Write("}");
 
                 }
 
                 if (f.CanWrite)
                 {
-                    WriteFunctionAttr(file);
-                    Write(file, "static public mrb_value set_{0}(mrb_state l, mrb_value _self) {{", f.Name);
-                    WriteTry(file);
+                    WriteFunctionAttr();
+                    w.Write("static public mrb_value set_{0}(mrb_state l, mrb_value _self) {{", f.Name);
+                    WriteTry();
                     if (f.IsStatic)
                     {
-                        Write(file, "{0} v;", TypeDecl(f.Type));
-                        WriteCheckType(file, f.Type, 2);
+                        w.Write("{0} v;", TypeDecl(f.Type));
+                        WriteCheckType(f.Type, 2);
                     }
                     else
                     {
-                        WriteCheckSelf(file, t);
-                        Write(file, "{0} v;", TypeDecl(f.Type));
-                        WriteCheckType(file, f.Type, 2);
+                        WriteCheckSelf(t);
+                        w.Write("{0} v;", TypeDecl(f.Type));
+                        WriteCheckType(f.Type, 2);
                     }
 
                     if (t.IsValueType && !f.IsStatic)
-                        Write(file, "setBack(l,self);");
-                    Write(file, "return DLL.mrb_nil_value();");
-                    WriteCatchExecption(file);
-                    Write(file, "}");
+                        w.Write("setBack(l,self);");
+                    w.Write("return DLL.mrb_nil_value();");
+                    WriteCatchExecption();
+                    w.Write("}");
                 }
             }
         }
 
-        void WriteTry(StreamWriter file)
+        void WriteTry()
         {
-            Write(file, "try {");
+            w.Write("try {");
 #if ENABLE_PROFILE
-            Write(file, "#if DEBUG");
-            Write(file, "var method = System.Reflection.MethodBase.GetCurrentMethod();");
-            Write(file, "string methodName = GetMethodName(method);");
-            Write(file, "#if UNITY_5_5_OR_NEWER");
-            Write(file, "UnityEngine.Profiling.Profiler.BeginSample(methodName);");
-            Write(file, "#else");
-            Write(file, "Profiler.BeginSample(methodName);");
-            Write(file, "#endif");
-            Write(file, "#endif");
+            w.Write( "#if DEBUG");
+            w.Write( "var method = System.Reflection.MethodBase.GetCurrentMethod();");
+            w.Write( "string methodName = GetMethodName(method);");
+            w.Write( "#if UNITY_5_5_OR_NEWER");
+            w.Write( "UnityEngine.Profiling.Profiler.BeginSample(methodName);");
+            w.Write( "#else");
+            w.Write( "Profiler.BeginSample(methodName);");
+            w.Write( "#endif");
+            w.Write( "#endif");
 #endif
         }
 
-        void WriteCatchExecption(StreamWriter file)
+        void WriteCatchExecption()
         {
-            Write(file, "}");
-            Write(file, "catch(Exception e) {");
-            Write(file, "DLL.mrb_exc_raise(l, Converter.error(l, e));");
-            Write(file, "return default;");
-            Write(file, "}");
-            WriteFinaly(file);
+            w.Write("}");
+            w.Write("catch(Exception e) {");
+            w.Write("DLL.mrb_exc_raise(l, Converter.error(l, e));");
+            w.Write("return default;");
+            w.Write("}");
+            WriteFinaly();
         }
-        void WriteFinaly(StreamWriter file)
+        void WriteFinaly()
         {
 #if ENABLE_PROFILE
-            Write(file, "#if DEBUG");
-            Write(file, "finally {");
-            Write(file, "#if UNITY_5_5_OR_NEWER");
-            Write(file, "UnityEngine.Profiling.Profiler.EndSample();");
-            Write(file, "#else");
-            Write(file, "Profiler.EndSample();");
-            Write(file, "#endif");
-            Write(file, "}");
-            Write(file, "#endif");
+            w.Write( "#if DEBUG");
+            w.Write( "finally {");
+            w.Write( "#if UNITY_5_5_OR_NEWER");
+            w.Write( "UnityEngine.Profiling.Profiler.EndSample();");
+            w.Write( "#else");
+            w.Write( "Profiler.EndSample();");
+            w.Write( "#endif");
+            w.Write( "}");
+            w.Write( "#endif");
 #endif
         }
 
-        void WriteCheckType(StreamWriter file, Type t, int n, string v = "v", string nprefix = "")
+        void WriteCheckType(Type t, int n, string v = "v", string nprefix = "")
         {
             if (t.IsEnum)
-                Write(file, "{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", v, TypeDecl(t), n);
+                w.Write("{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", v, TypeDecl(t), n);
             else if (t.BaseType == typeof(System.MulticastDelegate))
-                Write(file, "int op=checkDelegate(l,{2}{0},out {1});", n, v, nprefix);
+                w.Write("int op=checkDelegate(l,{2}{0},out {1});", n, v, nprefix);
             else if (IsValueType(t))
                 if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                    Write(file, "Converter.checkNullable(l,{2}{0},out {1});", n, v, nprefix);
+                    w.Write("Converter.checkNullable(l,{2}{0},out {1});", n, v, nprefix);
                 else
-                    Write(file, "Converter.checkValueType(l,{2}{0},out {1});", n, v, nprefix);
+                    w.Write("Converter.checkValueType(l,{2}{0},out {1});", n, v, nprefix);
             else if (t.IsArray)
-                Write(file, "Converter.checkArray(l,{2}{0},out {1});", n, v, nprefix);
+                w.Write("Converter.checkArray(l,{2}{0},out {1});", n, v, nprefix);
             else
-                Write(file, "Converter.checkType(l,{2}{0},out {1});", n, v, nprefix);
+                w.Write("Converter.checkType(l,{2}{0},out {1});", n, v, nprefix);
         }
 
-        private void WriteFunctionAttr(StreamWriter file)
+        private void WriteFunctionAttr()
         {
-            Write(file, "[MRuby.MonoPInvokeCallbackAttribute(typeof(MRubyCSFunction))]");
+            w.Write("[MRuby.MonoPInvokeCallbackAttribute(typeof(MRubyCSFunction))]");
 #if UNITY_5_3_OR_NEWER
-            Write(file, "[UnityEngine.Scripting.Preserve]");
+            w.Write( "[UnityEngine.Scripting.Preserve]");
 #endif
         }
 
-        private void WriteCSConstructor(Type t, StreamWriter file)
+        private void WriteCSConstructor(Type t)
         {
-            Write(file, "static CSObject Construct(mrb_state mrb, object obj) => ObjectCache.NewObject(mrb, _cls_value, obj);", ExportName(t));
+            w.Write("static CSObject Construct(mrb_state mrb, object obj) => ObjectCache.NewObject(mrb, _cls_value, obj);", ExportName(t));
         }
 
-        private void WriteConstructor(ClassDesc cls, StreamWriter file)
+        private void WriteConstructor(ClassDesc cls)
         {
             var t = cls.Type;
             var cons = cls.Constructors;
             if (cons.Count > 0)
             {
-                WriteFunctionAttr(file);
-                Write(file, "static public mrb_value _initialize(mrb_state l, mrb_value _self) {");
-                WriteTry(file);
+                WriteFunctionAttr();
+                w.Write("static public mrb_value _initialize(mrb_state l, mrb_value _self) {");
+                WriteTry();
                 if (cons.Count > 1)
-                    Write(file, "int argc = LuaDLL.lua_gettop(l);");
-                Write(file, "{0} o;", TypeDecl(t));
+                    w.Write("int argc = LuaDLL.lua_gettop(l);");
+                w.Write("{0} o;", TypeDecl(t));
                 bool first = true;
                 for (int n = 0; n < cons.Count; n++)
                 {
@@ -359,9 +330,9 @@ namespace MRuby.CodeGen
                     {
 #if false
                         if (isUniqueArgsCount(cons, ci))
-                            Write(file, "{0}(argc=={1}){{", first ? "if" : "else if", ci.GetParameters().Length + 1);
+                            w.Write( "{0}(argc=={1}){{", first ? "if" : "else if", ci.GetParameters().Length + 1);
                         else
-                            Write(file, "{0}(Converter.matchType(l,argc,2{1})){{", first ? "if" : "else if", TypeDecl(pars));
+                            w.Write( "{0}(Converter.matchType(l,argc,2{1})){{", first ? "if" : "else if", TypeDecl(pars));
 #endif
                         throw new Exception("not implemented");
                     }
@@ -370,11 +341,11 @@ namespace MRuby.CodeGen
                     {
                         ParameterInfo p = pars[k];
                         bool hasParams = p.IsDefined(typeof(ParamArrayAttribute), false);
-                        CheckArgument(file, p.ParameterType, k, 2, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
+                        CheckArgument(p.ParameterType, k, 2, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
                     }
-                    Write(file, "o=new {0}({1});", TypeDecl(t), FuncCall(ci));
-                    Write(file, "ObjectCache.NewObjectByVal(l, _self, o);");
-                    Write(file, "return DLL.mrb_nil_value();");
+                    w.Write("o=new {0}({1});", TypeDecl(t), FuncCall(ci));
+                    w.Write("ObjectCache.NewObjectByVal(l, _self, o);");
+                    w.Write("return DLL.mrb_nil_value();");
 #if false
                     if (t.Name == "String") // if export system.string, push string as ud not lua string
                         WriteReturn(file, "o");
@@ -382,8 +353,8 @@ namespace MRuby.CodeGen
                         WriteReturn(file, "o");
 #endif
                     if (cons.Count == 1)
-                        WriteCatchExecption(file);
-                    Write(file, "}");
+                        WriteCatchExecption();
+                    w.Write("}");
                     first = false;
                 }
 
@@ -391,49 +362,54 @@ namespace MRuby.CodeGen
                 {
                     if (t.IsValueType)
                     {
-                        Write(file, "{0}(argc=={1}){{", first ? "if" : "else if", 0);
-                        Write(file, "o=new {0}();", FullName(t));
-                        Write(file, "return Converter.make_value(l, o);");
-                        Write(file, "}");
+                        w.Write("{0}(argc=={1}){{", first ? "if" : "else if", 0);
+                        w.Write("o=new {0}();", FullName(t));
+                        w.Write("return Converter.make_value(l, o);");
+                        w.Write("}");
                     }
 
-                    Write(file, "return Converter.error(l,\"New object failed.\");");
-                    WriteCatchExecption(file);
-                    Write(file, "}");
+                    w.Write("return Converter.error(l,\"New object failed.\");");
+                    WriteCatchExecption();
+                    w.Write("}");
                 }
             }
             else if (t.IsValueType) // default constructor
             {
-                WriteFunctionAttr(file);
-                Write(file, "static public mrb_value _initialize(mrb_state l) {");
-                WriteTry(file);
-                Write(file, "{0} o;", FullName(t));
-                Write(file, "o=new {0}();", FullName(t));
-                WriteReturn(file, "o");
-                WriteCatchExecption(file);
-                Write(file, "}");
+                WriteFunctionAttr();
+                w.Write("static public mrb_value _initialize(mrb_state l) {");
+                WriteTry();
+                w.Write("{0} o;", FullName(t));
+                w.Write("o=new {0}();", FullName(t));
+                WriteReturn("o");
+                WriteCatchExecption();
+                w.Write("}");
             }
         }
 
-        void WriteOk(StreamWriter file)
+        void WriteOk()
         {
-            Write(file, "Converter.pushValue(l,true);");
+            w.Write("Converter.pushValue(l,true);");
         }
-        void WriteBad(StreamWriter file)
+        void WriteBad()
         {
-            Write(file, "Converter.pushValue(l,false);");
-        }
-
-        void WriteError(StreamWriter file, string err)
-        {
-            WriteBad(file);
-            Write(file, "LuaDLL.lua_pushstring(l,\"{0}\");", err);
-            Write(file, "return 2;");
+            w.Write("Converter.pushValue(l,false);");
         }
 
-        void WriteReturn(StreamWriter file, string val)
+        void WriteError(string err)
         {
-            Write(file, "return Converter.make_value(l, o);");
+            WriteBad();
+            w.Write("LuaDLL.lua_pushstring(l,\"{0}\");", err);
+            w.Write("return 2;");
+        }
+
+        void WriteReturn(Type t, string ret)
+        {
+            w.Write("return Converter.make_value(l, {0});", ret);
+        }
+
+        void WriteReturn(string val)
+        {
+            w.Write("return Converter.make_value(l, o);");
         }
 
         string[] prefix = new string[] { "System.Collections.Generic" };
@@ -537,24 +513,24 @@ namespace MRuby.CodeGen
                 return m.Name;
         }
 
-        void WriteFunctionDec(StreamWriter file, MethodDesc m)
+        void WriteFunctionDec(MethodDesc m)
         {
-            WriteFunctionAttr(file);
-            Write(file, "static public mrb_value {0}(mrb_state l, mrb_value _self) {{", m.Name);
+            WriteFunctionAttr();
+            w.Write("static public mrb_value {0}(mrb_state l, mrb_value _self) {{", m.Name);
 
         }
 
-        void WriteFunctionImpl(StreamWriter file, ClassDesc cls, MethodDesc md)
+        void WriteFunctionImpl(ClassDesc cls, MethodDesc md)
         {
-            WriteTry(file);
-            if (md.Methods.Count == 1) // no override function
+            WriteTry();
+            if (!md.IsOverloaded) // no override function
             {
-                WriteFunctionCall(file, cls, md);
+                WriteFunctionCall(cls, md);
             }
             else // 2 or more override function
             {
 #if false
-                Write(file, "int argc = LuaDLL.lua_gettop(l);");
+                w.Write( "int argc = LuaDLL.lua_gettop(l);");
 
                 bool first = true;
                 for (int n = 0; n < cons.Length; n++)
@@ -586,11 +562,11 @@ namespace MRuby.CodeGen
                         {
                             bool isExtension = IsExtensionMethod(mi) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
                             if (isUniqueArgsCount(cons, mi))
-                                Write(file, "{0}(argc=={1}){{", first ? "if" : "else if", mi.IsStatic ? mi.GetParameters().Length : mi.GetParameters().Length + 1);
+                                w.Write( "{0}(argc=={1}){{", first ? "if" : "else if", mi.IsStatic ? mi.GetParameters().Length : mi.GetParameters().Length + 1);
                             else
-                                Write(file, "{0}(Converter.matchType(l,argc,{1}{2})){{", first ? "if" : "else if", mi.IsStatic && !isExtension ? 1 : 2, TypeDecl(pars, isExtension ? 1 : 0));
-                            WriteFunctionCall(mi, file, t, bf);
-                            Write(file, "}");
+                                w.Write( "{0}(Converter.matchType(l,argc,{1}{2})){{", first ? "if" : "else if", mi.IsStatic && !isExtension ? 1 : 2, TypeDecl(pars, isExtension ? 1 : 0));
+                            WriteFunctionCall(mi, t, bf);
+                            w.Write( "}");
                             first = false;
                         }
                     }
@@ -598,38 +574,38 @@ namespace MRuby.CodeGen
                 WriteNotMatch(file, m.Name);
 #endif
             }
-            WriteCatchExecption(file);
-            Write(file, "}");
+            WriteCatchExecption();
+            w.Write("}");
 
             //riteOverridedMethod(file, overridedMethods, t, bf); // TODO
         }
 
-        void WriteSimpleFunction(StreamWriter file, string fn, MethodInfo mi, Type t, BindingFlags bf)
+        void WriteSimpleFunction(string fn, MethodInfo mi, Type t, BindingFlags bf)
         {
             //WriteFunctionDec(file, fn);
-            WriteTry(file);
+            WriteTry();
             //WriteFunctionCall(mi, file, t, bf);
-            WriteCatchExecption(file);
-            Write(file, "}");
+            WriteCatchExecption();
+            w.Write("}");
         }
 
-        void WriteCheckSelf(StreamWriter file, Type t)
+        void WriteCheckSelf(Type t)
         {
             if (t.IsValueType)
             {
-                Write(file, "{0} self;", TypeDecl(t));
+                w.Write("{0} self;", TypeDecl(t));
                 if (IsBaseType(t))
-                    Write(file, "Converter.checkType(l,1,out self);");
+                    w.Write("Converter.checkType(l,1,out self);");
                 else
-                    Write(file, "Converter.checkValueType(l,1,out self);");
+                    w.Write("Converter.checkValueType(l,1,out self);");
             }
             else
             {
-                Write(file, "{0} self=({0})Converter.checkSelf(l, _self);", TypeDecl(t));
+                w.Write("{0} self=({0})Converter.checkSelf(l, _self);", TypeDecl(t));
             }
         }
 
-        private void WriteFunctionCall(StreamWriter file, ClassDesc cls, MethodDesc md)
+        private void WriteFunctionCall(ClassDesc cls, MethodDesc md)
         {
             // bool isExtension = IsExtensionMethod(m) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
             bool isExtension = false; // TODO
@@ -639,24 +615,24 @@ namespace MRuby.CodeGen
 
             // Is argument number more than parameter number?
             var requireParameterNum = m.GetParameters().ToArray().TakeWhile(p => !p.HasDefaultValue).Count();
-            Write(file, "var _argc = DLL.mrb_get_argc(l);");
-            Write(file, "if (_argc > {0}){{", m.GetParameters().Length);
-            Write(file, "  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", m.GetParameters().Length);
-            Write(file, "}");
-            Write(file, "else if (_argc < {0}){{", requireParameterNum);
-            Write(file, "  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", requireParameterNum);
-            Write(file, "}");
+            w.Write("var _argc = DLL.mrb_get_argc(l);");
+            w.Write("if (_argc > {0}){{", m.GetParameters().Length);
+            w.Write("  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", m.GetParameters().Length);
+            w.Write("}");
+            w.Write("else if (_argc < {0}){{", requireParameterNum);
+            w.Write("  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", requireParameterNum);
+            w.Write("}");
 
             int argIndex = 1;
             int parOffset = 0;
             if (!m.IsStatic)
             {
-                WriteCheckSelf(file, t);
+                WriteCheckSelf(t);
                 argIndex++;
             }
             else if (isExtension)
             {
-                WriteCheckSelf(file, t);
+                WriteCheckSelf(t);
                 parOffset++;
             }
             for (int n = parOffset; n < pars.Length; n++)
@@ -668,7 +644,7 @@ namespace MRuby.CodeGen
                 }
 
                 bool hasParams = p.IsDefined(typeof(ParamArrayAttribute), false);
-                CheckArgument(file, p.ParameterType, n, argIndex, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
+                CheckArgument(p.ParameterType, n, argIndex, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
             }
 
             string ret = "";
@@ -680,49 +656,49 @@ namespace MRuby.CodeGen
             if (m.IsStatic && !isExtension)
             {
                 if (m.Name == "op_Multiply")
-                    Write(file, "{0}a1*a2;", ret);
+                    w.Write("{0}a1*a2;", ret);
                 else if (m.Name == "op_Subtraction")
-                    Write(file, "{0}a1-a2;", ret);
+                    w.Write("{0}a1-a2;", ret);
                 else if (m.Name == "op_Addition")
-                    Write(file, "{0}a1+a2;", ret);
+                    w.Write("{0}a1+a2;", ret);
                 else if (m.Name == "op_Division")
-                    Write(file, "{0}a1/a2;", ret);
+                    w.Write("{0}a1/a2;", ret);
                 else if (m.Name == "op_UnaryNegation")
-                    Write(file, "{0}-a1;", ret);
+                    w.Write("{0}-a1;", ret);
                 else if (m.Name == "op_UnaryPlus")
-                    Write(file, "{0}+a1;", ret);
+                    w.Write("{0}+a1;", ret);
                 else if (m.Name == "op_Equality")
-                    Write(file, "{0}(a1==a2);", ret);
+                    w.Write("{0}(a1==a2);", ret);
                 else if (m.Name == "op_Inequality")
-                    Write(file, "{0}(a1!=a2);", ret);
+                    w.Write("{0}(a1!=a2);", ret);
                 else if (m.Name == "op_LessThan")
-                    Write(file, "{0}(a1<a2);", ret);
+                    w.Write("{0}(a1<a2);", ret);
                 else if (m.Name == "op_GreaterThan")
-                    Write(file, "{0}(a2<a1);", ret);
+                    w.Write("{0}(a2<a1);", ret);
                 else if (m.Name == "op_LessThanOrEqual")
-                    Write(file, "{0}(a1<=a2);", ret);
+                    w.Write("{0}(a1<=a2);", ret);
                 else if (m.Name == "op_GreaterThanOrEqual")
-                    Write(file, "{0}(a2<=a1);", ret);
+                    w.Write("{0}(a2<=a1);", ret);
                 else
                 {
-                    Write(file, "{3}{2}.{0}({1});", MethodDecl(m), FuncCall(m), TypeDecl(t), ret);
+                    w.Write("{3}{2}.{0}({1});", MethodDecl(m), FuncCall(m), TypeDecl(t), ret);
                 }
             }
             else
             {
-                Write(file, "{2}self.{0}({1});", MethodDecl(m), FuncCall(m, parOffset), ret);
+                w.Write("{2}self.{0}({1});", MethodDecl(m), FuncCall(m, parOffset), ret);
             }
 
             if (m.ReturnType != typeof(void))
             {
-                Write(file, "return Converter.make_value(l, ret);");
+                w.Write("return Converter.make_value(l, ret);");
             }
             else
             {
-                Write(file, "return DLL.mrb_nil_value();");
+                w.Write("return DLL.mrb_nil_value();");
             }
 #if false // TODO: return value with out/ref parameter.
-            WriteOk(file);
+            WriteOk();
             int retcount = 1;
             if (m.ReturnType != typeof(void))
             {
@@ -747,9 +723,9 @@ namespace MRuby.CodeGen
             }
 
             if (t.IsValueType && m.ReturnType == typeof(void) && !m.IsStatic)
-                Write(file, "setBack(l,self);");
+                w.Write( "setBack(l,self);");
 
-            Write(file, "return {0};", retcount);
+            w.Write( "return {0};", retcount);
 #endif
         }
 
@@ -777,33 +753,6 @@ namespace MRuby.CodeGen
                     tn = tn.Replace("System.Object", "object");
                     return tn;
             }
-        }
-
-        void WriteReturn(Type t, StreamWriter file, string ret)
-        {
-            Write(file, "return Converter.make_value(l, {0});", ret);
-        }
-
-        void Write(StreamWriter file, string fmt, params object[] args)
-        {
-
-            fmt = System.Text.RegularExpressions.Regex.Replace(fmt, @"\r\n?|\n|\r", NewLine);
-
-            if (fmt.StartsWith("}")) indent--;
-
-            for (int n = 0; n < indent; n++)
-                file.Write("\t");
-
-
-            if (args.Length == 0)
-                file.WriteLine(fmt);
-            else
-            {
-                string line = string.Format(fmt, args);
-                file.WriteLine(line);
-            }
-
-            if (fmt.EndsWith("{")) indent++;
         }
 
         bool IsOutArg(ParameterInfo p)
@@ -834,50 +783,50 @@ namespace MRuby.CodeGen
             }
         }
 
-        private void CheckArgument(StreamWriter file, Type t, int n, int argstart, bool isout, bool isparams, bool hasDefaultValue, object defaultValue)
+        private void CheckArgument(Type t, int n, int argstart, bool isout, bool isparams, bool hasDefaultValue, object defaultValue)
         {
-            Write(file, "{0} a{1};", TypeDecl(t), n + 1);
+            w.Write("{0} a{1};", TypeDecl(t), n + 1);
 
             if (!isout)
             {
                 if (hasDefaultValue)
                 {
-                    Write(file, "if (_argc < {0}) {{", n + 1);
-                    Write(file, "    a{0} = {1};", n + 1, DefaultValueToString(defaultValue));
-                    Write(file, "} else {");
+                    w.Write("if (_argc < {0}) {{", n + 1);
+                    w.Write("    a{0} = {1};", n + 1, DefaultValueToString(defaultValue));
+                    w.Write("} else {");
                 }
 
                 if (t.IsEnum)
-                    Write(file, "a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n + 1, TypeDecl(t), n + argstart);
+                    w.Write("a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n + 1, TypeDecl(t), n + argstart);
                 else if (t.BaseType == typeof(System.MulticastDelegate))
                 {
                     //tryMake(t);
-                    Write(file, "Converter.checkDelegate(l,{0},out a{1});", n + argstart, n + 1);
+                    w.Write("Converter.checkDelegate(l,{0},out a{1});", n + argstart, n + 1);
                 }
                 else if (isparams)
                 {
                     if (t.GetElementType().IsValueType && !IsBaseType(t.GetElementType()))
-                        Write(file, "Converter.checkValueParams(l,{0},out a{1});", n + argstart, n + 1);
+                        w.Write("Converter.checkValueParams(l,{0},out a{1});", n + argstart, n + 1);
                     else
-                        Write(file, "Converter.checkParams(l,{0},out a{1});", n + argstart, n + 1);
+                        w.Write("Converter.checkParams(l,{0},out a{1});", n + argstart, n + 1);
                 }
                 else if (t.IsArray)
-                    Write(file, "Converter.checkArray(l,{0},out a{1});", n, n + 1);
+                    w.Write("Converter.checkArray(l,{0},out a{1});", n, n + 1);
                 else if (IsValueType(t))
                 {
                     if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                        Write(file, "Converter.checkNullable(l,{0},out a{1});", n + argstart, n + 1);
+                        w.Write("Converter.checkNullable(l,{0},out a{1});", n + argstart, n + 1);
                     else
-                        Write(file, "Converter.checkValueType(l,{0},out a{1});", n + argstart, n + 1);
+                        w.Write("Converter.checkValueType(l,{0},out a{1});", n + argstart, n + 1);
                 }
                 else
                 {
-                    Write(file, "Converter.checkType(l,{0},out a{1});", n /* + argstart */, n + 1);
+                    w.Write("Converter.checkType(l,{0},out a{1});", n /* + argstart */, n + 1);
                 }
 
                 if (hasDefaultValue)
                 {
-                    Write(file, "}");
+                    w.Write("}");
                 }
             }
         }
