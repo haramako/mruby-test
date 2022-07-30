@@ -832,11 +832,11 @@ namespace MRuby.Bind
                 }
                 else
                 {
-                    curNs = NamespaceInfo.CreateOrGet(curNs, name, null);
+                    curNs = ClassDesc.CreateOrGet(curNs, name, null);
                 }
             }
 
-            NamespaceInfo.CreateOrGet(curNs, t.Name, t);
+            ClassDesc.CreateOrGet(curNs, t.Name, t);
         }
 
         void RegFunction(Type t, StreamWriter file)

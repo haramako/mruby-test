@@ -3,21 +3,29 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Reflection;
+using System.Diagnostics;
 
 namespace MRuby.CodeGen
 {
-    public class NamespaceInfo
+    public class ClassDesc
     {
-        public NamespaceInfo Parent { get; private set; }
+        public ClassDesc Parent { get; private set; }
         public readonly string Name;
         public Type Type { get; private set; }
-        public readonly Dictionary<string, NamespaceInfo> Children = new Dictionary<string, NamespaceInfo>();
+        public readonly Dictionary<string, ClassDesc> Children = new Dictionary<string, ClassDesc>();
         public bool Ordered;
 
-        private NamespaceInfo(string name, Type type)
+        Dictionary<string, MethodDesc> methodDescs = new Dictionary<string, MethodDesc>();
+
+        List<ConstructorInfo> constructors = new List<ConstructorInfo>();
+        public readonly IReadOnlyList<ConstructorInfo> Constructors;
+
+        private ClassDesc(string name, Type type)
         {
             Name = name;
             Type = type;
+            Constructors = constructors;
         }
 
         public bool IsRoot => (Parent == null);
@@ -52,14 +60,28 @@ namespace MRuby.CodeGen
         public string BinderClassName => "MRuby_" + FullName.Replace('.', '_').Replace('+', '_');
 
 
-
-        public static NamespaceInfo CreateRoot() => new NamespaceInfo("", null);
-        public static NamespaceInfo CreateOrGet(NamespaceInfo parent, string name, Type type)
+        public MethodDesc AddMethod(MethodInfo m)
         {
-            NamespaceInfo ns;
+            if( !methodDescs.TryGetValue( m.Name, out var found))
+            {
+                found = new MethodDesc(this, m.Name);
+                methodDescs.Add(m.Name, found);
+            }
+            return found;
+        }
+
+        public void AddConstructor(ConstructorInfo c)
+        {
+            constructors.Add(c);
+        }
+
+        public static ClassDesc CreateRoot() => new ClassDesc("", null);
+        public static ClassDesc CreateOrGet(ClassDesc parent, string name, Type type)
+        {
+            ClassDesc ns;
             if (parent == null)
             {
-                ns = new NamespaceInfo(name, type);
+                ns = new ClassDesc(name, type);
             }
             else
             {
@@ -70,7 +92,7 @@ namespace MRuby.CodeGen
                 }
                 else
                 {
-                    ns = new NamespaceInfo(name, type);
+                    ns = new ClassDesc(name, type);
                     ns.Parent = parent;
                     parent.Children.Add(name, ns);
                 }
@@ -80,16 +102,37 @@ namespace MRuby.CodeGen
 
     }
 
+    public class MethodDesc
+    {
+        List<MethodInfo> methods = new List<MethodInfo>();
+        public readonly IReadOnlyList<MethodInfo> Methods;
+
+        public readonly string Name;
+
+        public MethodDesc(ClassDesc owner, string name)
+        {
+            Methods = methods;
+            Name = name;
+        }
+
+        public void AddMethodInfo(MethodInfo m)
+        {
+            Debug.Assert(m.Name != Name);
+            methods.Add(m);
+        }
+
+    }
+
     public class Registry
     {
-        public NamespaceInfo RootNamespace = NamespaceInfo.CreateRoot();
+        public ClassDesc RootNamespace = ClassDesc.CreateRoot();
 
-        public NamespaceInfo FindByType(Type t)
+        public ClassDesc FindByType(Type t)
         {
             return AllNamespaces(RootNamespace).Where(ns => ns.Type == t).FirstOrDefault();
         }
 
-        public IEnumerable<NamespaceInfo> AllNamespaces(NamespaceInfo cur)
+        public IEnumerable<ClassDesc> AllNamespaces(ClassDesc cur)
         {
             yield return cur;
             foreach (var child in cur.Children.Values)

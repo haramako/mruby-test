@@ -19,7 +19,7 @@ namespace MRuby.CodeGen
 
         public void Generate()
         {
-            var list = new List<NamespaceInfo>();
+            var list = new List<ClassDesc>();
             makeGenerateOrder(list, reg.RootNamespace);
 
             foreach( var ns in list)
@@ -48,7 +48,7 @@ namespace MRuby.CodeGen
             w.Dispose();
         }
 
-        void makeGenerateOrder(List<NamespaceInfo> list, NamespaceInfo ns)
+        void makeGenerateOrder(List<ClassDesc> list, ClassDesc ns)
         {
             if( ns.Ordered)
             {
@@ -71,7 +71,7 @@ namespace MRuby.CodeGen
 
         }
 
-        void generateNamespaces(List<NamespaceInfo> list)
+        void generateNamespaces(List<ClassDesc> list)
         {
             w.Write("static void defineModule(mrb_state mrb, string name, string ns){");
             w.Write("DLL.mrb_define_module_under(mrb, Converter.GetClass(mrb, ns), name);");
@@ -87,7 +87,7 @@ namespace MRuby.CodeGen
             w.Write("}");
         }
 
-        void generateNamespace(NamespaceInfo ns)
+        void generateNamespace(ClassDesc ns)
         {
             if (ns.IsRoot)
             {
@@ -105,7 +105,7 @@ namespace MRuby.CodeGen
             }
         }
 
-        void generateClassBinders(List<NamespaceInfo> list)
+        void generateClassBinders(List<ClassDesc> list)
         {
             w.Write("static void registerClasses(mrb_state mrb) {");
             foreach (var ns in list)

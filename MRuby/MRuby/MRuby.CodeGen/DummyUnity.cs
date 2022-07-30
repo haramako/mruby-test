@@ -13,7 +13,7 @@ namespace UnityEngine
 
         public static void LogError(object msg)
         {
-
+            Console.WriteLine(msg);
         }
     }
 

@@ -1,8 +1,8 @@
-* 引数のarray対応
-* overload対応
-* rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
+* ここらで一回リファクタか？
 * CodeGenのコード整理: overload, 拡張メソッドなどの対応をしやすくするために、一度独自のクラスにクラスの情報をいれる
 * a*の番号を1はじまりから、0はじまりにする
+* overload対応
+* rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
 
 ? ArrayをC#オブジェクトのまま返すか, RubyのArrayに変換するか・・・
 ? Value の継承を検討する(ArrayValue, DictionaryValue ...)
@@ -21,6 +21,7 @@
 * 複数のMrbStateを使えるようにする
 * CodeGenしなくても、リフレクションで触れる対応
 
+- 引数のarray対応 => 一部の型のみ
 - デフォルト引数に対応 =>いまは、一部の型のみ
 - 引数がDLL.MRB_ARGS_OPT(4)固定になってるのを修正
 - スタックトレースをだせるようにする
