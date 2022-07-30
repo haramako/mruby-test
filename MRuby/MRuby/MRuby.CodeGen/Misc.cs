@@ -110,7 +110,7 @@ namespace MRuby.CodeGen
 
         public MethodDesc AddMethod(MethodInfo m)
         {
-            if( !methodDescs.TryGetValue( m.Name, out var found))
+            if (!methodDescs.TryGetValue(m.Name, out var found))
             {
                 found = new MethodDesc(this, m.Name);
                 methodDescs.Add(m.Name, found);
@@ -170,6 +170,11 @@ namespace MRuby.CodeGen
             methods.Add(m);
         }
 
+        public bool IsStatic()
+        {
+            return methods.All(m => m.IsStatic);
+        }
+
         public (int,int) ParameterNum()
         {
             var min = methods.Min(m => requireParam(m));
@@ -182,6 +187,8 @@ namespace MRuby.CodeGen
             return m.GetParameters().TakeWhile(p => !p.HasDefaultValue).Count();
         }
 
+        public bool IsGeneric => methods.Any(m => m.IsGenericMethod);
+
         public string RubyName => Naming.ToSnakeCase(Name);
 
     }
@@ -192,7 +199,12 @@ namespace MRuby.CodeGen
 
         public ClassDesc FindByType(Type t)
         {
-            return AllNamespaces(RootNamespace).Where(ns => ns.Type == t).FirstOrDefault();
+            return AllNamespaces().Where(ns => ns.Type == t).FirstOrDefault();
+        }
+
+        public IEnumerable<ClassDesc> AllNamespaces()
+        {
+            return AllNamespaces(RootNamespace);
         }
 
         public IEnumerable<ClassDesc> AllNamespaces(ClassDesc cur)

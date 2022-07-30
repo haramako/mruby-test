@@ -66,7 +66,8 @@ namespace MRuby.CodeGen
         public void PrintMethodDesc(MethodDesc m)
         {
             var (min, max) = m.ParameterNum();
-            write($"{m.Name} => {m.RubyName} ({m.Methods.Count}) {min}..{max}");
+            var isStatic = m.IsStatic() ? "s" : " ";
+            write($"{isStatic} {m.Name} => {m.RubyName} ({m.Methods.Count}) {min}..{max}");
 
             if (verbose)
             {
@@ -290,14 +291,21 @@ namespace MRuby.CodeGen
         }
 
 
-        public static bool Generate(Registry reg, Type t, string ns, string path)
+        public static bool Generate(Registry reg, string ns, string path)
         {
             CodeGenerator cg = new CodeGenerator();
             cg.givenNamespace = ns;
             cg.path = path;
-            var ok = cg.Generate(t, reg);
+            foreach( var cls in reg.AllNamespaces())
+            {
+                if (!cls.IsNamespace)
+                {
+                    cg.GenerateClass(cls);
+                }
+            }
+            //var ok = cg.Generate(t, reg);
 
-            return ok;
+            return true;
         }
 
         public static void GenerateBind(Registry reg, string path)

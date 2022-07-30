@@ -194,9 +194,24 @@ namespace MRuby.CodeGen
 
         private Registry registry;
 
+        public void GenerateClass(ClassDesc cls)
+        {
+            var t = cls.Type;
+            StreamWriter file = Begin(t);
+            WriteHead(t, file);
+            WriteCSConstructor(t, file);
+            WriteConstructor(t, file);
+            WriteFunction(cls, file, false);
+            //WriteFunction(cls, file, true);
+            WriteField(t, file);
+            RegFunction(cls, file);
+            End(file);
+        }
+
         public bool Generate(Type t, Registry _registry)
         {
             registry = _registry;
+
 
             if (!Directory.Exists(path))
             {
@@ -243,10 +258,10 @@ namespace MRuby.CodeGen
                     WriteHead(t, file);
                     WriteCSConstructor(t, file);
                     WriteConstructor(t, file);
-                    WriteFunction(t, file, false);
-                    WriteFunction(t, file, true);
+                    //WriteFunction(t, file, false);
+                    //WriteFunction(t, file, true);
                     WriteField(t, file);
-                    RegFunction(t, file);
+                    //RegFunction(t, file);
                     End(file);
 
                     if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
@@ -667,55 +682,31 @@ namespace MRuby.Bind
             }
         }
 
-        private void WriteFunction(Type t, StreamWriter file, bool writeStatic = false)
+        private void WriteFunction(ClassDesc cls, StreamWriter file, bool writeStatic = false)
         {
-            BindingFlags bf = BindingFlags.Public | BindingFlags.DeclaredOnly;
-            if (writeStatic)
-                bf |= BindingFlags.Static;
-            else
-                bf |= BindingFlags.Instance;
+            var t = cls.Type;
 
-            MethodInfo[] members = t.GetMethods(bf);
-            List<MethodInfo> methods = new List<MethodInfo>();
-            foreach (MethodInfo mi in members)
-                methods.Add(tryFixGenericMethod(mi));
-
-            if (!writeStatic && this.includeExtension)
-            {
-                if (extensionMethods.ContainsKey(t))
-                {
-                    methods.AddRange(extensionMethods[t]);
-                }
-            }
-            foreach (MethodInfo mi in methods)
+            foreach (var m in cls.MethodDescs.Values)
             {
                 // ˆêŽž“I‚É override ‚ð–³Œø‰»
-                MethodBase[] cons = GetMethods(t, mi.Name, bf);
-                if( cons.Length > 1)
+                if (m.Methods.Count > 1)
                 {
                     continue;
                 }
 
-                bool instanceFunc;
-                if (writeStatic && isPInvoke(mi, out instanceFunc))
+                if (m.IsGeneric)
                 {
-                    directfunc.Add(t.FullName + "." + mi.Name, instanceFunc);
                     continue;
                 }
 
-                string fn = writeStatic ? staticName(mi.Name) : mi.Name;
-                if (mi.MemberType == MemberTypes.Method
-                    && !IsObsolete(mi)
-                    && !DontExport(mi)
-                    && !funcname.Contains(fn)
-                    && isUsefullMethod(mi)
-                    && !MemberInFilter(t, mi)
-                    && !ContainUnsafe(mi))
+                // TODO
+                if (m.Name.StartsWith("get_") || m.Name.StartsWith("set_"))
                 {
-                    WriteFunctionDec(file, fn);
-                    WriteFunctionImpl(file, mi, t, bf);
-                    funcname.Add(fn);
+                    continue;
                 }
+
+                WriteFunctionDec(file, m);
+                WriteFunctionImpl(file, cls, m);
             }
         }
 
@@ -839,11 +830,12 @@ namespace MRuby.Bind
             ClassDesc.CreateOrGet(curNs, t.Name, t);
         }
 
-        void RegFunction(Type t, StreamWriter file)
+        void RegFunction(ClassDesc cls, StreamWriter file)
         {
 #if UNITY_5_3_OR_NEWER
             Write(file, "[UnityEngine.Scripting.Preserve]");
 #endif
+            var t = cls.Type;
 
             var fullname = string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace;
             var fullnames = fullname.Split('.');
@@ -866,20 +858,27 @@ namespace MRuby.Bind
             Write(file, "TypeCache.AddType(typeof({0}), Construct);", FullName(t));
 
             //Write(file, "getTypeTable(l,\"{0}\");", string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace);
-            foreach (string i in funcname)
+            foreach (var md in cls.MethodDescs.Values)
             {
-                string f = i;
-                var isStatic = t.GetMethods().Any(m => m.Name == f && m.IsStatic); // TODO
-                trygetOverloadedVersion(t, ref f);
-                if (isStatic)
+                var f = md.Name;
+                if( md.IsGeneric)
                 {
-                    Write(file, "Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", RubyMethodName(f), f);
+                    continue;
+                }
+                // TODO
+                if( md.Methods.Count > 1)
+                {
+                    continue;
+                }
+
+                if (md.IsStatic())
+                {
+                    //Write(file, "Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", RubyMethodName(f), f); // TODO
                 }
                 else
                 {
                     Write(file, "Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", RubyMethodName(f), f);
                 }
-                //Write(file, "addMember(l,{0});", f);
             }
             foreach (string f in directfunc.Keys)
             {
@@ -1041,7 +1040,7 @@ namespace MRuby.Bind
                     pp.set = "set_" + fi.Name;
                 }
 
-                propname.Add(fi.Name, pp);
+                //propname.Add(fi.Name, pp); // TODO
                 tryMake(fi.FieldType);
             }
             //for this[]
@@ -1123,7 +1122,7 @@ namespace MRuby.Bind
                 }
                 pp.isInstance = isInstance;
 
-                propname.Add(fi.Name, pp);
+                //propname.Add(fi.Name, pp); // TODO
                 tryMake(fi.PropertyType);
             }
             //for this[]
@@ -1619,10 +1618,10 @@ namespace MRuby.Bind
             return false;
         }
 
-        void WriteFunctionDec(StreamWriter file, string name)
+        void WriteFunctionDec(StreamWriter file, MethodDesc m)
         {
             WriteFunctionAttr(file);
-            Write(file, "static public mrb_value {0}(mrb_state l, mrb_value _self) {{", name);
+            Write(file, "static public mrb_value {0}(mrb_state l, mrb_value _self) {{", m.Name);
 
         }
 
@@ -1672,24 +1671,16 @@ namespace MRuby.Bind
             WriteError(file, string.Format("No matched override function {0} to call", fn));
         }
 
-        void WriteFunctionImpl(StreamWriter file, MethodInfo m, Type t, BindingFlags bf)
+        void WriteFunctionImpl(StreamWriter file, ClassDesc cls, MethodDesc md)
         {
             WriteTry(file);
-            MethodBase[] cons = GetMethods(t, m.Name, bf);
-
-            Dictionary<string, MethodInfo> overridedMethods = null;
-
-            if (cons.Length == 1) // no override function
+            if (md.Methods.Count == 1) // no override function
             {
-                if (isUsefullMethod(m) && !m.ReturnType.ContainsGenericParameters && !m.ContainsGenericParameters) // don't support generic method
-                    WriteFunctionCall(m, file, t, bf);
-                else
-                {
-                    WriteNotMatch(file, m.Name);
-                }
+                WriteFunctionCall(file, cls, md);
             }
             else // 2 or more override function
             {
+#if false
                 Write(file, "int argc = LuaDLL.lua_gettop(l);");
 
                 bool first = true;
@@ -1732,17 +1723,20 @@ namespace MRuby.Bind
                     }
                 }
                 WriteNotMatch(file, m.Name);
+#endif
             }
             WriteCatchExecption(file);
             Write(file, "}");
 
-            WriteOverridedMethod(file, overridedMethods, t, bf);
+            //riteOverridedMethod(file, overridedMethods, t, bf); // TODO
         }
 
         void WriteOverridedMethod(StreamWriter file, Dictionary<string, MethodInfo> methods, Type t, BindingFlags bf)
         {
             if (methods == null)
+            {
                 return;
+            }
 
             foreach (var pair in methods)
             {
@@ -1755,9 +1749,9 @@ namespace MRuby.Bind
 
         void WriteSimpleFunction(StreamWriter file, string fn, MethodInfo mi, Type t, BindingFlags bf)
         {
-            WriteFunctionDec(file, fn);
+            //WriteFunctionDec(file, fn);
             WriteTry(file);
-            WriteFunctionCall(mi, file, t, bf);
+            //WriteFunctionCall(mi, file, t, bf);
             WriteCatchExecption(file);
             Write(file, "}");
         }
@@ -1795,15 +1789,19 @@ namespace MRuby.Bind
                     Write(file, "Converter.checkValueType(l,1,out self);");
             }
             else
+            {
                 Write(file, "{0} self=({0})Converter.checkSelf(l, _self);", TypeDecl(t));
+            }
         }
 
 
-        private void WriteFunctionCall(MethodInfo m, StreamWriter file, Type t, BindingFlags bf)
+        private void WriteFunctionCall(StreamWriter file, ClassDesc cls, MethodDesc md)
         {
-
-            bool isExtension = IsExtensionMethod(m) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
+            // bool isExtension = IsExtensionMethod(m) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
+            bool isExtension = false; // TODO
+            var m = md.Methods[0];
             ParameterInfo[] pars = m.GetParameters();
+            var t = cls.Type;
 
             // Is argument number more than parameter number?
             var requireParameterNum = m.GetParameters().ToArray().TakeWhile(p => !p.HasDefaultValue).Count();
