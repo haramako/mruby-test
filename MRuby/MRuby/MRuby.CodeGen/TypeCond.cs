@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MRuby.CodeGen
 {
@@ -148,6 +149,106 @@ namespace MRuby.CodeGen
             }
             return method;
         }
+
+        public static bool IsValueType(Type t)
+        {
+            if (t.IsByRef) t = t.GetElementType();
+            return t.BaseType == typeof(ValueType) && !IsBaseType(t);
+        }
+
+        public static bool IsBaseType(Type t)
+        {
+            return t.IsPrimitive || CSObject.isImplByLua(t);
+        }
+
+        public static string SimpleTypeName(Type t)
+        {
+            string tn = t.Name;
+            switch (tn)
+            {
+                case "Single":
+                    return "float";
+                case "String":
+                    return "string";
+                case "Double":
+                    return "double";
+                case "Boolean":
+                    return "bool";
+                case "Int32":
+                    return "int";
+                case "Object":
+                    //return reg.FindByType(t).FullName;
+                    return "object";
+                default:
+                    tn = TypeDecl(t);
+                    tn = tn.Replace("System.Collections.Generic.", "");
+                    tn = tn.Replace("System.Object", "object");
+                    return tn;
+            }
+        }
+
+        static string[] prefix = new string[] { "System.Collections.Generic" };
+        static Regex GenericParamPattern = new Regex(@"`\d", RegexOptions.None);
+        public static string RemoveRef(string s, bool removearray = true)
+        {
+            if (s.EndsWith("&")) s = s.Substring(0, s.Length - 1);
+            if (s.EndsWith("[]") && removearray) s = s.Substring(0, s.Length - 2);
+            if (s.StartsWith(prefix[0])) s = s.Substring(prefix[0].Length + 1, s.Length - prefix[0].Length - 1);
+
+            s = s.Replace("+", ".");
+            if (s.Contains("`"))
+            {
+                s = GenericParamPattern.Replace(s, "");
+                s = s.Replace("[", "<");
+                s = s.Replace("]", ">");
+            }
+            return s;
+        }
+
+        public static string TypeDecl(ParameterInfo[] pars, int paraOffset = 0)
+        {
+            string ret = "";
+            for (int n = paraOffset; n < pars.Length; n++)
+            {
+                ret += ",typeof(";
+                if (pars[n].IsOut)
+                    ret += "LuaOut";
+                else
+                    ret += SimpleTypeName(pars[n].ParameterType);
+                ret += ")";
+            }
+            return ret;
+        }
+
+        public static string TypeDecl(Type t)
+        {
+            if (t.IsGenericType)
+            {
+                string ret = Naming.GenericBaseName(t);
+
+                string gs = "";
+                gs += "<";
+                Type[] types = t.GetGenericArguments();
+                for (int n = 0; n < types.Length; n++)
+                {
+                    gs += TypeDecl(types[n]);
+                    if (n < types.Length - 1)
+                        gs += ",";
+                }
+                gs += ">";
+
+                ret = Regex.Replace(ret, @"`\d", gs);
+
+                return ret;
+            }
+            if (t.IsArray)
+            {
+                return TypeDecl(t.GetElementType()) + "[]";
+            }
+            else
+                return TypeCond.RemoveRef(t.ToString(), false);
+        }
+
     }
 
 }

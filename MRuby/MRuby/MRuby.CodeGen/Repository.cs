@@ -119,6 +119,18 @@ namespace MRuby.CodeGen
             fields.Add(p.Name, new FieldDesc(p));
         }
 
+        public string ExportName()
+        {
+            if (Type.IsGenericType)
+            {
+                return "MRuby_" + FullName.Replace(".", "_").Replace("+", "_");
+            }
+            else
+            {
+                return "MRuby_" + FullName.Replace(".", "_").Replace("+", "_"); // TODO
+            }
+        }
+
         public static ClassDesc CreateRoot() => new ClassDesc("", null);
         public static ClassDesc CreateOrGet(ClassDesc parent, string name, Type type)
         {

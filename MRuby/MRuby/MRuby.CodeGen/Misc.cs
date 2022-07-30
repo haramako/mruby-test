@@ -53,6 +53,39 @@ namespace MRuby.CodeGen
             }
             return sb.ToString();
         }
+
+        public static string GenericBaseName(Type t)
+        {
+            string n = t.FullName;
+            if (n.IndexOf('[') > 0)
+            {
+                n = n.Substring(0, n.IndexOf('['));
+            }
+            return n.Replace("+", ".");
+        }
+
+        public static string GenericName(Type t, string sep = "_")
+        {
+            try
+            {
+                Type[] tt = t.GetGenericArguments();
+                string ret = "";
+                for (int n = 0; n < tt.Length; n++)
+                {
+                    string dt = TypeCond.SimpleTypeName(tt[n]);
+                    ret += dt;
+                    if (n < tt.Length - 1)
+                        ret += sep;
+                }
+                return ret;
+            }
+            catch (Exception e)
+            {
+                Logger.Log(e.ToString());
+                return "";
+            }
+        }
+
     }
 
     public static class Logger

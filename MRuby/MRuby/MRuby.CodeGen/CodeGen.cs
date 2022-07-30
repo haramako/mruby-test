@@ -37,32 +37,29 @@ namespace MRuby.CodeGen
     public class CodeGenerator
     {
         public string givenNamespace;
-        public bool includeExtension = MRubySetting.Instance.exportExtensionMethod;
+
+        ClassDesc cls;
+        Registry reg;
 
         CodeWriter w;
-        ClassDesc cls;
-
-        Registry reg;
 
         public CodeGenerator(Registry _reg, ClassDesc _cls, string path)
         {
             reg = _reg;
             cls = _cls;
-            string clsname = ExportName(cls.Type);
-            string f = path + clsname + ".cs";
-            w = new CodeWriter(f);
+            w = new CodeWriter(path + cls.ExportName() + ".cs");
         }
 
         public void Generate()
         {
             var t = cls.Type;
-            WriteHead(t);
-            WriteCSConstructor(t);
-            WriteConstructor(cls);
-            WriteFunction(cls, false);
+            WriteHead();
+            WriteCSConstructor();
+            WriteConstructor();
+            WriteFunction(false);
             //WriteFunction(cls, true);
-            WriteField(cls);
-            RegFunction(cls);
+            WriteField();
+            RegFunction();
             End();
         }
 
@@ -73,28 +70,19 @@ namespace MRuby.CodeGen
             w.Dispose();
         }
 
-        private void WriteHead(Type t)
+        private void WriteHead()
         {
-            HashSet<string> nsset = new HashSet<string>();
             w.Write("#if true");
             w.Write("using System;");
             w.Write("using MRuby;");
             w.Write("using System.Collections.Generic;");
-            nsset.Add("System");
-            nsset.Add("SLua");
-            nsset.Add("System.Collections.Generic");
-            //WriteExtraNamespace(file, t, nsset);
-#if UNITY_5_3_OR_NEWER
-            w.Write( "[UnityEngine.Scripting.Preserve]");
-#endif
-            w.Write("public class {0} {{", ExportName(t));
+            w.Write("public class {0} {{", cls.ExportName());
 
             w.Write("static RClass _cls;");
             w.Write("static mrb_value _cls_value;");
-            //w.Write( "readonly {0} obj;", FullName(t));
         }
 
-        private void WriteFunction(ClassDesc cls, bool writeStatic = false)
+        private void WriteFunction(bool writeStatic = false)
         {
             var t = cls.Type;
 
@@ -116,7 +104,7 @@ namespace MRuby.CodeGen
             }
         }
 
-        void RegFunction(ClassDesc cls)
+        void RegFunction()
         {
 #if UNITY_5_3_OR_NEWER
             w.Write( "[UnityEngine.Scripting.Preserve]");
@@ -131,7 +119,7 @@ namespace MRuby.CodeGen
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
-                w.Write("LuaUnityEvent_{1}.reg(l);", FullName(t), _Name((GenericName(t.BaseType))));
+                w.Write("LuaUnityEvent_{1}.reg(l);", FullName(t), reg.FindByType(cls.BaseType).RubyFullName);
             }
 
             w.Write("_cls = Converter.GetClass(mrb, \"{0}\");", FullName(t).Replace(".", "::"));
@@ -181,7 +169,7 @@ namespace MRuby.CodeGen
             w.Write("}");
         }
 
-        private void WriteField(ClassDesc cls)
+        private void WriteField()
         {
             var t = cls.Type;
 
@@ -199,12 +187,12 @@ namespace MRuby.CodeGen
 
                     if (f.IsStatic)
                     {
-                        WriteReturn(f.Type, string.Format("{0}.{1}", TypeDecl(t), f.Name));
+                        WriteReturn(string.Format("{0}.{1}", TypeCond.TypeDecl(t), f.Name));
                     }
                     else
                     {
-                        WriteCheckSelf(t);
-                        WriteReturn(f.Type, string.Format("self.{0}", f.Name));
+                        WriteCheckSelf();
+                        WriteReturn(string.Format("self.{0}", f.Name));
                     }
 
                     WriteCatchExecption();
@@ -219,13 +207,13 @@ namespace MRuby.CodeGen
                     WriteTry();
                     if (f.IsStatic)
                     {
-                        w.Write("{0} v;", TypeDecl(f.Type));
+                        w.Write("{0} v;", TypeCond.TypeDecl(f.Type));
                         WriteCheckType(f.Type, 2);
                     }
                     else
                     {
-                        WriteCheckSelf(t);
-                        w.Write("{0} v;", TypeDecl(f.Type));
+                        WriteCheckSelf();
+                        w.Write("{0} v;", TypeCond.TypeDecl(f.Type));
                         WriteCheckType(f.Type, 2);
                     }
 
@@ -281,18 +269,32 @@ namespace MRuby.CodeGen
         void WriteCheckType(Type t, int n, string v = "v", string nprefix = "")
         {
             if (t.IsEnum)
-                w.Write("{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", v, TypeDecl(t), n);
+            {
+                w.Write("{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", v, TypeCond.TypeDecl(t), n);
+            }
             else if (t.BaseType == typeof(System.MulticastDelegate))
+            {
                 w.Write("int op=checkDelegate(l,{2}{0},out {1});", n, v, nprefix);
-            else if (IsValueType(t))
+            }
+            else if (TypeCond.IsValueType(t))
+            {
                 if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
+                {
                     w.Write("Converter.checkNullable(l,{2}{0},out {1});", n, v, nprefix);
+                }
                 else
+                {
                     w.Write("Converter.checkValueType(l,{2}{0},out {1});", n, v, nprefix);
+                }
+            }
             else if (t.IsArray)
+            {
                 w.Write("Converter.checkArray(l,{2}{0},out {1});", n, v, nprefix);
+            }
             else
+            {
                 w.Write("Converter.checkType(l,{2}{0},out {1});", n, v, nprefix);
+            }
         }
 
         private void WriteFunctionAttr()
@@ -303,12 +305,12 @@ namespace MRuby.CodeGen
 #endif
         }
 
-        private void WriteCSConstructor(Type t)
+        private void WriteCSConstructor()
         {
-            w.Write("static CSObject Construct(mrb_state mrb, object obj) => ObjectCache.NewObject(mrb, _cls_value, obj);", ExportName(t));
+            w.Write("static CSObject Construct(mrb_state mrb, object obj) => ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName());
         }
 
-        private void WriteConstructor(ClassDesc cls)
+        private void WriteConstructor()
         {
             var t = cls.Type;
             var cons = cls.Constructors;
@@ -319,7 +321,7 @@ namespace MRuby.CodeGen
                 WriteTry();
                 if (cons.Count > 1)
                     w.Write("int argc = LuaDLL.lua_gettop(l);");
-                w.Write("{0} o;", TypeDecl(t));
+                w.Write("{0} o;", TypeCond.TypeDecl(t));
                 bool first = true;
                 for (int n = 0; n < cons.Count; n++)
                 {
@@ -343,7 +345,7 @@ namespace MRuby.CodeGen
                         bool hasParams = p.IsDefined(typeof(ParamArrayAttribute), false);
                         CheckArgument(p.ParameterType, k, 2, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
                     }
-                    w.Write("o=new {0}({1});", TypeDecl(t), FuncCall(ci));
+                    w.Write("o=new {0}({1});", TypeCond.TypeDecl(t), FuncCall(ci));
                     w.Write("ObjectCache.NewObjectByVal(l, _self, o);");
                     w.Write("return DLL.mrb_nil_value();");
 #if false
@@ -386,109 +388,9 @@ namespace MRuby.CodeGen
             }
         }
 
-        void WriteOk()
-        {
-            w.Write("Converter.pushValue(l,true);");
-        }
-        void WriteBad()
-        {
-            w.Write("Converter.pushValue(l,false);");
-        }
-
-        void WriteError(string err)
-        {
-            WriteBad();
-            w.Write("LuaDLL.lua_pushstring(l,\"{0}\");", err);
-            w.Write("return 2;");
-        }
-
-        void WriteReturn(Type t, string ret)
+        void WriteReturn(string ret)
         {
             w.Write("return Converter.make_value(l, {0});", ret);
-        }
-
-        void WriteReturn(string val)
-        {
-            w.Write("return Converter.make_value(l, o);");
-        }
-
-        string[] prefix = new string[] { "System.Collections.Generic" };
-        string RemoveRef(string s, bool removearray = true)
-        {
-            if (s.EndsWith("&")) s = s.Substring(0, s.Length - 1);
-            if (s.EndsWith("[]") && removearray) s = s.Substring(0, s.Length - 2);
-            if (s.StartsWith(prefix[0])) s = s.Substring(prefix[0].Length + 1, s.Length - prefix[0].Length - 1);
-
-            s = s.Replace("+", ".");
-            if (s.Contains("`"))
-            {
-                string regstr = @"`\d";
-                Regex r = new Regex(regstr, RegexOptions.None);
-                s = r.Replace(s, "");
-                s = s.Replace("[", "<");
-                s = s.Replace("]", ">");
-            }
-            return s;
-        }
-
-        string GenericBaseName(Type t)
-        {
-            string n = t.FullName;
-            if (n.IndexOf('[') > 0)
-            {
-                n = n.Substring(0, n.IndexOf('['));
-            }
-            return n.Replace("+", ".");
-        }
-
-        string GenericName(Type t, string sep = "_")
-        {
-            try
-            {
-                Type[] tt = t.GetGenericArguments();
-                string ret = "";
-                for (int n = 0; n < tt.Length; n++)
-                {
-                    string dt = SimpleType(tt[n]);
-                    ret += dt;
-                    if (n < tt.Length - 1)
-                        ret += sep;
-                }
-                return ret;
-            }
-            catch (Exception e)
-            {
-                Debug.Log(e.ToString());
-                return "";
-            }
-        }
-
-        string _Name(string n)
-        {
-            string ret = "";
-            for (int i = 0; i < n.Length; i++)
-            {
-                if (char.IsLetterOrDigit(n[i]))
-                    ret += n[i];
-                else
-                    ret += "_";
-            }
-            return ret;
-        }
-
-        string TypeDecl(ParameterInfo[] pars, int paraOffset = 0)
-        {
-            string ret = "";
-            for (int n = paraOffset; n < pars.Length; n++)
-            {
-                ret += ",typeof(";
-                if (pars[n].IsOut)
-                    ret += "LuaOut";
-                else
-                    ret += SimpleType(pars[n].ParameterType);
-                ret += ")";
-            }
-            return ret;
         }
 
         // fill Generic Parameters if needed
@@ -580,7 +482,7 @@ namespace MRuby.CodeGen
             //riteOverridedMethod(file, overridedMethods, t, bf); // TODO
         }
 
-        void WriteSimpleFunction(string fn, MethodInfo mi, Type t, BindingFlags bf)
+        void WriteSimpleFunction(string fn, MethodInfo mi, BindingFlags bf)
         {
             //WriteFunctionDec(file, fn);
             WriteTry();
@@ -589,19 +491,20 @@ namespace MRuby.CodeGen
             w.Write("}");
         }
 
-        void WriteCheckSelf(Type t)
+        void WriteCheckSelf()
         {
+            var t = cls.Type;
             if (t.IsValueType)
             {
-                w.Write("{0} self;", TypeDecl(t));
-                if (IsBaseType(t))
+                w.Write("{0} self;", TypeCond.TypeDecl(t));
+                if (TypeCond.IsBaseType(t))
                     w.Write("Converter.checkType(l,1,out self);");
                 else
                     w.Write("Converter.checkValueType(l,1,out self);");
             }
             else
             {
-                w.Write("{0} self=({0})Converter.checkSelf(l, _self);", TypeDecl(t));
+                w.Write("{0} self=({0})Converter.checkSelf(l, _self);", TypeCond.TypeDecl(t));
             }
         }
 
@@ -627,12 +530,12 @@ namespace MRuby.CodeGen
             int parOffset = 0;
             if (!m.IsStatic)
             {
-                WriteCheckSelf(t);
+                WriteCheckSelf();
                 argIndex++;
             }
             else if (isExtension)
             {
-                WriteCheckSelf(t);
+                WriteCheckSelf();
                 parOffset++;
             }
             for (int n = parOffset; n < pars.Length; n++)
@@ -681,7 +584,7 @@ namespace MRuby.CodeGen
                     w.Write("{0}(a2<=a1);", ret);
                 else
                 {
-                    w.Write("{3}{2}.{0}({1});", MethodDecl(m), FuncCall(m), TypeDecl(t), ret);
+                    w.Write("{3}{2}.{0}({1});", MethodDecl(m), FuncCall(m), TypeCond.TypeDecl(t), ret);
                 }
             }
             else
@@ -729,38 +632,12 @@ namespace MRuby.CodeGen
 #endif
         }
 
-        string SimpleType(Type t)
-        {
-
-            string tn = t.Name;
-            switch (tn)
-            {
-                case "Single":
-                    return "float";
-                case "String":
-                    return "string";
-                case "Double":
-                    return "double";
-                case "Boolean":
-                    return "bool";
-                case "Int32":
-                    return "int";
-                case "Object":
-                    return FullName(t);
-                default:
-                    tn = TypeDecl(t);
-                    tn = tn.Replace("System.Collections.Generic.", "");
-                    tn = tn.Replace("System.Object", "object");
-                    return tn;
-            }
-        }
-
         bool IsOutArg(ParameterInfo p)
         {
             return (p.IsOut || p.IsDefined(typeof(System.Runtime.InteropServices.OutAttribute), false)) && !p.ParameterType.IsArray;
         }
 
-        public string DefaultValueToString(object v)
+        public string DefaultValueToCode(object v)
         {
             if (v == null)
             {
@@ -785,19 +662,19 @@ namespace MRuby.CodeGen
 
         private void CheckArgument(Type t, int n, int argstart, bool isout, bool isparams, bool hasDefaultValue, object defaultValue)
         {
-            w.Write("{0} a{1};", TypeDecl(t), n + 1);
+            w.Write("{0} a{1};", TypeCond.TypeDecl(t), n + 1);
 
             if (!isout)
             {
                 if (hasDefaultValue)
                 {
                     w.Write("if (_argc < {0}) {{", n + 1);
-                    w.Write("    a{0} = {1};", n + 1, DefaultValueToString(defaultValue));
+                    w.Write("    a{0} = {1};", n + 1, DefaultValueToCode(defaultValue));
                     w.Write("} else {");
                 }
 
                 if (t.IsEnum)
-                    w.Write("a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n + 1, TypeDecl(t), n + argstart);
+                    w.Write("a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n + 1, TypeCond.TypeDecl(t), n + argstart);
                 else if (t.BaseType == typeof(System.MulticastDelegate))
                 {
                     //tryMake(t);
@@ -805,14 +682,14 @@ namespace MRuby.CodeGen
                 }
                 else if (isparams)
                 {
-                    if (t.GetElementType().IsValueType && !IsBaseType(t.GetElementType()))
+                    if (t.GetElementType().IsValueType && !TypeCond.IsBaseType(t.GetElementType()))
                         w.Write("Converter.checkValueParams(l,{0},out a{1});", n + argstart, n + 1);
                     else
                         w.Write("Converter.checkParams(l,{0},out a{1});", n + argstart, n + 1);
                 }
                 else if (t.IsArray)
                     w.Write("Converter.checkArray(l,{0},out a{1});", n, n + 1);
-                else if (IsValueType(t))
+                else if (TypeCond.IsValueType(t))
                 {
                     if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
                         w.Write("Converter.checkNullable(l,{0},out a{1});", n + argstart, n + 1);
@@ -831,76 +708,13 @@ namespace MRuby.CodeGen
             }
         }
 
-        bool IsValueType(Type t)
-        {
-            if (t.IsByRef) t = t.GetElementType();
-            return t.BaseType == typeof(ValueType) && !IsBaseType(t);
-        }
-
-        bool IsBaseType(Type t)
-        {
-            return t.IsPrimitive || CSObject.isImplByLua(t);
-        }
-
-        string FullName(string str)
-        {
-            if (str == null)
-            {
-                throw new NullReferenceException();
-            }
-            return RemoveRef(str.Replace("+", "."));
-        }
-
-        string TypeDecl(Type t)
-        {
-            if (t.IsGenericType)
-            {
-                string ret = GenericBaseName(t);
-
-                string gs = "";
-                gs += "<";
-                Type[] types = t.GetGenericArguments();
-                for (int n = 0; n < types.Length; n++)
-                {
-                    gs += TypeDecl(types[n]);
-                    if (n < types.Length - 1)
-                        gs += ",";
-                }
-                gs += ">";
-
-                ret = Regex.Replace(ret, @"`\d", gs);
-
-                return ret;
-            }
-            if (t.IsArray)
-            {
-                return TypeDecl(t.GetElementType()) + "[]";
-            }
-            else
-                return RemoveRef(t.ToString(), false);
-        }
-
-        string ExportName(Type t)
-        {
-            if (t.IsGenericType)
-            {
-                return string.Format("MRuby_{0}_{1}", _Name(GenericBaseName(t)), _Name(GenericName(t)));
-            }
-            else
-            {
-                string name = RemoveRef(t.FullName, true);
-                name = "MRuby_" + name;
-                return name.Replace(".", "_");
-            }
-        }
-
         string FullName(Type t)
         {
             if (t.FullName == null)
             {
                 return t.Name;
             }
-            return FullName(t.FullName);
+            return t.FullName.Replace("+", ".");
         }
 
         string FuncCall(MethodBase m, int parOffset = 0)
