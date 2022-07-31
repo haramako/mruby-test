@@ -61,6 +61,7 @@ namespace MRuby.CodeGen
             WriteField();
             RegFunction();
             End();
+            cls.Exported = true;
         }
 
         private void End()
@@ -80,28 +81,6 @@ namespace MRuby.CodeGen
 
             w.Write("static RClass _cls;");
             w.Write("static mrb_value _cls_value;");
-        }
-
-        private void WriteFunction(bool writeStatic = false)
-        {
-            var t = cls.Type;
-
-            foreach (var m in cls.MethodDescs.Values)
-            {
-                // ˆêŽž“I‚É override ‚ð–³Œø‰»
-                if (m.IsOverloaded)
-                {
-                    continue;
-                }
-
-                if (m.IsGeneric)
-                {
-                    continue;
-                }
-
-                WriteFunctionDec(m);
-                WriteFunctionImpl(cls, m);
-            }
         }
 
         void RegFunction()
@@ -135,11 +114,6 @@ namespace MRuby.CodeGen
             {
                 var f = md.Name;
                 if (md.IsGeneric)
-                {
-                    continue;
-                }
-                // TODO
-                if (md.IsOverloaded)
                 {
                     continue;
                 }
@@ -224,6 +198,7 @@ namespace MRuby.CodeGen
             }
         }
 
+        #region Utility Writers
         void WriteTry()
         {
             w.Write("try {");
@@ -391,6 +366,11 @@ namespace MRuby.CodeGen
             w.Write("return Converter.make_value(l, {0});", ret);
         }
 
+        void WriteError(string err)
+        {
+            w.Write("throw new Exception(\"{0}\");", err);
+        }
+
         // fill Generic Parameters if needed
         string MethodDecl(MethodInfo m)
         {
@@ -413,6 +393,29 @@ namespace MRuby.CodeGen
                 return m.Name;
         }
 
+        #endregion
+
+
+        #region Generate function
+
+        private void WriteFunction(bool writeStatic = false)
+        {
+            var t = cls.Type;
+
+            //cls.MethodDescs.GroupBy(m=>m.)
+
+            foreach (var m in cls.MethodDescs.Values)
+            {
+                if (m.IsGeneric)
+                {
+                    continue;
+                }
+
+                WriteFunctionDec(m);
+                WriteFunctionImpl(cls, m);
+            }
+        }
+
         void WriteFunctionDec(MethodDesc m)
         {
             WriteFunctionAttr();
@@ -423,56 +426,41 @@ namespace MRuby.CodeGen
         void WriteFunctionImpl(ClassDesc cls, MethodDesc md)
         {
             WriteTry();
+            w.Write("var _argc = DLL.mrb_get_argc(l);");
             if (!md.IsOverloaded) // no override function
             {
-                WriteFunctionCall(cls, md);
+                WriteFunctionCall(cls, md, md.Methods[0]);
             }
             else // 2 or more override function
             {
-#if false
-                w.Write( "int argc = LuaDLL.lua_gettop(l);");
+                w.Write("unsafe {");
+                w.Write("var _argv = DLL.mrb_get_argv(l);");
 
                 bool first = true;
-                for (int n = 0; n < cons.Length; n++)
+                foreach (var m in md.Methods)
                 {
-                    if (cons[n].MemberType == MemberTypes.Method)
+                    var ifCode = first ? "if" : "else if";
+                    if (m.MemberType == MemberTypes.Method)
                     {
-                        MethodInfo mi = cons[n] as MethodInfo;
-                        if (ContainUnsafe(mi))
-                        {
-                            continue;
-                        }
-                        if (mi.IsDefined(typeof(LuaOverrideAttribute), false))
-                        {
-                            if (overridedMethods == null)
-                                overridedMethods = new Dictionary<string, MethodInfo>();
-
-                            LuaOverrideAttribute attr = mi.GetCustomAttributes(typeof(LuaOverrideAttribute), false)[0] as LuaOverrideAttribute;
-                            string fn = attr.fn;
-                            if (overridedMethods.ContainsKey(fn))
-                                throw new Exception(string.Format("Found function with same name {0}", fn));
-                            overridedMethods.Add(fn, mi);
-                            continue;
-                        }
-
+                        MethodInfo mi = m as MethodInfo;
                         ParameterInfo[] pars = mi.GetParameters();
-                        if (isUsefullMethod(mi)
-                            && !mi.ReturnType.ContainsGenericParameters
-                            /*&& !ContainGeneric(pars)*/) // don't support generic method
-                        {
-                            bool isExtension = IsExtensionMethod(mi) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
-                            if (isUniqueArgsCount(cons, mi))
-                                w.Write( "{0}(argc=={1}){{", first ? "if" : "else if", mi.IsStatic ? mi.GetParameters().Length : mi.GetParameters().Length + 1);
-                            else
-                                w.Write( "{0}(Converter.matchType(l,argc,{1}{2})){{", first ? "if" : "else if", mi.IsStatic && !isExtension ? 1 : 2, TypeDecl(pars, isExtension ? 1 : 0));
-                            WriteFunctionCall(mi, t, bf);
-                            w.Write( "}");
-                            first = false;
-                        }
+                        var requireParameterNum = pars.TakeWhile(p => !p.HasDefaultValue).Count();
+                        var argTypes = pars.Select(p => reg.FindByType(p.ParameterType, cls).CodeName).Select(s=>$"typeof({s})").ToArray();
+                        var argTypesStr = string.Join(",", argTypes);
+                        w.Write("{0}(_argc >= {2} && _argc <= {3} && Converter.matchType(l, _argv, {1})){{", ifCode, argTypesStr, requireParameterNum, pars.Length);
+                        WriteFunctionCall(cls, md, m);
+                        w.Write("}");
+                        first = false;
                     }
+                    else
+                    {
+                        Logger.Log($"Unknown method type {m.MethodHandle} in {m}");
+                    }
+                    first = false;
                 }
-                WriteNotMatch(file, m.Name);
-#endif
+
+                WriteNotMatch(md.Name);
+                w.Write("}");
             }
             WriteCatchExecption();
             w.Write("}");
@@ -506,17 +494,15 @@ namespace MRuby.CodeGen
             }
         }
 
-        private void WriteFunctionCall(ClassDesc cls, MethodDesc md)
+        private void WriteFunctionCall(ClassDesc cls, MethodDesc md, MethodInfo m)
         {
             // bool isExtension = IsExtensionMethod(m) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
             bool isExtension = false; // TODO
-            var m = md.Methods[0];
             ParameterInfo[] pars = m.GetParameters();
             var t = cls.Type;
 
             // Is argument number more than parameter number?
             var requireParameterNum = m.GetParameters().ToArray().TakeWhile(p => !p.HasDefaultValue).Count();
-            w.Write("var _argc = DLL.mrb_get_argc(l);");
             w.Write("if (_argc > {0}){{", m.GetParameters().Length);
             w.Write("  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", m.GetParameters().Length);
             w.Write("}");
@@ -540,9 +526,6 @@ namespace MRuby.CodeGen
             {
                 ParameterInfo p = pars[n];
                 string pn = p.ParameterType.Name;
-                if (pn.EndsWith("&"))
-                {
-                }
 
                 bool hasParams = p.IsDefined(typeof(ParamArrayAttribute), false);
                 CheckArgument(p.ParameterType, n, argIndex, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
@@ -630,6 +613,13 @@ namespace MRuby.CodeGen
 #endif
         }
 
+        void WriteNotMatch(string fn)
+        {
+            WriteError($"No matched override function {fn} to call");
+        }
+
+        #endregion
+
         bool IsOutArg(ParameterInfo p)
         {
             return (p.IsOut || p.IsDefined(typeof(System.Runtime.InteropServices.OutAttribute), false)) && !p.ParameterType.IsArray;
@@ -678,7 +668,7 @@ namespace MRuby.CodeGen
                     //tryMake(t);
                     w.Write("Converter.checkDelegate(l,{0},out a{1});", n + argstart, n);
                 }
-                else if (isparams)
+                else if (isparams && false /* TODO */)
                 {
                     if (t.GetElementType().IsValueType && !TypeCond.IsBaseType(t.GetElementType()))
                         w.Write("Converter.checkValueParams(l,{0},out a{1});", n + argstart, n);

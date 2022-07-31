@@ -36,16 +36,19 @@ namespace MRuby.CodeGen
                 }
                 else
                 {
-                    string baseType;
-                    if(cls.Type == typeof(Object))
+                    if (cls.Exported)
                     {
-                        baseType = "null";
+                        string baseType;
+                        if (cls.Type == typeof(Object))
+                        {
+                            baseType = "null";
+                        }
+                        else
+                        {
+                            baseType = "\"" + reg.FindByType(cls.BaseType, cls).RubyFullName + "\"";
+                        }
+                        w.Write("new RuntimeClassDesc( \"{0}\", {1}.Register, {2}),", cls.RubyFullName, cls.BinderClassName, baseType);
                     }
-                    else
-                    {
-                        baseType = "\"" + reg.FindByType(cls.BaseType, cls).RubyFullName + "\"";
-                    }
-                    w.Write("new RuntimeClassDesc( \"{0}\", {1}.Register, {2}),", cls.RubyFullName, cls.BinderClassName, baseType);
                 }
             }
 

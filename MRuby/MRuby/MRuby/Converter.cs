@@ -857,98 +857,52 @@ return true;
 #endif
         }
 
-        public static bool matchType(IntPtr l, int p, MRubyType lt, Type t)
+        public static bool matchType(mrb_state mrb, mrb_value v, Type t)
         {
+            var type = DLL.mrb_type(v);
+            switch (type)
+            {
+                case mrb_vtype.MRB_TT_INTEGER:
+                    return t == typeof(int);
+                case mrb_vtype.MRB_TT_FLOAT:
+                    return t == typeof(float);
+                case mrb_vtype.MRB_TT_STRING:
+                    return t == typeof(string);
+                case mrb_vtype.MRB_TT_TRUE:
+                    return t == typeof(bool);
+                case mrb_vtype.MRB_TT_FALSE:
+                    return t == typeof(bool);
+                case mrb_vtype.MRB_TT_ARRAY:
+                    return t == typeof(Array);
+                case mrb_vtype.MRB_TT_OBJECT:
+                    return false;
+                default:
+                    return false;
+            }
+        }
+
+         public static unsafe bool matchType(mrb_state mrb, mrb_value* args, int p, Type t1)
+        {
+            return matchType(mrb, args[p], t1);
+        }
+
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1)
+        {
+            return matchType(mrb, args[0], t1);
+        }
+
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1, Type t2)
+        {
+            return matchType(mrb, args[0], t1) && matchType(mrb, args[1], t2);
+        }
+
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1, Type t2, Type t3)
+        {
+            return matchType(mrb, args[0], t1) && matchType(mrb, args[1], t2) && matchType(mrb, args[2], t3);
+        }
+
 #if false
-			if (t == typeof(object))
-			{
-				return true;
-			}
-			else if (t == typeof(Type) && isTypeTable(l, p))
-			{
-				return true;
-			}
-			else if (t == typeof(char[]) || t == typeof(byte[]))
-			{
-				return lt == LuaTypes.LUA_TSTRING || lt == LuaTypes.LUA_TUSERDATA;
-			}
-
-			switch (lt)
-			{
-				case LuaTypes.LUA_TNIL:
-					return !t.IsValueType && !t.IsPrimitive;
-				case LuaTypes.LUA_TNUMBER:
-#if LUA_5_3
-					if (LuaDLL.lua_isinteger(l, p) > 0)
-						return (t.IsPrimitive && t != typeof(float) && t != typeof(double)) || t.IsEnum;
-					else
-						return t == typeof(float) || t == typeof(double);
-#else
-					return t.IsPrimitive || t.IsEnum;
-#endif
-				case LuaTypes.LUA_TUSERDATA:
-					object o = checkObj(l, p);
-					Type ot = o.GetType();
-					return ot == t || ot.IsSubclassOf(t) || t.IsAssignableFrom(ot);
-				case LuaTypes.LUA_TSTRING:
-					return t == typeof(string);
-				case LuaTypes.LUA_TBOOLEAN:
-					return t == typeof(bool);
-				case LuaTypes.LUA_TTABLE:
-					{
-						if (t == typeof(LuaTable) || t.IsArray)
-							return true;
-						else if (t.IsValueType)
-							return luaTypeCheck(l, p, t.Name);
-						else if (LuaDLL.luaS_subclassof(l, p, t.Name) == 1)
-							return true;
-						else
-							return false;
-					}
-				case LuaTypes.LUA_TFUNCTION:
-					return t == typeof(LuaFunction) || t.BaseType == typeof(MulticastDelegate);
-				case LuaTypes.LUA_TTHREAD:
-					return t == typeof(LuaThread);
-
-			}
-#endif
-            return false;
-        }
-
-        public static bool matchType(IntPtr l, int p, Type t1)
-        {
-#if false
-			MRubyType t = LuaDLL.lua_type(l, p);
-			return matchType(l, p, t, t1);
-#endif
-            return false;
-        }
-
-        public static bool matchType(IntPtr l, int total, int from, Type t1)
-        {
-            if (total - from + 1 != 1)
-                return false;
-
-            return matchType(l, from, t1);
-        }
-
-        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2)
-        {
-            if (total - from + 1 != 2)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2);
-        }
-
-        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3)
-        {
-            if (total - from + 1 != 3)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3);
-        }
-
-        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4)
+        public static bool matchType(mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4)
         {
             if (total - from + 1 != 4)
                 return false;
@@ -956,7 +910,7 @@ return true;
             return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4);
         }
 
-        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5)
+        public static bool matchType(mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5)
         {
             if (total - from + 1 != 5)
                 return false;
@@ -966,7 +920,7 @@ return true;
         }
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6)
         {
             if (total - from + 1 != 6)
                 return false;
@@ -977,7 +931,7 @@ return true;
         }
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7)
         {
             if (total - from + 1 != 7)
                 return false;
@@ -989,7 +943,7 @@ return true;
         }
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8)
         {
             if (total - from + 1 != 8)
                 return false;
@@ -1003,7 +957,7 @@ return true;
 
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9)
         {
             if (total - from + 1 != 9)
                 return false;
@@ -1017,7 +971,7 @@ return true;
         }
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9, Type t10)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9, Type t10)
         {
             if (total - from + 1 != 10)
                 return false;
@@ -1031,7 +985,7 @@ return true;
                     && matchType(l, from + 9, t10);
         }
 
-        public static bool matchType(IntPtr l, int total, int from, params Type[] t)
+        public static bool matchType(mrb_state mrb, int total, int from, params Type[] t)
         {
             if (total - from + 1 != t.Length)
                 return false;
@@ -1045,7 +999,7 @@ return true;
             return true;
         }
 
-        public static bool matchType(IntPtr l, int total, int from, ParameterInfo[] pars)
+        public static bool matchType(mrb_state mrb, int total, int from, ParameterInfo[] pars)
         {
 #if false
 			if (total - from + 1 != pars.Length)
@@ -1061,6 +1015,7 @@ return true;
 #endif
             return true;
         }
+#endif
 
         public static void define_method(mrb_state mrb, RClass cls, string funcName, MRubyCSFunction func, mrb_aspec aspec)
         {

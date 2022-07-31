@@ -38,9 +38,9 @@ public class Sample
         return 99;
     }
 
-    public int OverloadedMethod(int n)
+    public void SetIntValue(int n)
     {
-        return n;
+        IntField = n;
     }
 
     public static int StaticMethod(int n)
@@ -73,7 +73,11 @@ public class Sample
         return Enumerable.Repeat<string>("a", n).ToArray();
     }
 
-#if false
+    public int OverloadedMethod(int n)
+    {
+        return n;
+    }
+
     public int OverloadedMethod(int n, int m)
     {
         return n + m;
@@ -81,9 +85,8 @@ public class Sample
 
     public string OverloadedMethod(string s)
     {
-        return s;
+        return s + "*";
     }
-#endif
 
 }
 

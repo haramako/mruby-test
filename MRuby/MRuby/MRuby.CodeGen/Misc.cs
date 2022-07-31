@@ -105,9 +105,23 @@ namespace MRuby.CodeGen
             Console.WriteLine(msg);
         }
 
+        public static void Log(string fmt, params object[] args)
+        {
+            Console.WriteLine(fmt, args);
+        }
+
+        public static void Log(object msg)
+        {
+            Console.WriteLine(msg);
+        }
+
         public static void LogError(string msg)
         {
             Console.WriteLine(msg);
+        }
+        public static void LogError(string fmt, params object[] args)
+        {
+            Console.WriteLine(fmt, args);
         }
 
         public static void LogError(object msg)

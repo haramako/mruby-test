@@ -95,7 +95,7 @@ namespace MRuby.CodeGen
         /// </summary>
         public string FullName { get; private set; }
 
-        public bool Ordered;
+        public bool Exported;
 
         /// <summary>
         /// Export指定されたクラスからのポップカウント

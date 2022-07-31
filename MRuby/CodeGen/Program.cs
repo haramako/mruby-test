@@ -20,7 +20,7 @@ class Program
             Console.WriteLine();
             foreach ( var m in typeof(Object).GetMethods())
             {
-                Console.WriteLine(m);
+                Console.WriteLine($"{m.Name} {m}");
             }
             Environment.Exit(0);
         }
@@ -31,7 +31,7 @@ class Program
         var gen = new CodeGenUtil();
         var mrubyTypes = CodeGenUtil.GetMRubyClasses(new string[] { "MRubyLib" });
         mrubyTypes.Add(typeof(System.Object));
-        mrubyTypes.Add(typeof(System.Array));
+        //mrubyTypes.Add(typeof(System.Array));
 
         foreach (var t in mrubyTypes)
         {

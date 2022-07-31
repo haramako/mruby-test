@@ -1,5 +1,7 @@
 * overload対応
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
+* l => mrb に変換
+* paramsに対応
 
 ? ArrayをC#オブジェクトのまま返すか, RubyのArrayに変換するか・・・
 ? Value の継承を検討する(ArrayValue, DictionaryValue ...)
