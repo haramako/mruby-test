@@ -75,8 +75,8 @@ class CodeGenTest
     }
 
     [TestCase("Sample.new.with_default_value(1)", "1,2,def")]
-    [TestCase("Sample.new.with_default_value(1,99)", "1,99,def")] 
-    [TestCase("Sample.new.with_default_value(1,99,\"hoge\")", "1,99,hoge")] 
+    [TestCase("Sample.new.with_default_value(1,99)", "1,99,def")]
+    [TestCase("Sample.new.with_default_value(1,99,\"hoge\")", "1,99,hoge")]
     public void TestDefaultParameters(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());

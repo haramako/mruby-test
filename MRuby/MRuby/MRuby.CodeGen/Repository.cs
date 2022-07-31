@@ -130,8 +130,10 @@ namespace MRuby.CodeGen
 
         public string RubyFullName => IsRoot ? "Object" : FullName.Replace(".", "::").Replace("+", "::");
         public string BinderClassName => "MRuby_" + FullName.Replace('.', '_').Replace('+', '_');
-        public string ExportName {
-            get {
+        public string ExportName
+        {
+            get
+            {
 
                 if (Type.IsGenericType)
                 {

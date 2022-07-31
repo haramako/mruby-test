@@ -21,7 +21,7 @@ namespace MRuby
 
         public static bool TryGetClass(Type type, out ConstructorFunc constructor)
         {
-            if(cache.TryGetValue(type, out constructor))
+            if (cache.TryGetValue(type, out constructor))
             {
                 return true;
             }

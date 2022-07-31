@@ -7,7 +7,7 @@ class Program
     static void Main(string[] args)
     {
         var gen = new CodeGenUtil();
-        var mrubyTypes = CodeGenUtil.GetMRubyClasses(new string[] { "MRubyLib"});
+        var mrubyTypes = CodeGenUtil.GetMRubyClasses(new string[] { "MRubyLib" });
         mrubyTypes.Add(typeof(Array));
 
         var reg = new Registry();

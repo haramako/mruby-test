@@ -130,7 +130,8 @@ namespace MRuby.CodeGen
                     var methods = t.GetMethods();
                     foreach (var m in methods)
                     {
-                        if ((m.Attributes & MethodAttributes.SpecialName) != 0) {
+                        if ((m.Attributes & MethodAttributes.SpecialName) != 0)
+                        {
                             continue;
                         }
                         cls.AddMethod(m);

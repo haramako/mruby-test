@@ -70,7 +70,7 @@ public class Sample
 
     public string[] StrArrayResult(int n)
     {
-        return Enumerable.Repeat<string>("a",n).ToArray();
+        return Enumerable.Repeat<string>("a", n).ToArray();
     }
 
 #if false

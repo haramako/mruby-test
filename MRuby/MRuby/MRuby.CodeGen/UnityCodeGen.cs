@@ -529,7 +529,7 @@ namespace MRuby.CodeGen
         [MenuItem("SLua/Compile LuaObject To DLL")]
         static public void CompileDLL()
         {
-#region scripts
+        #region scripts
             List<string> scripts = new List<string>();
             string[] guids = AssetDatabase.FindAssets("t:Script", new string[1] { Path.GetDirectoryName(GenPath) }).Distinct().ToArray();
             int guidCount = guids.Length;
@@ -546,9 +546,9 @@ namespace MRuby.CodeGen
                 Debug.LogError("No Scripts");
                 return;
             }
-#endregion
+        #endregion
 
-#region libraries
+        #region libraries
         List<string> libraries = new List<string>();
 #if UNITY_2017_2_OR_NEWER
             string[] referenced = unityModule;
@@ -569,13 +569,13 @@ namespace MRuby.CodeGen
                     libraries.Add(path);
                 }
             }
-#endregion
+        #endregion
 
         //generate AssemblyInfo
         string AssemblyInfoFile = Application.dataPath + "/AssemblyInfo.cs";
             File.WriteAllText(AssemblyInfoFile, string.Format("[assembly: UnityEngine.UnityAPICompatibilityVersionAttribute(\"{0}\")]", Application.unityVersion));
 
-#region mono compile            
+        #region mono compile            
             string editorData = EditorApplication.applicationContentsPath;
 #if UNITY_EDITOR_OSX && !UNITY_5_4_OR_NEWER
 			editorData += "/Frameworks";
@@ -597,9 +597,9 @@ namespace MRuby.CodeGen
 #if UNITY_EDITOR_WIN
             mcs += ".bat";
 #endif
-#endregion
+        #endregion
 
-#region execute bash
+        #region execute bash
             StringBuilder output = new StringBuilder();
             StringBuilder error = new StringBuilder();
             bool success = false;
@@ -656,7 +656,7 @@ namespace MRuby.CodeGen
             {
                 Debug.LogError(ex);
             }
-#endregion
+        #endregion
 
             Debug.Log(output.ToString());
             if (success)

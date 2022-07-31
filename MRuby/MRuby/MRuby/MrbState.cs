@@ -19,12 +19,12 @@ namespace MRuby
 
         public override string Message => exc.ToString();
 
-        public override string StackTrace => exc.Send("backtrace").Send("join","\n").ToString();
+        public override string StackTrace => exc.Send("backtrace").Send("join", "\n").ToString();
 
         public Value Exception => exc;
     }
 
-    public class AbortException : RubyException 
+    public class AbortException : RubyException
     {
         public AbortException(mrb_state _mrb, mrb_value _exc) : base(_mrb, _exc) { }
     }
@@ -88,7 +88,7 @@ namespace MRuby
             if (!exc.IsNil)
             {
                 DLL.mrb_mrb_state_clear_exc(mrb);
-                throw new RubyException(mrb, exc);  
+                throw new RubyException(mrb, exc);
             }
             else
             {

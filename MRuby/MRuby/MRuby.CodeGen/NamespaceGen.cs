@@ -22,7 +22,7 @@ namespace MRuby.CodeGen
             var list = new List<ClassDesc>();
             makeGenerateOrder(list, reg.RootNamespace);
 
-            foreach( var ns in list)
+            foreach (var ns in list)
             {
                 Logger.Log(ns.FullName);
             }
@@ -50,12 +50,12 @@ namespace MRuby.CodeGen
 
         void makeGenerateOrder(List<ClassDesc> list, ClassDesc ns)
         {
-            if( ns.Ordered)
+            if (ns.Ordered)
             {
                 return;
             }
 
-            if ( ns.Type != null && ns.Type.BaseType != null )
+            if (ns.Type != null && ns.Type.BaseType != null)
             {
                 var baseType = reg.FindByType(ns.Type.BaseType);
                 makeGenerateOrder(list, baseType);
@@ -81,7 +81,8 @@ namespace MRuby.CodeGen
             w.Write("}");
             w.Write("");
             w.Write("static void registerNamespaces(mrb_state mrb) {");
-            foreach( var ns in list ){
+            foreach (var ns in list)
+            {
                 generateNamespace(ns);
             }
             w.Write("}");
