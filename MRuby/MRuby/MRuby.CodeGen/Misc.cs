@@ -86,6 +86,16 @@ namespace MRuby.CodeGen
             }
         }
 
+        /// <summary>
+        /// C#のfullnameからcode上の名前に変換する
+        /// </summary>
+        /// <param name="fullname"></param>
+        /// <returns></returns>
+        public static string CodeName(string fullname)
+        {
+            return fullname.Replace('+', '.');
+        }
+
     }
 
     public static class Logger

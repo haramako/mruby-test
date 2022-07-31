@@ -109,17 +109,17 @@ namespace MRuby.CodeGen
         {
             get
             {
-                if (IsRoot)
+                if (!IsNamespace)
+                {
+                    return Type.FullName;
+                }
+                else if (IsRoot)
                 {
                     return "";
                 }
                 else if (Parent.IsRoot)
                 {
                     return Name;
-                }
-                else if (!IsNamespace)
-                {
-                    return Type.FullName;
                 }
                 else
                 {
@@ -128,8 +128,9 @@ namespace MRuby.CodeGen
             }
         }
 
-        public string RubyFullName => IsRoot ? "Object" : FullName.Replace(".", "::").Replace("+", "::");
-        public string BinderClassName => "MRuby_" + FullName.Replace('.', '_').Replace('+', '_');
+        public string CodeName => Naming.CodeName(FullName);
+        public string RubyFullName => IsRoot ? "Object" : Naming.RubyName(FullName);
+        public string BinderClassName => ExportName;
         public string ExportName
         {
             get

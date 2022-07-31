@@ -111,7 +111,7 @@ namespace MRuby.CodeGen
 #endif
             var t = cls.Type;
 
-            var fullname = string.IsNullOrEmpty(givenNamespace) ? FullName(t) : givenNamespace;
+            var fullname = string.IsNullOrEmpty(givenNamespace) ? cls.FullName : givenNamespace;
             var fullnames = fullname.Split('.');
 
             // Write export function
@@ -119,17 +119,17 @@ namespace MRuby.CodeGen
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
-                w.Write("LuaUnityEvent_{1}.reg(l);", FullName(t), reg.FindByType(cls.BaseType).RubyFullName);
+                w.Write("LuaUnityEvent_{1}.reg(l);", cls.ExportName, reg.FindByType(cls.BaseType).RubyFullName);
             }
 
-            w.Write("_cls = Converter.GetClass(mrb, \"{0}\");", FullName(t).Replace(".", "::"));
+            w.Write("_cls = Converter.GetClass(mrb, \"{0}\");", cls.RubyFullName);
             w.Write("_cls_value = DLL.mrb_obj_value(_cls.val);");
 
             if (cls.Constructors.Count > 0)
             {
                 w.Write("Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(16));");
             }
-            w.Write("TypeCache.AddType(typeof({0}), Construct);", FullName(t));
+            w.Write("TypeCache.AddType(typeof({0}), Construct);", cls.CodeName);
 
             foreach (var md in cls.MethodDescs.Values)
             {
@@ -365,7 +365,7 @@ namespace MRuby.CodeGen
                     if (t.IsValueType)
                     {
                         w.Write("{0}(argc=={1}){{", first ? "if" : "else if", 0);
-                        w.Write("o=new {0}();", FullName(t));
+                        w.Write("o=new {0}();", cls.ExportName);
                         w.Write("return Converter.make_value(l, o);");
                         w.Write("}");
                     }
@@ -380,8 +380,8 @@ namespace MRuby.CodeGen
                 WriteFunctionAttr();
                 w.Write("static public mrb_value _initialize(mrb_state l) {");
                 WriteTry();
-                w.Write("{0} o;", FullName(t));
-                w.Write("o=new {0}();", FullName(t));
+                w.Write("{0} o;", cls.FullName);
+                w.Write("o=new {0}();", cls.FullName);
                 WriteReturn("o");
                 WriteCatchExecption();
                 w.Write("}");
@@ -706,15 +706,6 @@ namespace MRuby.CodeGen
                     w.Write("}");
                 }
             }
-        }
-
-        string FullName(Type t)
-        {
-            if (t.FullName == null)
-            {
-                return t.Name;
-            }
-            return t.FullName.Replace("+", ".");
         }
 
         /// <summary>
