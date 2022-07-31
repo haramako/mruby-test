@@ -128,3 +128,23 @@ namespace NSSample
         public int Func() => 1;
     }
 }
+
+
+public static class ExtTest
+{
+    public static void ExSet(this Extended self, int i) { }
+    public static void Set(this Extended self, int i) { }
+    public static void Set<T>(this Extended self, T i) { }
+}
+
+public class Extended
+{
+    //public void Set(int i) { }
+    public void Set(string s) { }
+    //public void Set<T>(T v) { }
+}
+
+class GenericTest
+{
+
+}
