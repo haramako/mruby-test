@@ -1,7 +1,7 @@
 * FindByTypeで、ないものは足すように
+* RuntimeClassDescをつくって、実行時に順番を管理するようにする
 * overload対応
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
-* RuntimeClassDescをつくって、実行時に順番を管理するようにする
 
 ? ArrayをC#オブジェクトのまま返すか, RubyのArrayに変換するか・・・
 ? Value の継承を検討する(ArrayValue, DictionaryValue ...)

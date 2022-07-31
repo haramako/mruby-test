@@ -56,7 +56,7 @@ namespace MRuby.CodeGen
 
         public static string GenericBaseName(Type t)
         {
-            string n = t.FullName;
+            string n = t.ToString();
             if (n.IndexOf('[') > 0)
             {
                 n = n.Substring(0, n.IndexOf('['));

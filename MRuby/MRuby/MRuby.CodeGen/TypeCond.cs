@@ -70,7 +70,7 @@ namespace MRuby.CodeGen
         {
             foreach (ParameterInfo p in mi.GetParameters())
             {
-                if (p.ParameterType.FullName.Contains("*"))
+                if (p.ParameterType.ToString().Contains("*"))
                     return true;
             }
             return false;

@@ -10,24 +10,24 @@ namespace MRuby.CodeGen
     public class RegistryPrinter
     {
         int indent;
-        bool verbose;
+        int level;
 
-        public RegistryPrinter(bool _verbose = false)
+        public RegistryPrinter(int _level = 1)
         {
-            verbose = _verbose;
+            level = _level;
         }
 
-        void write(string msg)
+        void write(string fmt, params object[] args)
         {
             Console.Write(new string(' ', indent * 2));
-            Console.WriteLine(msg);
+            Console.WriteLine(fmt, args);
         }
 
         public void PrintRegistry(Registry reg)
         {
-            foreach (var cls in reg.AllNamespaces())
+            foreach (var cls in reg.AllDescs())
             {
-                write(new string('=', 40));
+                //write(new string('=', 40));
                 PrintClassDesc(cls);
             }
         }
@@ -36,23 +36,26 @@ namespace MRuby.CodeGen
         {
             if (cls.IsNamespace)
             {
-                write($"namespace {cls.FullName} => {cls.RubyFullName}");
+                write("ns    {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName);
             }
             else
             {
-                write($"class {cls.FullName} => {cls.RubyFullName}");
+                write("class {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName);
             }
 
-            indent++;
-            foreach (var m in cls.MethodDescs.Values)
+            if (level >= 1)
             {
-                PrintMethodDesc(m);
+                indent++;
+                foreach (var m in cls.MethodDescs.Values)
+                {
+                    PrintMethodDesc(m);
+                }
+                foreach (var f in cls.Fields.Values)
+                {
+                    PrintField(f);
+                }
+                indent--;
             }
-            foreach (var f in cls.Fields.Values)
-            {
-                PrintField(f);
-            }
-            indent--;
         }
 
         public void PrintMethodDesc(MethodDesc m)
@@ -61,7 +64,7 @@ namespace MRuby.CodeGen
             var isStatic = m.IsStatic ? "s" : " ";
             write($"{isStatic} {m.Name} => {m.RubyName} ({m.Methods.Count}) {min}..{max}");
 
-            if (verbose)
+            if (level >= 2)
             {
                 indent++;
                 foreach (var method in m.Methods)
@@ -90,7 +93,7 @@ namespace MRuby.CodeGen
 
         public void RegisterClass(Registry reg, Type t)
         {
-            var cls = reg.FindByType(t);
+            var cls = reg.FindByType(t,0);
 
             if (!t.IsGenericTypeDefinition && (!TypeCond.IsObsolete(t)
                 && t != typeof(UnityEngine.YieldInstruction) && t != typeof(UnityEngine.Coroutine))
@@ -287,8 +290,6 @@ namespace MRuby.CodeGen
         public static List<Type> GetMRubyClasses(string[] asemblyNames)
         {
             List<Type> exports = new List<Type>();
-
-            exports.Add(typeof(System.Object));
 
             foreach (string asemblyName in asemblyNames)
             {

@@ -119,7 +119,7 @@ namespace MRuby.CodeGen
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
-                w.Write("LuaUnityEvent_{1}.reg(l);", cls.ExportName, reg.FindByType(cls.BaseType).RubyFullName);
+                w.Write("LuaUnityEvent_{1}.reg(l);", cls.ExportName, reg.FindByType(cls.BaseType, cls).RubyFullName);
             }
 
             w.Write("_cls = Converter.GetClass(mrb, \"{0}\");", cls.RubyFullName);

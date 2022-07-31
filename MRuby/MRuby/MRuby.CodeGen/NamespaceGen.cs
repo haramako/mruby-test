@@ -57,7 +57,7 @@ namespace MRuby.CodeGen
 
             if (ns.Type != null && ns.Type.BaseType != null)
             {
-                var baseType = reg.FindByType(ns.Type.BaseType);
+                var baseType = reg.FindByType(ns.Type.BaseType, ns);
                 makeGenerateOrder(list, baseType);
             }
 
@@ -101,7 +101,7 @@ namespace MRuby.CodeGen
             else
             {
                 var baseType = ns.Type.BaseType ?? typeof(System.Object);
-                var baseTypeNs = reg.FindByType(baseType);
+                var baseTypeNs = reg.FindByType(baseType, 0);
                 w.Write("defineClass(mrb, \"{0}\", \"{1}\", \"{2}\");", ns.Name, ns.Parent.RubyFullName, baseTypeNs.RubyFullName);
             }
         }

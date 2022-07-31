@@ -9,12 +9,14 @@ namespace MRuby.CodeGen
 {
     public class Registry
     {
-        public ClassDesc RootNamespace = new ClassDesc(null, "", null);
+        public ClassDesc RootNamespace = new ClassDesc(null, "");
 
-        public ClassDesc FindOrCreateClassDesc(string fullname, Type t)
+        Dictionary<string, ClassDesc> classes = new Dictionary<string, ClassDesc>();
+
+        public ClassDesc FindOrCreateClassDesc(string fullname, Type t, int pop)
         {
             var cur = RootNamespace;
-            var nameList = t.FullName.Split(new char[] { '.', '+' });
+            var nameList = t.ToString().Split(new char[] { '.', '+' });
             foreach (var name in nameList)
             {
                 if (cur.Children.TryGetValue(name, out var found))
@@ -23,7 +25,8 @@ namespace MRuby.CodeGen
                 }
                 else
                 {
-                    cur = new ClassDesc(cur, name, null);
+                    cur = new ClassDesc(cur, name);
+                    classes.Add(cur.FullName, cur);
                 }
             }
 
@@ -31,32 +34,41 @@ namespace MRuby.CodeGen
             if (t != null)
             {
                 Debug.Assert(cur.Type == null || cur.Type == t);
-                cur.Type = t;
+                if (cur.Type != t) {
+                    classes.Remove(cur.FullName);
+                    cur.SetType(t);
+                    classes.Add(cur.FullName, cur);
+                }
+            }
+
+            if( cur.PopCountFromExport > pop)
+            {
+                cur.PopCountFromExport = pop;
             }
 
             return cur;
         }
 
-        public ClassDesc FindByType(Type t)
+        public ClassDesc FindByType(Type t, int pop)
         {
-            return FindOrCreateClassDesc(t.FullName, t);
-        }
-
-        public IEnumerable<ClassDesc> AllNamespaces()
-        {
-            return flatten(RootNamespace);
-        }
-
-        public IEnumerable<ClassDesc> flatten(ClassDesc cur)
-        {
-            yield return cur;
-            foreach (var child in cur.Children.Values)
+            if (classes.TryGetValue(t.ToString(), out var found))
             {
-                foreach (var childNs in flatten(child))
-                {
-                    yield return childNs;
-                }
+                return found;
             }
+            else
+            {
+                return FindOrCreateClassDesc(t.ToString(), t, pop);
+            }
+        }
+
+        public ClassDesc FindByType(Type t, ClassDesc from)
+        {
+            return FindByType(t, from.PopCountFromExport + 1);
+        }
+
+        public IEnumerable<ClassDesc> AllDescs()
+        {
+            return classes.Values;
         }
 
     }
@@ -65,8 +77,13 @@ namespace MRuby.CodeGen
     {
         public ClassDesc Parent { get; private set; }
         public readonly string Name;
-        public Type Type { get; set; }
+        public Type Type { get; private set; }
         public readonly Dictionary<string, ClassDesc> Children = new Dictionary<string, ClassDesc>();
+
+        /// <summary>
+        /// C#のなかでの名前
+        /// </summary>
+        public string FullName { get; private set; }
 
         public bool Ordered;
 
@@ -74,7 +91,7 @@ namespace MRuby.CodeGen
         /// Export指定されたクラスからのポップカウント
         /// (エキスポートされたクラス自体は、0)
         /// </summary>
-        public bool PopCountFromExport;
+        public int PopCountFromExport;
 
         Dictionary<string, MethodDesc> methodDescs = new Dictionary<string, MethodDesc>();
         public readonly IReadOnlyDictionary<string, MethodDesc> MethodDescs;
@@ -85,11 +102,18 @@ namespace MRuby.CodeGen
         Dictionary<string, FieldDesc> fields = new Dictionary<string, FieldDesc>();
         public readonly IReadOnlyDictionary<string, FieldDesc> Fields;
 
-        public ClassDesc(ClassDesc parent, string name, Type type)
+        public ClassDesc(ClassDesc parent, string name)
         {
             Parent = parent;
             Name = name;
-            Type = type;
+            if (parent == null || parent.IsRoot)
+            {
+                FullName = name;
+            }
+            else
+            {
+                FullName = parent.FullName + "." + name;
+            }
 
             Parent?.Children.Add(name, this);
 
@@ -98,35 +122,20 @@ namespace MRuby.CodeGen
             Fields = fields;
         }
 
+        public ClassDesc(ClassDesc parent, Type type) : this(parent, type.Name)
+        {
+            Type = type;
+        }
+
+        public void SetType(Type t)
+        {
+            Type = t;
+            FullName = t.ToString();
+        }
+
         public bool IsRoot => (Parent == null);
         public bool IsNamespace => (Type == null);
         public Type BaseType => IsNamespace ? null : (Type?.BaseType ?? typeof(System.Object));
-
-        /// <summary>
-        /// C#のなかでの名前
-        /// </summary>
-        public string FullName
-        {
-            get
-            {
-                if (!IsNamespace)
-                {
-                    return Type.FullName;
-                }
-                else if (IsRoot)
-                {
-                    return "";
-                }
-                else if (Parent.IsRoot)
-                {
-                    return Name;
-                }
-                else
-                {
-                    return Parent.FullName + "." + Name;
-                }
-            }
-        }
 
         public string CodeName => Naming.CodeName(FullName);
         public string RubyFullName => IsRoot ? "Object" : Naming.RubyName(FullName);
