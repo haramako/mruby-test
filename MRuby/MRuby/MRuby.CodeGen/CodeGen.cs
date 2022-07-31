@@ -345,7 +345,7 @@ namespace MRuby.CodeGen
                         bool hasParams = p.IsDefined(typeof(ParamArrayAttribute), false);
                         CheckArgument(p.ParameterType, k, 2, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
                     }
-                    w.Write("o=new {0}({1});", TypeCond.TypeDecl(t), FuncCall(ci));
+                    w.Write("o=new {0}({1});", TypeCond.TypeDecl(t), FuncCallCode(ci));
                     w.Write("ObjectCache.NewObjectByVal(l, _self, o);");
                     w.Write("return DLL.mrb_nil_value();");
 #if false
@@ -584,12 +584,12 @@ namespace MRuby.CodeGen
                     w.Write("{0}(a2<=a1);", ret);
                 else
                 {
-                    w.Write("{3}{2}.{0}({1});", MethodDecl(m), FuncCall(m), TypeCond.TypeDecl(t), ret);
+                    w.Write("{3}{2}.{0}({1});", MethodDecl(m), FuncCallCode(m), TypeCond.TypeDecl(t), ret);
                 }
             }
             else
             {
-                w.Write("{2}self.{0}({1});", MethodDecl(m), FuncCall(m, parOffset), ret);
+                w.Write("{2}self.{0}({1});", MethodDecl(m), FuncCallCode(m, parOffset), ret);
             }
 
             if (m.ReturnType != typeof(void))
@@ -662,43 +662,43 @@ namespace MRuby.CodeGen
 
         private void CheckArgument(Type t, int n, int argstart, bool isout, bool isparams, bool hasDefaultValue, object defaultValue)
         {
-            w.Write("{0} a{1};", TypeCond.TypeDecl(t), n + 1);
+            w.Write("{0} a{1};", TypeCond.TypeDecl(t), n);
 
             if (!isout)
             {
                 if (hasDefaultValue)
                 {
-                    w.Write("if (_argc < {0}) {{", n + 1);
-                    w.Write("    a{0} = {1};", n + 1, DefaultValueToCode(defaultValue));
+                    w.Write("if (_argc < {0}) {{", n);
+                    w.Write("    a{0} = {1};", n, DefaultValueToCode(defaultValue));
                     w.Write("} else {");
                 }
 
                 if (t.IsEnum)
-                    w.Write("a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n + 1, TypeCond.TypeDecl(t), n + argstart);
+                    w.Write("a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n, TypeCond.TypeDecl(t), n + argstart);
                 else if (t.BaseType == typeof(System.MulticastDelegate))
                 {
                     //tryMake(t);
-                    w.Write("Converter.checkDelegate(l,{0},out a{1});", n + argstart, n + 1);
+                    w.Write("Converter.checkDelegate(l,{0},out a{1});", n + argstart, n);
                 }
                 else if (isparams)
                 {
                     if (t.GetElementType().IsValueType && !TypeCond.IsBaseType(t.GetElementType()))
-                        w.Write("Converter.checkValueParams(l,{0},out a{1});", n + argstart, n + 1);
+                        w.Write("Converter.checkValueParams(l,{0},out a{1});", n + argstart, n);
                     else
-                        w.Write("Converter.checkParams(l,{0},out a{1});", n + argstart, n + 1);
+                        w.Write("Converter.checkParams(l,{0},out a{1});", n + argstart, n);
                 }
                 else if (t.IsArray)
-                    w.Write("Converter.checkArray(l,{0},out a{1});", n, n + 1);
+                    w.Write("Converter.checkArray(l,{0},out a{1});", n, n);
                 else if (TypeCond.IsValueType(t))
                 {
                     if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                        w.Write("Converter.checkNullable(l,{0},out a{1});", n + argstart, n + 1);
+                        w.Write("Converter.checkNullable(l,{0},out a{1});", n + argstart, n);
                     else
-                        w.Write("Converter.checkValueType(l,{0},out a{1});", n + argstart, n + 1);
+                        w.Write("Converter.checkValueType(l,{0},out a{1});", n + argstart, n);
                 }
                 else
                 {
-                    w.Write("Converter.checkType(l,{0},out a{1});", n /* + argstart */, n + 1);
+                    w.Write("Converter.checkType(l,{0},out a{1});", n /* + argstart */, n);
                 }
 
                 if (hasDefaultValue)
@@ -717,7 +717,15 @@ namespace MRuby.CodeGen
             return t.FullName.Replace("+", ".");
         }
 
-        string FuncCall(MethodBase m, int parOffset = 0)
+        /// <summary>
+        /// Create function call code string.
+        /// 
+        /// FunCallCode() => "a1, a2, a3"
+        /// </summary>
+        /// <param name="m"></param>
+        /// <param name="parOffset"></param>
+        /// <returns></returns>
+        string FuncCallCode(MethodBase m, int parOffset = 0)
         {
 
             string str = "";
@@ -726,11 +734,11 @@ namespace MRuby.CodeGen
             {
                 ParameterInfo p = pars[n];
                 if (p.ParameterType.IsByRef && p.IsOut)
-                    str += string.Format("out a{0}", n + 1);
+                    str += string.Format("out a{0}", n);
                 else if (p.ParameterType.IsByRef)
-                    str += string.Format("ref a{0}", n + 1);
+                    str += string.Format("ref a{0}", n);
                 else
-                    str += string.Format("a{0}", n + 1);
+                    str += string.Format("a{0}", n);
                 if (n < pars.Length - 1)
                     str += ",";
             }
