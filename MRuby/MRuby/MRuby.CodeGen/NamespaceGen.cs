@@ -22,11 +22,6 @@ namespace MRuby.CodeGen
             var list = new List<ClassDesc>();
             makeGenerateOrder(list, reg.RootNamespace);
 
-            foreach (var ns in list)
-            {
-                Logger.Log(ns.FullName);
-            }
-
             w.Write("using System;");
             w.Write("using System.Collections.Generic;");
             w.Write("namespace MRuby {");
@@ -55,6 +50,11 @@ namespace MRuby.CodeGen
                 return;
             }
 
+            if (ns.Parent != null)
+            {
+                makeGenerateOrder(list, ns.Parent);
+            }
+
             if (ns.Type != null && ns.Type.BaseType != null)
             {
                 var baseType = reg.FindByType(ns.Type.BaseType, ns);
@@ -64,7 +64,7 @@ namespace MRuby.CodeGen
             list.Add(ns);
             ns.Ordered = true;
 
-            foreach (var child in ns.Children.Values)
+            foreach (var child in ns.Children.Values.ToArray())
             {
                 makeGenerateOrder(list, child);
             }
@@ -100,9 +100,16 @@ namespace MRuby.CodeGen
             }
             else
             {
-                var baseType = ns.Type.BaseType ?? typeof(System.Object);
-                var baseTypeNs = reg.FindByType(baseType, 0);
-                w.Write("defineClass(mrb, \"{0}\", \"{1}\", \"{2}\");", ns.Name, ns.Parent.RubyFullName, baseTypeNs.RubyFullName);
+                if (ns.Type.BaseType == null)
+                {
+                    w.Write("defineClass(mrb, \"{0}\", \"{1}\", \"Object\");", ns.Name, ns.Parent.RubyFullName);
+                }
+                else
+                {
+                    var baseType = ns.Type.BaseType;
+                    var baseTypeNs = reg.FindByType(baseType, 0);
+                    w.Write("defineClass(mrb, \"{0}\", \"{1}\", \"{2}\");", ns.Name, ns.Parent.RubyFullName, baseTypeNs.RubyFullName);
+                }
             }
         }
 

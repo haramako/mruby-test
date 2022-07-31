@@ -9,7 +9,7 @@ namespace MRuby.CodeGen
 {
     public class Registry
     {
-        public ClassDesc RootNamespace = new ClassDesc(null, "");
+        public ClassDesc RootNamespace = new ClassDesc(null, "", 0);
 
         Dictionary<string, ClassDesc> classes = new Dictionary<string, ClassDesc>();
 
@@ -25,7 +25,7 @@ namespace MRuby.CodeGen
                 }
                 else
                 {
-                    cur = new ClassDesc(cur, name);
+                    cur = new ClassDesc(cur, name, pop);
                     classes.Add(cur.FullName, cur);
                 }
             }
@@ -34,14 +34,20 @@ namespace MRuby.CodeGen
             if (t != null)
             {
                 Debug.Assert(cur.Type == null || cur.Type == t);
-                if (cur.Type != t) {
+                if (cur.Type != t)
+                {
                     classes.Remove(cur.FullName);
                     cur.SetType(t);
                     classes.Add(cur.FullName, cur);
+
+                    if (t.BaseType != null)
+                    {
+                        FindByType(t.BaseType, cur);
+                    }
                 }
             }
 
-            if( cur.PopCountFromExport > pop)
+            if (cur.PopCountFromExport > pop)
             {
                 cur.PopCountFromExport = pop;
             }
@@ -53,6 +59,10 @@ namespace MRuby.CodeGen
         {
             if (classes.TryGetValue(t.ToString(), out var found))
             {
+                if (found.PopCountFromExport > pop)
+                {
+                    found.PopCountFromExport = pop;
+                }
                 return found;
             }
             else
@@ -68,7 +78,7 @@ namespace MRuby.CodeGen
 
         public IEnumerable<ClassDesc> AllDescs()
         {
-            return classes.Values;
+            return classes.Values.ToArray();
         }
 
     }
@@ -91,7 +101,7 @@ namespace MRuby.CodeGen
         /// Export指定されたクラスからのポップカウント
         /// (エキスポートされたクラス自体は、0)
         /// </summary>
-        public int PopCountFromExport;
+        public int PopCountFromExport = -1;
 
         Dictionary<string, MethodDesc> methodDescs = new Dictionary<string, MethodDesc>();
         public readonly IReadOnlyDictionary<string, MethodDesc> MethodDescs;
@@ -102,10 +112,12 @@ namespace MRuby.CodeGen
         Dictionary<string, FieldDesc> fields = new Dictionary<string, FieldDesc>();
         public readonly IReadOnlyDictionary<string, FieldDesc> Fields;
 
-        public ClassDesc(ClassDesc parent, string name)
+        public ClassDesc(ClassDesc parent, string name, int pop)
         {
             Parent = parent;
             Name = name;
+            PopCountFromExport = pop;
+
             if (parent == null || parent.IsRoot)
             {
                 FullName = name;
@@ -122,9 +134,9 @@ namespace MRuby.CodeGen
             Fields = fields;
         }
 
-        public ClassDesc(ClassDesc parent, Type type) : this(parent, type.Name)
+        public ClassDesc(ClassDesc parent, Type type, int pop) : this(parent, type.Name, pop)
         {
-            Type = type;
+            SetType(type);
         }
 
         public void SetType(Type t)

@@ -36,11 +36,11 @@ namespace MRuby.CodeGen
         {
             if (cls.IsNamespace)
             {
-                write("ns    {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName);
+                write("{2} ns    {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName, cls.PopCountFromExport);
             }
             else
             {
-                write("class {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName);
+                write("{2} class {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName, cls.PopCountFromExport);
             }
 
             if (level >= 1)
