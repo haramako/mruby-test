@@ -28,7 +28,9 @@ class CodeGenTest
 
     [TestCase("1+1", "2")]
     [TestCase("Sample.new.int_field", "1")]
+    [TestCase("s=Sample.new; s.int_field=2; s.int_field;", "2")]
     [TestCase("Sample.new.string_field", "a")]
+    [TestCase("s=Sample.new; s.string_field='b'; s.string_field", "b")]
     [TestCase("Sample.new.get_string_value", "str")]
     [TestCase("Sample.new.get_int_value", "99")]
     [TestCase("Sample.new.overloaded_method(1)", "1")]

@@ -115,7 +115,7 @@ namespace MRuby.CodeGen
             var fullnames = fullname.Split('.');
 
             // Write export function
-            w.Write("static public void RegisterMembers(mrb_state mrb) {");
+            w.Write("static public void Register(mrb_state mrb) {");
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
@@ -208,18 +208,16 @@ namespace MRuby.CodeGen
                     if (f.IsStatic)
                     {
                         w.Write("{0} v;", TypeCond.TypeDecl(f.Type));
-                        WriteCheckType(f.Type, 2);
+                        WriteCheckType(f.Type, 0);
                     }
                     else
                     {
                         WriteCheckSelf();
                         w.Write("{0} v;", TypeCond.TypeDecl(f.Type));
-                        WriteCheckType(f.Type, 2);
+                        WriteCheckType(f.Type, 0);
                     }
-
-                    if (t.IsValueType && !f.IsStatic)
-                        w.Write("setBack(l,self);");
-                    w.Write("return DLL.mrb_nil_value();");
+                    w.Write("self.{0} = v;", f.Name);
+                    WriteReturn("v");
                     WriteCatchExecption();
                     w.Write("}");
                 }

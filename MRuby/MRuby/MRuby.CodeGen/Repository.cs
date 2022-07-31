@@ -270,7 +270,7 @@ namespace MRuby.CodeGen
         public string RubyName => Naming.ToSnakeCase(Name);
 
         public string GetterName => "get_" + Name;
-        public string SetterName => "get_" + Name;
+        public string SetterName => "set_" + Name;
 
     }
 

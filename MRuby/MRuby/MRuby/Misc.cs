@@ -73,16 +73,16 @@ namespace MRuby
             }
 
 
-            Console.WriteLine($"Bind {desc.RubyName}");
+            //Console.WriteLine($"Bind {desc.RubyName}");
             if (desc.BinderFunc == null)
             {
-                Console.WriteLine($"namespace {name}");
+                //Console.WriteLine($"namespace {name}");
                 DLL.mrb_define_module_under(mrb, Converter.GetClass(mrb, ns), name);
             }
             else
             {
                 string baseType = desc.BaseTypeRubyName ?? "Object";
-                Console.WriteLine($"class {name} {baseType}");
+                //Console.WriteLine($"class {name} {baseType}");
                 DLL.mrb_define_class_under(mrb, Converter.GetClass(mrb, ns), name, Converter.GetClass(mrb, baseType));
                 desc.BinderFunc?.Invoke(mrb);
             }

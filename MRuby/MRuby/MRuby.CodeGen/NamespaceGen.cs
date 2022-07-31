@@ -45,7 +45,7 @@ namespace MRuby.CodeGen
                     {
                         baseType = "\"" + reg.FindByType(cls.BaseType, cls).RubyFullName + "\"";
                     }
-                    w.Write("new RuntimeClassDesc( \"{0}\", {1}.RegisterMembers, {2}),", cls.RubyFullName, cls.BinderClassName, baseType);
+                    w.Write("new RuntimeClassDesc( \"{0}\", {1}.Register, {2}),", cls.RubyFullName, cls.BinderClassName, baseType);
                 }
             }
 
