@@ -25,7 +25,7 @@ namespace MRuby.CodeGen
 
         public void PrintRegistry(Registry reg)
         {
-            foreach (var cls in reg.AllNamespaces(reg.RootNamespace))
+            foreach (var cls in reg.AllNamespaces())
             {
                 write(new string('=', 40));
                 PrintClassDesc(cls);
@@ -90,30 +90,8 @@ namespace MRuby.CodeGen
 
         public void RegisterClass(Registry reg, Type t)
         {
-            var curNs = reg.RootNamespace;
-            var nameList = t.FullName.Split(new char[] { '.', '+' }).SkipLast(1);
-            foreach (var name in nameList)
-            {
-                if (curNs.Children.TryGetValue(name, out var found))
-                {
-                    curNs = found;
-                }
-                else
-                {
-                    curNs = ClassDesc.CreateOrGet(curNs, name, null);
-                }
-            }
+            var cls = reg.FindByType(t);
 
-            var cls = ClassDesc.CreateOrGet(curNs, t.Name, t);
-            if (!cls.IsNamespace)
-            {
-                RegisterClass_(reg, cls);
-            }
-        }
-
-        public void RegisterClass_(Registry reg, ClassDesc cls)
-        {
-            var t = cls.Type;
             if (!t.IsGenericTypeDefinition && (!TypeCond.IsObsolete(t)
                 && t != typeof(UnityEngine.YieldInstruction) && t != typeof(UnityEngine.Coroutine))
                 || (t.BaseType != null && t.BaseType == typeof(System.MulticastDelegate)))

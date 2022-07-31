@@ -9,24 +9,50 @@ namespace MRuby.CodeGen
 {
     public class Registry
     {
-        public ClassDesc RootNamespace = ClassDesc.CreateRoot();
+        public ClassDesc RootNamespace = new ClassDesc(null, "", null);
+
+        public ClassDesc FindOrCreateClassDesc(string fullname, Type t)
+        {
+            var cur = RootNamespace;
+            var nameList = t.FullName.Split(new char[] { '.', '+' });
+            foreach (var name in nameList)
+            {
+                if (cur.Children.TryGetValue(name, out var found))
+                {
+                    cur = found;
+                }
+                else
+                {
+                    cur = new ClassDesc(cur, name, null);
+                }
+            }
+
+            // Set Type if not set.
+            if (t != null)
+            {
+                Debug.Assert(cur.Type == null || cur.Type == t);
+                cur.Type = t;
+            }
+
+            return cur;
+        }
 
         public ClassDesc FindByType(Type t)
         {
-            return AllNamespaces().Where(ns => ns.Type == t).FirstOrDefault();
+            return FindOrCreateClassDesc(t.FullName, t);
         }
 
         public IEnumerable<ClassDesc> AllNamespaces()
         {
-            return AllNamespaces(RootNamespace);
+            return flatten(RootNamespace);
         }
 
-        public IEnumerable<ClassDesc> AllNamespaces(ClassDesc cur)
+        public IEnumerable<ClassDesc> flatten(ClassDesc cur)
         {
             yield return cur;
             foreach (var child in cur.Children.Values)
             {
-                foreach (var childNs in AllNamespaces(child))
+                foreach (var childNs in flatten(child))
                 {
                     yield return childNs;
                 }
@@ -39,9 +65,16 @@ namespace MRuby.CodeGen
     {
         public ClassDesc Parent { get; private set; }
         public readonly string Name;
-        public Type Type { get; private set; }
+        public Type Type { get; set; }
         public readonly Dictionary<string, ClassDesc> Children = new Dictionary<string, ClassDesc>();
+
         public bool Ordered;
+
+        /// <summary>
+        /// Export指定されたクラスからのポップカウント
+        /// (エキスポートされたクラス自体は、0)
+        /// </summary>
+        public bool PopCountFromExport;
 
         Dictionary<string, MethodDesc> methodDescs = new Dictionary<string, MethodDesc>();
         public readonly IReadOnlyDictionary<string, MethodDesc> MethodDescs;
@@ -52,10 +85,14 @@ namespace MRuby.CodeGen
         Dictionary<string, FieldDesc> fields = new Dictionary<string, FieldDesc>();
         public readonly IReadOnlyDictionary<string, FieldDesc> Fields;
 
-        private ClassDesc(string name, Type type)
+        public ClassDesc(ClassDesc parent, string name, Type type)
         {
+            Parent = parent;
             Name = name;
             Type = type;
+
+            Parent?.Children.Add(name, this);
+
             MethodDescs = methodDescs;
             Constructors = constructors;
             Fields = fields;
@@ -65,6 +102,9 @@ namespace MRuby.CodeGen
         public bool IsNamespace => (Type == null);
         public Type BaseType => IsNamespace ? null : (Type?.BaseType ?? typeof(System.Object));
 
+        /// <summary>
+        /// C#のなかでの名前
+        /// </summary>
         public string FullName
         {
             get
@@ -83,7 +123,6 @@ namespace MRuby.CodeGen
                 }
                 else
                 {
-
                     return Parent.FullName + "." + Name;
                 }
             }
@@ -91,6 +130,19 @@ namespace MRuby.CodeGen
 
         public string RubyFullName => IsRoot ? "Object" : FullName.Replace(".", "::").Replace("+", "::");
         public string BinderClassName => "MRuby_" + FullName.Replace('.', '_').Replace('+', '_');
+        public string ExportName {
+            get {
+
+                if (Type.IsGenericType)
+                {
+                    return "MRuby_" + FullName.Replace(".", "_").Replace("+", "_");
+                }
+                else
+                {
+                    return "MRuby_" + FullName.Replace(".", "_").Replace("+", "_"); // TODO
+                }
+            }
+        }
 
 
         public MethodDesc AddMethod(MethodInfo m)
@@ -117,43 +169,6 @@ namespace MRuby.CodeGen
         public void AddProperty(PropertyInfo p)
         {
             fields.Add(p.Name, new FieldDesc(p));
-        }
-
-        public string ExportName()
-        {
-            if (Type.IsGenericType)
-            {
-                return "MRuby_" + FullName.Replace(".", "_").Replace("+", "_");
-            }
-            else
-            {
-                return "MRuby_" + FullName.Replace(".", "_").Replace("+", "_"); // TODO
-            }
-        }
-
-        public static ClassDesc CreateRoot() => new ClassDesc("", null);
-        public static ClassDesc CreateOrGet(ClassDesc parent, string name, Type type)
-        {
-            ClassDesc ns;
-            if (parent == null)
-            {
-                ns = new ClassDesc(name, type);
-            }
-            else
-            {
-                if (parent.Children.TryGetValue(name, out var found))
-                {
-                    ns = found;
-                    ns.Type = type;
-                }
-                else
-                {
-                    ns = new ClassDesc(name, type);
-                    ns.Parent = parent;
-                    parent.Children.Add(name, ns);
-                }
-            }
-            return ns;
         }
 
     }

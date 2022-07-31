@@ -47,7 +47,7 @@ namespace MRuby.CodeGen
         {
             reg = _reg;
             cls = _cls;
-            w = new CodeWriter(path + cls.ExportName() + ".cs");
+            w = new CodeWriter(path + cls.ExportName + ".cs");
         }
 
         public void Generate()
@@ -76,7 +76,7 @@ namespace MRuby.CodeGen
             w.Write("using System;");
             w.Write("using MRuby;");
             w.Write("using System.Collections.Generic;");
-            w.Write("public class {0} {{", cls.ExportName());
+            w.Write("public class {0} {{", cls.ExportName);
 
             w.Write("static RClass _cls;");
             w.Write("static mrb_value _cls_value;");
@@ -307,7 +307,7 @@ namespace MRuby.CodeGen
 
         private void WriteCSConstructor()
         {
-            w.Write("static CSObject Construct(mrb_state mrb, object obj) => ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName());
+            w.Write("static CSObject Construct(mrb_state mrb, object obj) => ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName);
         }
 
         private void WriteConstructor()
@@ -668,7 +668,7 @@ namespace MRuby.CodeGen
             {
                 if (hasDefaultValue)
                 {
-                    w.Write("if (_argc < {0}) {{", n);
+                    w.Write("if (_argc <= {0}) {{", n);
                     w.Write("    a{0} = {1};", n, DefaultValueToCode(defaultValue));
                     w.Write("} else {");
                 }
