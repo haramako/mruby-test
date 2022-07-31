@@ -6,22 +6,24 @@ using System.Text;
 
 namespace MRuby.CodeGen
 {
-    class NamespaceGen
+    public class NamespaceGen
     {
         CodeWriter w;
         Registry reg;
+        string binderClassName;
 
-        public NamespaceGen(Registry _reg, string path)
+        public NamespaceGen(Registry _reg, string path, string _binderClassName)
         {
             reg = _reg;
-            w = new CodeWriter(Path.Combine(path, "MRuby__Namespaces.cs"));
+            w = new CodeWriter(path);
+            binderClassName = _binderClassName;
         }
 
         public void Generate()
         {
             w.Write("using MRuby;");
-            w.Write("[MRuby.LuaBinder({0})]", 0);
-            w.Write("public class _Binder {");
+            w.Write("[MRuby.LuaBinder]");
+            w.Write("public class {0} {{", binderClassName);
 
             w.Write("public static RuntimeClassDesc[] BindData = new[]");
             w.Write("{");

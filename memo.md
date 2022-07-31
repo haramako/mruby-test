@@ -1,4 +1,3 @@
-* RuntimeClassDescをつくって、実行時に順番を管理するようにする
 * overload対応
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
 
@@ -26,6 +25,7 @@
 * CodeGenしなくても、リフレクションで触れる対応
 * preserve(ビルド時にUnityにコードを消されないこと)の対応
 
+- RuntimeClassDescをつくって、実行時に順番を管理するようにする
 - FindByTypeで、ないものは足すように
 - a*の番号を1はじまりから、0はじまりにする
 - CodeGenのコード整理: overload, 拡張メソッドなどの対応をしやすくするために、一度独自のクラスにクラスの情報をいれる

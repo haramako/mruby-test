@@ -92,7 +92,11 @@ namespace MRubyUnity
 
         public void Write(string s)
         {
+#if SLUA_STANDALONE
+            System.Console.WriteLine(s);
+#else
             Debug.Log(s);
+#endif
         }
 
         public void Flush()

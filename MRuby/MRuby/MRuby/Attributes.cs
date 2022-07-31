@@ -20,7 +20,6 @@ namespace MRuby
     {
         public CustomMRubyClassAttribute()
         {
-            //
         }
     }
 
@@ -28,16 +27,13 @@ namespace MRuby
     {
         public DoNotToLuaAttribute()
         {
-            //
         }
     }
 
     public class LuaBinderAttribute : System.Attribute
     {
-        public int order;
-        public LuaBinderAttribute(int order)
+        public LuaBinderAttribute()
         {
-            this.order = order;
         }
     }
 
@@ -46,7 +42,6 @@ namespace MRuby
     {
         public StaticExportAttribute()
         {
-            //
         }
     }
 

@@ -125,6 +125,7 @@ namespace MRuby.CodeGen
 
         public CodeWriter(string path)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
             w = new StreamWriter(path, false, Encoding.UTF8);
         }
 
@@ -181,6 +182,83 @@ namespace MRuby.CodeGen
             }
 
             if (fmt.EndsWith("{")) indent++;
+        }
+    }
+
+    public class RegistryPrinter
+    {
+        int indent;
+        int level;
+
+        public RegistryPrinter(int _level = 1)
+        {
+            level = _level;
+        }
+
+        void write(string fmt, params object[] args)
+        {
+            Console.Write(new string(' ', indent * 2));
+            Console.WriteLine(fmt, args);
+        }
+
+        public void PrintRegistry(Registry reg)
+        {
+            foreach (var cls in reg.AllDescs())
+            {
+                //write(new string('=', 40));
+                PrintClassDesc(cls);
+            }
+        }
+
+        public void PrintClassDesc(ClassDesc cls)
+        {
+            if (cls.IsNamespace)
+            {
+                write("{2} ns    {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName, cls.PopCountFromExport);
+            }
+            else
+            {
+                write("{2} class {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName, cls.PopCountFromExport);
+            }
+
+            if (level >= 1)
+            {
+                indent++;
+                foreach (var m in cls.MethodDescs.Values)
+                {
+                    PrintMethodDesc(m);
+                }
+                foreach (var f in cls.Fields.Values)
+                {
+                    PrintField(f);
+                }
+                indent--;
+            }
+        }
+
+        public void PrintMethodDesc(MethodDesc m)
+        {
+            var (min, max) = m.ParameterNum();
+            var isStatic = m.IsStatic ? "s" : " ";
+            write($"{isStatic} {m.Name} => {m.RubyName} ({m.Methods.Count}) {min}..{max}");
+
+            if (level >= 2)
+            {
+                indent++;
+                foreach (var method in m.Methods)
+                {
+                    write($"  {method} {method.Attributes}");
+                }
+                indent--;
+            }
+        }
+
+        public void PrintField(FieldDesc f)
+        {
+            var kind = f.IsProperty ? "p" : "f";
+            var canRead = f.CanRead ? "r" : "-";
+            var canWrite = f.CanWrite ? "w" : "-";
+            write($"{kind} {f.Name} {canRead}{canWrite}");
         }
     }
 
