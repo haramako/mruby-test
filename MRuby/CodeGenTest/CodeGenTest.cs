@@ -13,7 +13,7 @@ class CodeGenTest
     public void Setup()
     {
         mrb = new MrbState();
-        _Binder.Bind(mrb.mrb);
+        Binder.Bind(mrb, _Binder.BindData);
     }
 
     [TestCase("hoge", "hoge")]

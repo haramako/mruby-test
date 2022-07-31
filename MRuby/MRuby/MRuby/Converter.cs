@@ -1144,7 +1144,7 @@ return true;
 
         public static RClass GetClass(mrb_state mrb, string name)
         {
-            if (name == "System.Object" || name == "UnityEngine.MonoBehaviour")
+            if (name == null || name == "System.Object" || name == "UnityEngine.MonoBehaviour")
             {
                 return DLL.mrb_class_get(mrb, "Object");
             }
@@ -1152,32 +1152,6 @@ return true;
             {
                 return GetClass(mrb, name.Split("::"));
             }
-        }
-
-        public static RClass GetModule(mrb_state mrb, string[] names)
-        {
-            RClass module = DLL.mrb_class_get(mrb, "Object");
-            for (int i = 0; i < names.Length; i++)
-            {
-                module = DLL.mrb_module_get_under(mrb, module, names[i]);
-            }
-            return module;
-        }
-
-        public static RClass CreateModule(mrb_state mrb, string[] names)
-        {
-            RClass module = DLL.mrb_module_get(mrb, "Object");
-            for (int i = 0; i < names.Length; i++)
-            {
-                module = DLL.mrb_define_module_under(mrb, module, names[i]);
-            }
-            return module;
-        }
-
-        public static RClass DefineClass(mrb_state mrb, RClass module, string name, RClass baseClass)
-        {
-            var names = name.Split('.');
-            return DLL.mrb_define_class_under(mrb, module, names[names.Length - 1], baseClass);
         }
 
         public struct ArenaLock : IDisposable
