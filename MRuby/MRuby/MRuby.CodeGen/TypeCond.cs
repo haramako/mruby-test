@@ -16,8 +16,6 @@ namespace MRuby.CodeGen
             }
 
             var methodString = string.Format("{0}.{1}", mi.DeclaringType, mi.Name);
-            if (CustomExport.FunctionFilterList.Contains(methodString))
-                return true;
             // directly ignore any components .ctor
             if (mi.DeclaringType.IsSubclassOf(typeof(UnityEngine.Component)))
             {
