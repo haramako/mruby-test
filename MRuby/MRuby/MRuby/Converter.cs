@@ -594,11 +594,11 @@ namespace MRuby
                     {
                         return DLL.mrb_nil_value();
                     }
-                    else if (ObjectCache.TryToValue(mrb, val, out var mrb_v))
+                    else if (MrbState.FindCache(mrb).ObjectCache.TryToValue(mrb, val, out var mrb_v))
                     {
                         return mrb_v;
                     }
-                    else if (TypeCache.TryGetClass(val.GetType(), out TypeCache.ConstructorFunc constructor))
+                    else if (MrbState.FindCache(mrb).TypeCache.TryGetClass(val.GetType(), out TypeCache.ConstructorFunc constructor))
                     {
                         var obj = constructor(mrb, val);
                         return obj.val;

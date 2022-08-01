@@ -32,20 +32,25 @@ namespace MRuby
 
     public class MrbState : IDisposable
     {
+        public readonly TypeCache TypeCache = new TypeCache();
+        public readonly ObjectCache ObjectCache = new ObjectCache();
+
         bool disposed;
         public mrb_state mrb;
 
-        static Dictionary<mrb_state, MrbState> mrbStateCache = new Dictionary<mrb_state, MrbState>();
+        static Dictionary<UIntPtr, MrbState> mrbStateCache = new Dictionary<UIntPtr, MrbState>();
 
         public static MrbState FindCache(mrb_state mrb)
         {
-            return mrbStateCache[mrb];
+            return mrbStateCache[mrb.val];
         }
 
         public MrbState()
         {
             mrb = DLL.mrb_open();
             DLL.mrb_unity_set_abort_func(mrb, abortCallback);
+
+            mrbStateCache.Add(mrb.val, this);
 
             Converter.sym_objid = DLL.mrb_intern_cstr(mrb, "objid");
 

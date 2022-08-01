@@ -12,8 +12,6 @@ class CodeGenTest
     [SetUp]
     public void Setup()
     {
-        TypeCache.Clear();
-        ObjectCache.Clear();
         GC.TryStartNoGCRegion(1024 * 1024 * 16);
 
         mrb = new MrbState();

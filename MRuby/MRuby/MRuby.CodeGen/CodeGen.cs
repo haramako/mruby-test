@@ -108,7 +108,7 @@ namespace MRuby.CodeGen
             {
                 w.Write("Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(16));");
             }
-            w.Write("TypeCache.AddType(typeof({0}), Construct);", cls.CodeName);
+            w.Write("MrbState.FindCache(mrb).TypeCache.AddType(typeof({0}), Construct);", cls.CodeName);
 
             foreach (var md in cls.MethodDescs.Values)
             {
@@ -280,7 +280,7 @@ namespace MRuby.CodeGen
 
         private void WriteCSConstructor()
         {
-            w.Write("static CSObject Construct(mrb_state mrb, object obj) => ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName);
+            w.Write("static CSObject Construct(mrb_state mrb, object obj) => MrbState.FindCache(mrb).ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName);
         }
 
         private void WriteConstructor()
@@ -319,7 +319,7 @@ namespace MRuby.CodeGen
                         CheckArgument(p.ParameterType, k, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
                     }
                     w.Write("o=new {0}({1});", TypeCond.TypeDecl(t), FuncCallCode(new MethodEntry(ci,false)));
-                    w.Write("ObjectCache.NewObjectByVal(mrb, _self, o);");
+                    w.Write("MrbState.FindCache(mrb).ObjectCache.NewObjectByVal(mrb, _self, o);");
                     w.Write("return DLL.mrb_nil_value();");
 #if false
                     if (t.Name == "String") // if export system.string, push string as ud not lua string
