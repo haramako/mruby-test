@@ -7,7 +7,7 @@ namespace MRuby
     public class TypeCache
     {
         MrbState mrb;
-        public delegate CSObject ConstructorFunc(mrb_state mrb, object obj);
+        public delegate mrb_value ConstructorFunc(mrb_state mrb, object obj);
         static Dictionary<Type, ConstructorFunc> cache = new Dictionary<Type, ConstructorFunc>();
 
         public TypeCache(MrbState _mrb)
@@ -58,21 +58,19 @@ namespace MRuby
             return id;
         }
 
-        public CSObject NewObject(mrb_state mrb, mrb_value cls, object obj)
+        public mrb_value NewObject(mrb_state mrb, mrb_value cls, object obj)
         {
             var val = DLL.mrb_funcall_argv(mrb, cls, "allocate", 0, null);
-            var r = new CSObject(mrb, obj, val);
             var id = AddObject(obj, val);
-            DLL.mrb_iv_set(mrb, r.val, _mrb.SymObjID, DLL.mrb_fixnum_value(id));
-            return r;
+            DLL.mrb_iv_set(mrb, val, _mrb.SymObjID, DLL.mrb_fixnum_value(id));
+            return val;
         }
 
-        public CSObject NewObjectByVal(mrb_state mrb, mrb_value self, object obj)
+        public mrb_value NewObjectByVal(mrb_state mrb, mrb_value self, object obj)
         {
-            var r = new CSObject(mrb, obj, self);
             var id = AddObject(obj, self);
-            DLL.mrb_iv_set(mrb, r.val, _mrb.SymObjID, DLL.mrb_fixnum_value(id));
-            return r;
+            DLL.mrb_iv_set(mrb, self, _mrb.SymObjID, DLL.mrb_fixnum_value(id));
+            return self;
         }
 
         public object GetObject(mrb_state mrb, mrb_value obj)

@@ -15,6 +15,7 @@ class CodeGenTest
         GC.TryStartNoGCRegion(1024 * 1024 * 16);
 
         mrb = new MrbState();
+        DLL.mrb_load_string(mrb.mrb, "GC.disable");
         _ = DLL.mrb_gc_arena_save(mrb.mrb);
         Binder.Bind(mrb, _Binder.BindData);
     }

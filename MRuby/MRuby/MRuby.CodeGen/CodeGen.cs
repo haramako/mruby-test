@@ -280,7 +280,7 @@ namespace MRuby.CodeGen
 
         private void WriteCSConstructor()
         {
-            w.Write("static CSObject Construct(mrb_state mrb, object obj) => MrbState.FindCache(mrb).ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName);
+            w.Write("static mrb_value Construct(mrb_state mrb, object obj) => MrbState.FindCache(mrb).ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName);
         }
 
         private void WriteConstructor()

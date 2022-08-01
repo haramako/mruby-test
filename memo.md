@@ -1,7 +1,5 @@
-* l => mrb に変換
 * paramsに対応
 
-* TypeCache, ObjectCacheをMrbStateごとに独立させる
 * ガベージコレクション対策
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
 
@@ -53,6 +51,8 @@ genericと拡張メソッド、overloadは、すべて、同時に存在しう�
 拡張メソッドと通常メソッドが被った場合、通常メソッド(generic含む)が優先される。ただし、overloadはできる
 genericと通常メソッドは、通常メソッドが優先される
 
+generic関数には対応しない（大変なので）
+
 通常メソッド > generic > 拡張 > 拡張generic
 
 関数コード作成のときに、
@@ -67,6 +67,8 @@ genericと通常メソッドは、通常メソッドが優先される
 
 # OLD TODO
 
+- l => mrb に変換
+- TypeCache, ObjectCacheをMrbStateごとに独立させる
 - extension methodに対応
 - overload対応 => とりあえず、一番基本的な感じで
 - RuntimeClassDescをつくって、実行時に順番を管理するようにする

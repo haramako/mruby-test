@@ -598,8 +598,7 @@ namespace MRuby
                     }
                     else if (MrbState.FindCache(mrb).TypeCache.TryGetClass(val.GetType(), out TypeCache.ConstructorFunc constructor))
                     {
-                        var obj = constructor(mrb, val);
-                        return obj.val;
+                        return constructor(mrb, val);
                     }
                     else
                     {

@@ -167,7 +167,7 @@ namespace MRuby.CodeGen
 
         public static bool IsBaseType(Type t)
         {
-            return t.IsPrimitive || CSObject.isImplByLua(t);
+            return t.IsPrimitive;
         }
 
         public static bool IsPropertyAccessor(MethodInfo m)
