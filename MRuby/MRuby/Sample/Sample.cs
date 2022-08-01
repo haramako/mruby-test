@@ -130,6 +130,7 @@ namespace NSSample
 }
 
 
+[MRuby.CustomMRubyClass]
 public static class ExtTest
 {
     public static void ExSet(this Extended self, int i) { }
@@ -137,9 +138,12 @@ public static class ExtTest
     public static void Set<T>(this Extended self, T i) { }
 }
 
+[MRuby.CustomMRubyClass]
 public class Extended
 {
-    //public void Set(int i) { }
+    //public Extended() { }
+
+    public void Set(int i) { }
     public void Set(string s) { }
     //public void Set<T>(T v) { }
 }

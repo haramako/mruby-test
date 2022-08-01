@@ -1,6 +1,6 @@
+* extension methodに対応
 * l => mrb に変換
 * paramsに対応
-* extension methodに対応
 
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
 

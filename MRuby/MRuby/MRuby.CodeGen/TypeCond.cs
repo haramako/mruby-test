@@ -119,6 +119,17 @@ namespace MRuby.CodeGen
             return method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute), false);
         }
 
+        public static Type ExtensionTargetClass(MethodBase method)
+        {
+            var x = method.GetParameters()[0];
+            return method.GetParameters()[0].ParameterType;
+        }
+
+        public static bool IsStaticClass(Type t)
+        {
+            return t.IsAbstract && t.IsSealed;
+        }
+
         // try filling generic parameters
         public static MethodInfo TryFixGenericMethod(MethodInfo method)
         {
@@ -157,6 +168,11 @@ namespace MRuby.CodeGen
         public static bool IsBaseType(Type t)
         {
             return t.IsPrimitive || CSObject.isImplByLua(t);
+        }
+
+        public static bool IsPropertyAccessor(MethodInfo m)
+        {
+            return (m.Attributes & MethodAttributes.SpecialName) != 0;
         }
 
         public static string SimpleTypeName(Type t)

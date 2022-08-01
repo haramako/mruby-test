@@ -228,11 +228,11 @@ namespace MRuby.CodeGen
         {
             if (cls.IsNamespace)
             {
-                write("{2} ns    {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName, cls.PopCountFromExport);
+                write("{1} ns    {0,-20}", cls.FullName, cls.PopCountFromExport);
             }
             else
             {
-                write("{2} class {0,-20} => {1,-20}", cls.FullName, cls.RubyFullName, cls.PopCountFromExport);
+                write("{1} class {0,-20}", cls.FullName, cls.PopCountFromExport);
             }
 
             if (level >= 1)
@@ -252,16 +252,19 @@ namespace MRuby.CodeGen
 
         public void PrintMethodDesc(MethodDesc m)
         {
-            var (min, max) = m.ParameterNum();
-            var isStatic = m.IsStatic ? "s" : " ";
-            write($"{isStatic} {m.Name} => {m.RubyName} ({m.Methods.Count}) {min}..{max}");
+            var (min, max, hasParamArray) = m.ParameterNum();
+            var mark = m.IsStatic ? "s" : " ";
+            var param = hasParamArray ? $"{min}.." : ((min==max) ? $"{min}" : $"{min}..{max}");
+            write($"{mark} {m.Name}({param}) [{m.Methods.Count}]");
 
-            if (level >= 2)
+            if (m.IsOverloaded && level >= 2)
             {
                 indent++;
                 foreach (var method in m.Methods)
                 {
-                    write($"  {method} {method.Attributes}");
+                    var extension = method.IsExtension ? "x" : " ";
+                    write($"  {extension} {method.Info}");
+                    //write($"  {extension} {method} {method.Info.Attributes}");
                 }
                 indent--;
             }

@@ -16,16 +16,6 @@ class CodeGenTest
         Binder.Bind(mrb, _Binder.BindData);
     }
 
-    [TestCase("hoge", "hoge")]
-    [TestCase("A", "a")]
-    [TestCase("Hoge", "hoge")]
-    [TestCase("HogeFuga", "hoge_fuga")]
-    [TestCase("HogeFUGA", "hoge_fuga")]
-    public void TestRubyMethodName(string input, string expect)
-    {
-        Assert.AreEqual(expect, Naming.ToSnakeCase(input));
-    }
-
     [TestCase("1+1", "2")]
     [TestCase("Sample.new.int_field", "1")]
     [TestCase("s=Sample.new; s.int_field=2; s.int_field;", "2")]
@@ -34,11 +24,11 @@ class CodeGenTest
     [TestCase("Sample.new.get_string_value", "str")]
     [TestCase("Sample.new.get_int_value", "99")]
     [TestCase("Sample.new.overloaded_method(1)", "1")]
-    [TestCase("Sample.static_method(2)", "2")]
-    public void TestSample2(string src, string expect)
-    {
-        Assert.AreEqual(expect, mrb.LoadString(src).ToString());
-    }
+        [TestCase("Sample.static_method(2)", "2")]
+        public void TestSample2(string src, string expect)
+        {
+            Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+        }
 
     [TestCase("Sample.new.get_int_value(1)", "wrong number of arguments (given 1, expected 0)")] // Over argument
     [TestCase("Sample.new.set_int_value()", "wrong number of arguments (given 0, expected 1)")] // Less argument

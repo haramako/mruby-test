@@ -56,11 +56,21 @@ namespace MRuby.CodeGen
                     var methods = t.GetMethods();
                     foreach (var m in methods)
                     {
-                        if ((m.Attributes & MethodAttributes.SpecialName) != 0)
+                        var noinstance = TypeCond.IsStaticClass(t) && !m.IsStatic;
+                        if (TypeCond.IsPropertyAccessor(m) || noinstance)
                         {
                             continue;
                         }
-                        cls.AddMethod(m);
+
+                        if (TypeCond.IsExtensionMethod(m))
+                        {
+                            var extensionTargetClass = reg.FindByType(TypeCond.ExtensionTargetClass(m), cls);
+                            extensionTargetClass.AddMethod(new MethodEntry(m, true));
+                        }
+                        else
+                        {
+                            cls.AddMethod(new MethodEntry(m, false));
+                        }
                     }
 
                     var fields = t.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);

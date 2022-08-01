@@ -440,9 +440,9 @@ namespace MRuby.CodeGen
                 foreach (var m in md.Methods)
                 {
                     var ifCode = first ? "if" : "else if";
-                    if (m.MemberType == MemberTypes.Method)
+                    if (m.Info.MemberType == MemberTypes.Method)
                     {
-                        MethodInfo mi = m as MethodInfo;
+                        MethodInfo mi = m.Info as MethodInfo;
                         ParameterInfo[] pars = mi.GetParameters();
                         var requireParameterNum = pars.TakeWhile(p => !p.HasDefaultValue).Count();
                         var argTypes = pars.Select(p => reg.FindByType(p.ParameterType, cls).CodeName).Select(s=>$"typeof({s})").ToArray();
@@ -454,7 +454,7 @@ namespace MRuby.CodeGen
                     }
                     else
                     {
-                        Logger.Log($"Unknown method type {m.MethodHandle} in {m}");
+                        Logger.LogError($"Unknown method type {m.Name} in {m}");
                     }
                     first = false;
                 }
@@ -494,12 +494,12 @@ namespace MRuby.CodeGen
             }
         }
 
-        private void WriteFunctionCall(ClassDesc cls, MethodDesc md, MethodInfo m)
+        private void WriteFunctionCall(ClassDesc cls, MethodDesc md, MethodEntry me)
         {
             // bool isExtension = IsExtensionMethod(m) && (bf & BindingFlags.Instance) == BindingFlags.Instance;
-            bool isExtension = false; // TODO
-            ParameterInfo[] pars = m.GetParameters();
+            ParameterInfo[] pars = me.Parameters;
             var t = cls.Type;
+            var m = me.Info;
 
             // Is argument number more than parameter number?
             var requireParameterNum = m.GetParameters().ToArray().TakeWhile(p => !p.HasDefaultValue).Count();
@@ -517,7 +517,7 @@ namespace MRuby.CodeGen
                 WriteCheckSelf();
                 argIndex++;
             }
-            else if (isExtension)
+            else if (me.IsExtension)
             {
                 WriteCheckSelf();
                 parOffset++;
@@ -537,7 +537,7 @@ namespace MRuby.CodeGen
                 ret = "var ret=";
             }
 
-            if (m.IsStatic && !isExtension)
+            if (me.IsStatic && !me.IsExtension)
             {
                 if (m.Name == "op_Multiply")
                     w.Write("{0}a1*a2;", ret);

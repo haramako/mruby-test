@@ -169,14 +169,14 @@ namespace MRuby.CodeGen
         }
 
 
-        public MethodDesc AddMethod(MethodInfo m)
+        public MethodDesc AddMethod(MethodEntry m)
         {
             if (!methodDescs.TryGetValue(m.Name, out var found))
             {
                 found = new MethodDesc(this, m.Name);
                 methodDescs.Add(m.Name, found);
             }
-            found.AddMethodInfo(m);
+            found.AddMethodEntry(m);
             return found;
         }
 
@@ -197,10 +197,15 @@ namespace MRuby.CodeGen
 
     }
 
+    /// <summary>
+    /// A information of method group.
+    /// 
+    /// Include overloaded methods.
+    /// </summary>
     public class MethodDesc
     {
-        List<MethodInfo> methods = new List<MethodInfo>();
-        public readonly IReadOnlyList<MethodInfo> Methods;
+        List<MethodEntry> methods = new List<MethodEntry>();
+        public readonly IReadOnlyList<MethodEntry> Methods;
 
         public readonly string Name;
 
@@ -210,33 +215,78 @@ namespace MRuby.CodeGen
             Name = name;
         }
 
-        public void AddMethodInfo(MethodInfo m)
+        public void AddMethodEntry(MethodEntry m)
         {
-            Debug.Assert(m.Name == Name);
+            Debug.Assert(m.Info.Name == Name);
             methods.Add(m);
         }
 
         public bool IsStatic => methods.All(m => m.IsStatic);
 
-        public (int, int) ParameterNum()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>returns (min parameter num, max parameter num, has variable parameter)</returns>
+        public (int, int, bool) ParameterNum()
         {
-            var min = methods.Min(m => requireParam(m));
-            var max = methods.Max(m => m.GetParameters().Length);
-            return (min, max);
+            var min = methods.Min(m => m.RequiredParamNum);
+            var max = methods.Max(m => m.ParamNum);
+            var hasParamArray = methods.Any(m => m.HasParamArray);
+            return (min, max, hasParamArray);
         }
 
-        int requireParam(MethodInfo m)
-        {
-            return m.GetParameters().TakeWhile(p => !p.HasDefaultValue).Count();
-        }
-
-        public bool IsGeneric => methods.Any(m => m.IsGenericMethod);
+        public bool IsGeneric => methods.Any(m => m.IsGeneric);
 
         public bool IsOverloaded => (methods.Count > 1);
 
-
         public string RubyName => Naming.ToSnakeCase(Name);
+    }
 
+    /// <summary>
+    /// A info of one method.
+    /// 
+    /// It's a MethodInfo with additional information.
+    /// </summary>
+    public class MethodEntry
+    {
+        public readonly MethodInfo Info;
+        public readonly ParameterInfo[] Parameters;
+        public readonly string Name;
+
+        /// <summary>
+        /// Is extension-method.
+        /// </summary>
+        public readonly bool IsExtension;
+
+        /// <summary>
+        /// Has variable length parameters, like 'params object[] args'.
+        /// </summary>
+        public readonly bool HasParamArray;
+
+        /// <summary>
+        /// Is generic method.
+        /// 
+        /// Generic class's normal method is false.
+        /// </summary>
+        public readonly bool IsGeneric;
+
+        public readonly bool IsStatic;
+        public readonly int RequiredParamNum;
+        public readonly int ParamNum;
+
+        public MethodEntry(MethodInfo info, bool isExtension = false)
+        {
+            Info = info;
+            Parameters = info.GetParameters();
+            Name = info.Name;
+            IsExtension = isExtension;
+            HasParamArray = Parameters.LastOrDefault()?.IsDefined(typeof(ParamArrayAttribute)) ?? false;
+            IsGeneric = info.IsGenericMethod;
+
+            IsStatic = info.IsStatic;
+            RequiredParamNum = Parameters.TakeWhile(p => !p.HasDefaultValue).Count();
+            ParamNum = Parameters.Length;
+        }
     }
 
     public class FieldDesc
