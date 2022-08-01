@@ -95,6 +95,8 @@ namespace MRuby.CodeGen
 
             // Write export function
             w.Write("static public void Register(mrb_state mrb) {");
+            w.Write("var _mrb = MRuby.MrbState.FindCache(mrb);");
+
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
@@ -106,7 +108,7 @@ namespace MRuby.CodeGen
 
             if (cls.Constructors.Count > 0)
             {
-                w.Write("Converter.define_method(mrb, _cls, \"initialize\", _initialize, DLL.MRB_ARGS_OPT(16));");
+                w.Write("Converter.define_method(mrb, _cls, \"initialize\", _mrb.Pin(_initialize), DLL.MRB_ARGS_OPT(16));");
             }
             w.Write("MrbState.FindCache(mrb).TypeCache.AddType(typeof({0}), Construct);", cls.CodeName);
 
@@ -120,11 +122,11 @@ namespace MRuby.CodeGen
 
                 if (md.IsStatic)
                 {
-                    w.Write("Converter.define_class_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", md.RubyName, f); // TODO
+                    w.Write("Converter.define_class_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f); // TODO
                 }
                 else
                 {
-                    w.Write("Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", md.RubyName, f);
+                    w.Write("Converter.define_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f);
                 }
             }
 
@@ -132,11 +134,11 @@ namespace MRuby.CodeGen
             {
                 if (f.CanRead)
                 {
-                    w.Write("Converter.define_method(mrb, _cls, \"{0}\", {1}, DLL.MRB_ARGS_OPT(16));", f.RubyName, f.GetterName);
+                    w.Write("Converter.define_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.GetterName);
                 }
                 if (f.CanWrite)
                 {
-                    w.Write("Converter.define_method(mrb, _cls, \"{0}=\", {1}, DLL.MRB_ARGS_OPT(16));", f.RubyName, f.SetterName);
+                    w.Write("Converter.define_method(mrb, _cls, \"{0}=\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.SetterName);
                 }
             }
 
@@ -280,6 +282,7 @@ namespace MRuby.CodeGen
 
         private void WriteCSConstructor()
         {
+            WriteFunctionAttr();
             w.Write("static mrb_value Construct(mrb_state mrb, object obj) => MrbState.FindCache(mrb).ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName);
         }
 

@@ -42,7 +42,14 @@ namespace MRuby
     {
         MrbState _mrb;
 
+        /// <summary>
+        /// Cache from mrb_value to C# object.
+        /// </summary>
         static Dictionary<int, object> cache = new Dictionary<int, object>();
+
+        /// <summary>
+        /// Cache from C# object to mrb_value.
+        /// </summary>
         static Dictionary<object, mrb_value> csToMRubyCache = new Dictionary<object, mrb_value>();
 
         public ObjectCache(MrbState mrb)
@@ -60,37 +67,30 @@ namespace MRuby
 
         public mrb_value NewObject(mrb_state mrb, mrb_value cls, object obj)
         {
+            //CodeGen.Logger.Log($"NewObject");
             var val = DLL.mrb_funcall_argv(mrb, cls, "allocate", 0, null);
             var id = AddObject(obj, val);
             DLL.mrb_iv_set(mrb, val, _mrb.SymObjID, DLL.mrb_fixnum_value(id));
+            //CodeGen.Logger.Log($"NewObject: {val.val} as {obj} {id}");
             return val;
         }
 
         public mrb_value NewObjectByVal(mrb_state mrb, mrb_value self, object obj)
         {
+            //CodeGen.Logger.Log($"NewObjVal");
             var id = AddObject(obj, self);
             DLL.mrb_iv_set(mrb, self, _mrb.SymObjID, DLL.mrb_fixnum_value(id));
+            //CodeGen.Logger.Log($"NewObjVal: {self.val} as {obj} {id}");
             return self;
         }
 
-        public object GetObject(mrb_state mrb, mrb_value obj)
+        public object GetObject(mrb_state mrb, mrb_value val)
         {
-            //UnityEngine.Debug.Log("GetObject: " + obj.val);
-            var x = DLL.mrb_iv_get(mrb, obj, _mrb.SymObjID);
-            var id = (int)DLL.mrb_as_int(mrb, x);
-            if (cache.TryGetValue(id, out object found))
-            {
-                return found;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public object GetObject(int id)
-        {
-            return cache[id];
+            //CodeGen.Logger.Log($"GetObject: {val.val} ");
+            var id = (int)DLL.mrb_as_int(mrb, DLL.mrb_iv_get(mrb, val, _mrb.SymObjID));
+            var obj = cache[id];
+            //CodeGen.Logger.Log($"GetObject: {val.val} to {obj} {id}");
+            return obj;
         }
 
         public bool TryGetObject(mrb_state mrb, mrb_value obj, out object found)

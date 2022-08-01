@@ -878,10 +878,12 @@ return true;
             }
         }
 
+#if false
         public static unsafe bool matchType(mrb_state mrb, mrb_value* args, int p, Type t1)
         {
             return matchType(mrb, args[p], t1);
         }
+#endif
 
         public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1)
         {

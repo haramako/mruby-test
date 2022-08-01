@@ -100,6 +100,15 @@ namespace MRuby.CodeGen
 
     public static class Logger
     {
+#if false
+        public static TextWriter Console;
+        static Logger()
+        {
+            Console = File.CreateText("log.txt");
+        }
+#endif
+            
+
         public static void Log(string msg)
         {
             Console.WriteLine(msg);

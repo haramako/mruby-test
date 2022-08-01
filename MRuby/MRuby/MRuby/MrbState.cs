@@ -102,6 +102,13 @@ namespace MRuby
             }
         }
 
+        List<MRubyCSFunction> pinned = new List<MRubyCSFunction>();
+        public MRubyCSFunction Pin(MRubyCSFunction f)
+        {
+            pinned.Add(f);
+            return f;
+        }
+
 
         public static string prelude = @"
 class LoadError < Exception

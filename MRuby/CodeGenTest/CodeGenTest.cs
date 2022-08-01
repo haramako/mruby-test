@@ -12,18 +12,12 @@ class CodeGenTest
     [SetUp]
     public void Setup()
     {
-        GC.TryStartNoGCRegion(1024 * 1024 * 16);
-
         mrb = new MrbState();
-        DLL.mrb_load_string(mrb.mrb, "GC.disable");
         _ = DLL.mrb_gc_arena_save(mrb.mrb);
+        DLL.mrb_load_string(mrb.mrb, "GC.disable");
         Binder.Bind(mrb, _Binder.BindData);
-    }
 
-    [TearDown]
-    public void TearDown()
-    {
-        GC.EndNoGCRegion();
+        Logger.Log("=" + TestContext.CurrentContext.Test.Name);
     }
 
     void testError(string src, string errorMessage)

@@ -78,6 +78,7 @@ namespace MRuby
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate mrb_value MRubyCSFunction(mrb_state mrb, mrb_value _self);
 #else
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate mrb_value MRubyCSFunction(mrb_state mrb, mrb_value _self);
 #endif
 
