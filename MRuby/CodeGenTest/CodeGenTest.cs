@@ -12,29 +12,22 @@ class CodeGenTest
     [SetUp]
     public void Setup()
     {
+        TypeCache.Clear();
+        ObjectCache.Clear();
+        GC.TryStartNoGCRegion(1024 * 1024 * 16);
+
         mrb = new MrbState();
+        _ = DLL.mrb_gc_arena_save(mrb.mrb);
         Binder.Bind(mrb, _Binder.BindData);
     }
 
-    [TestCase("1+1", "2")]
-    [TestCase("Sample.new.int_field", "1")]
-    [TestCase("s=Sample.new; s.int_field=2; s.int_field;", "2")]
-    [TestCase("Sample.new.string_field", "a")]
-    [TestCase("s=Sample.new; s.string_field='b'; s.string_field", "b")]
-    [TestCase("Sample.new.get_string_value", "str")]
-    [TestCase("Sample.new.get_int_value", "99")]
-    [TestCase("Sample.new.overloaded_method(1)", "1")]
-        [TestCase("Sample.static_method(2)", "2")]
-        public void TestSample2(string src, string expect)
-        {
-            Assert.AreEqual(expect, mrb.LoadString(src).ToString());
-        }
+    [TearDown]
+    public void TearDown()
+    {
+        GC.EndNoGCRegion();
+    }
 
-    [TestCase("Sample.new.get_int_value(1)", "wrong number of arguments (given 1, expected 0)")] // Over argument
-    [TestCase("Sample.new.set_int_value()", "wrong number of arguments (given 0, expected 1)")] // Less argument
-    [TestCase("Sample.new.set_int_value(1,2)", "wrong number of arguments (given 2, expected 1)")] // Over argument
-    [TestCase("Sample.new.set_int_value('a')", "String cannot be converted to Integer")] // Invalid type of argument
-    public void TestArgumentError(string src, string errorMessage)
+    void testError(string src, string errorMessage)
     {
         try
         {
@@ -46,6 +39,29 @@ class CodeGenTest
             return;
         }
         Assert.Fail();
+    }
+
+    [TestCase("1+1", "2")]
+    [TestCase("Sample.new.int_field", "1")]
+    [TestCase("s=Sample.new; s.int_field=2; s.int_field;", "2")]
+    [TestCase("Sample.new.string_field", "a")]
+    [TestCase("s=Sample.new; s.string_field='b'; s.string_field", "b")]
+    [TestCase("Sample.new.get_string_value", "str")]
+    [TestCase("Sample.new.get_int_value", "99")]
+    [TestCase("Sample.new.overloaded_method(1)", "1")]
+    [TestCase("Sample.static_method(2)", "2")]
+    public void TestSample2(string src, string expect)
+    {
+        Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+    }
+
+    [TestCase("Sample.new.get_int_value(1)", "wrong number of arguments (given 1, expected 0)")] // Over argument
+    [TestCase("Sample.new.set_int_value()", "wrong number of arguments (given 0, expected 1)")] // Less argument
+    [TestCase("Sample.new.set_int_value(1,2)", "wrong number of arguments (given 2, expected 1)")] // Over argument
+    [TestCase("Sample.new.set_int_value('a')", "String cannot be converted to Integer")] // Invalid type of argument
+    public void TestArgumentError(string src, string errorMessage)
+    {
+        testError(src, errorMessage);
     }
 
 
@@ -103,6 +119,20 @@ class CodeGenTest
     [TestCase("Sample.new.overloaded_method(1,2)", "3")]
     [TestCase("Sample.new.overloaded_method('a')", "a*")]
     public void TestOverload(string src, string expect)
+    {
+        Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+    }
+
+    [TestCase("Sample.new.overloaded_method()", "No matched override function OverloadedMethod to call")]
+    [TestCase("Sample.new.overloaded_method(1,2,3)", "No matched override function OverloadedMethod to call")]
+    [TestCase("Sample.new.overloaded_method([])", "No matched override function OverloadedMethod to call")]
+    public void TestOverloadError(string src, string errorMessage)
+    {
+        testError(src, errorMessage);
+    }
+
+    [TestCase("Extended.new.set(1)", "1")]
+    public void TestExtensionMethod(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
     }

@@ -9,6 +9,11 @@ namespace MRuby
         public delegate CSObject ConstructorFunc(mrb_state mrb, object obj);
         static Dictionary<Type, ConstructorFunc> cache = new Dictionary<Type, ConstructorFunc>();
 
+        public static void Clear()
+        {
+            cache.Clear();
+        }
+
         public static void AddType(Type type, ConstructorFunc cls)
         {
             cache[type] = cls;
@@ -36,6 +41,12 @@ namespace MRuby
     {
         static Dictionary<int, object> cache = new Dictionary<int, object>();
         static Dictionary<object, mrb_value> csToMRubyCache = new Dictionary<object, mrb_value>();
+
+        public static void Clear()
+        {
+            cache.Clear();
+            csToMRubyCache.Clear();
+        }
 
         public static int AddObject(object obj, mrb_value v)
         {

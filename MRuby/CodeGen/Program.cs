@@ -63,7 +63,7 @@ class Program
 
         var ex = new Extended();
         ex.Set(1);
-        ex.Set(1.0);
+        //ex.Set(1.0);
         ex.ExSet(1);
 
         {

@@ -245,11 +245,11 @@ namespace MRuby.CodeGen
     /// <summary>
     /// A info of one method.
     /// 
-    /// It's a MethodInfo with additional information.
+    /// It's a MethodBase (MethodInfo and ConstructorInfo) with additional information.
     /// </summary>
     public class MethodEntry
     {
-        public readonly MethodInfo Info;
+        public readonly MethodBase Info;
         public readonly ParameterInfo[] Parameters;
         public readonly string Name;
 
@@ -257,6 +257,12 @@ namespace MRuby.CodeGen
         /// Is extension-method.
         /// </summary>
         public readonly bool IsExtension;
+
+
+        /// <summary>
+        /// Number of this param. (1 if extension method else 0)
+        /// </summary>
+        public readonly int ThisParamNum;
 
         /// <summary>
         /// Has variable length parameters, like 'params object[] args'.
@@ -270,11 +276,24 @@ namespace MRuby.CodeGen
         /// </summary>
         public readonly bool IsGeneric;
 
+        /// <summary>
+        /// Is static method in ruby. (Extension method is not static)
+        /// </summary>
         public readonly bool IsStatic;
+
+        /// <summary>
+        /// Min parameter number in ruby.
+        /// </summary>
         public readonly int RequiredParamNum;
+
+        /// <summary>
+        /// Maximum parameter number in ruby.
+        /// </summary>
         public readonly int ParamNum;
 
-        public MethodEntry(MethodInfo info, bool isExtension = false)
+        public readonly Type ReturnType;
+
+        public MethodEntry(MethodBase info, bool isExtension = false)
         {
             Info = info;
             Parameters = info.GetParameters();
@@ -283,9 +302,12 @@ namespace MRuby.CodeGen
             HasParamArray = Parameters.LastOrDefault()?.IsDefined(typeof(ParamArrayAttribute)) ?? false;
             IsGeneric = info.IsGenericMethod;
 
-            IsStatic = info.IsStatic;
-            RequiredParamNum = Parameters.TakeWhile(p => !p.HasDefaultValue).Count();
-            ParamNum = Parameters.Length;
+            ThisParamNum = (isExtension ? 1 : 0);
+            IsStatic = info.IsStatic && !IsExtension;
+            RequiredParamNum = Parameters.TakeWhile(p => !p.HasDefaultValue).Count() - ThisParamNum;
+            ParamNum = Parameters.Length - ThisParamNum;
+
+            ReturnType = (Info as MethodInfo)?.ReturnType;
         }
     }
 

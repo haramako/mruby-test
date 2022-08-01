@@ -134,8 +134,8 @@ namespace NSSample
 public static class ExtTest
 {
     public static void ExSet(this Extended self, int i) { }
-    public static void Set(this Extended self, int i) { }
-    public static void Set<T>(this Extended self, T i) { }
+    public static int Set(this Extended self, int i) => i;
+    //public static T Set<T>(this Extended self, T i) => i;
 }
 
 [MRuby.CustomMRubyClass]
@@ -143,8 +143,8 @@ public class Extended
 {
     //public Extended() { }
 
-    public void Set(int i) { }
-    public void Set(string s) { }
+    //public void Set(int i) { }
+    //public void Set(string s) { }
     //public void Set<T>(T v) { }
 }
 
