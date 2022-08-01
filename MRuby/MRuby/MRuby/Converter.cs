@@ -8,8 +8,6 @@ namespace MRuby
 {
     public static class Converter
     {
-        public static mrb_sym sym_objid;
-
 #if false
         #region enum
 		static public bool checkEnum<T>(IntPtr l, int p, out T o) where T : struct
@@ -853,7 +851,7 @@ return true;
 				throw new Exception("expect self, but get null");
 			return o;
 #else
-            return ObjectCache.GetObject(l, self);
+            return MrbState.FindCache(l).ObjectCache.GetObject(l, self);
 #endif
         }
 
@@ -881,7 +879,7 @@ return true;
             }
         }
 
-         public static unsafe bool matchType(mrb_state mrb, mrb_value* args, int p, Type t1)
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, int p, Type t1)
         {
             return matchType(mrb, args[p], t1);
         }

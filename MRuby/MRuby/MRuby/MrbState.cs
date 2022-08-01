@@ -32,8 +32,9 @@ namespace MRuby
 
     public class MrbState : IDisposable
     {
-        public readonly TypeCache TypeCache = new TypeCache();
-        public readonly ObjectCache ObjectCache = new ObjectCache();
+        public readonly TypeCache TypeCache;
+        public readonly ObjectCache ObjectCache;
+        public readonly mrb_sym SymObjID;
 
         bool disposed;
         public mrb_state mrb;
@@ -47,12 +48,15 @@ namespace MRuby
 
         public MrbState()
         {
+            TypeCache = new TypeCache(this);
+            ObjectCache = new ObjectCache(this);
+
             mrb = DLL.mrb_open();
             DLL.mrb_unity_set_abort_func(mrb, abortCallback);
 
             mrbStateCache.Add(mrb.val, this);
 
-            Converter.sym_objid = DLL.mrb_intern_cstr(mrb, "objid");
+            SymObjID = DLL.mrb_intern_cstr(mrb, "objid");
 
             var kernel = DLL.mrb_module_get(mrb, "Kernel");
             DLL.mrb_define_module_function(mrb, kernel, "require", MRubyUnity.Core._require, DLL.MRB_ARGS_REQ(1));

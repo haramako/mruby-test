@@ -6,8 +6,14 @@ namespace MRuby
 {
     public class TypeCache
     {
+        MrbState mrb;
         public delegate CSObject ConstructorFunc(mrb_state mrb, object obj);
         static Dictionary<Type, ConstructorFunc> cache = new Dictionary<Type, ConstructorFunc>();
+
+        public TypeCache(MrbState _mrb)
+        {
+            mrb = _mrb;
+        }
 
         public void AddType(Type type, ConstructorFunc cls)
         {
@@ -34,8 +40,15 @@ namespace MRuby
 
     public class ObjectCache
     {
+        MrbState _mrb;
+
         static Dictionary<int, object> cache = new Dictionary<int, object>();
         static Dictionary<object, mrb_value> csToMRubyCache = new Dictionary<object, mrb_value>();
+
+        public ObjectCache(MrbState mrb)
+        {
+            _mrb = mrb;
+        }
 
         public int AddObject(object obj, mrb_value v)
         {
@@ -50,7 +63,7 @@ namespace MRuby
             var val = DLL.mrb_funcall_argv(mrb, cls, "allocate", 0, null);
             var r = new CSObject(mrb, obj, val);
             var id = AddObject(obj, val);
-            DLL.mrb_iv_set(mrb, r.val, Converter.sym_objid, DLL.mrb_fixnum_value(id));
+            DLL.mrb_iv_set(mrb, r.val, _mrb.SymObjID, DLL.mrb_fixnum_value(id));
             return r;
         }
 
@@ -58,14 +71,14 @@ namespace MRuby
         {
             var r = new CSObject(mrb, obj, self);
             var id = AddObject(obj, self);
-            DLL.mrb_iv_set(mrb, r.val, Converter.sym_objid, DLL.mrb_fixnum_value(id));
+            DLL.mrb_iv_set(mrb, r.val, _mrb.SymObjID, DLL.mrb_fixnum_value(id));
             return r;
         }
 
-        public static object GetObject(mrb_state mrb, mrb_value obj)
+        public object GetObject(mrb_state mrb, mrb_value obj)
         {
             //UnityEngine.Debug.Log("GetObject: " + obj.val);
-            var x = DLL.mrb_iv_get(mrb, obj, Converter.sym_objid);
+            var x = DLL.mrb_iv_get(mrb, obj, _mrb.SymObjID);
             var id = (int)DLL.mrb_as_int(mrb, x);
             if (cache.TryGetValue(id, out object found))
             {
@@ -84,7 +97,7 @@ namespace MRuby
 
         public bool TryGetObject(mrb_state mrb, mrb_value obj, out object found)
         {
-            var id = (int)DLL.mrb_as_int(mrb, DLL.mrb_iv_get(mrb, obj, Converter.sym_objid));
+            var id = (int)DLL.mrb_as_int(mrb, DLL.mrb_iv_get(mrb, obj, _mrb.SymObjID));
             return cache.TryGetValue(id, out found);
         }
 
