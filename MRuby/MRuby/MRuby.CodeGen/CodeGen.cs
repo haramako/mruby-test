@@ -98,7 +98,7 @@ namespace MRuby.CodeGen
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
-                w.Write("LuaUnityEvent_{1}.reg(l);", cls.ExportName, reg.FindByType(cls.BaseType, cls).RubyFullName);
+                w.Write("LuaUnityEvent_{1}.reg(mrb);", cls.ExportName, reg.FindByType(cls.BaseType, cls).RubyFullName);
             }
 
             w.Write("_cls = Converter.GetClass(mrb, \"{0}\");", cls.RubyFullName);
@@ -156,7 +156,7 @@ namespace MRuby.CodeGen
                 if (f.Type.BaseType != typeof(MulticastDelegate))
                 {
                     WriteFunctionAttr();
-                    w.Write("static public mrb_value get_{0}(mrb_state l, mrb_value _self) {{", f.Name);
+                    w.Write("static public mrb_value get_{0}(mrb_state mrb, mrb_value _self) {{", f.Name);
                     WriteTry();
 
                     if (f.IsStatic)
@@ -177,7 +177,7 @@ namespace MRuby.CodeGen
                 if (f.CanWrite)
                 {
                     WriteFunctionAttr();
-                    w.Write("static public mrb_value set_{0}(mrb_state l, mrb_value _self) {{", f.Name);
+                    w.Write("static public mrb_value set_{0}(mrb_state mrb, mrb_value _self) {{", f.Name);
                     WriteTry();
                     if (f.IsStatic)
                     {
@@ -219,7 +219,7 @@ namespace MRuby.CodeGen
         {
             w.Write("}");
             w.Write("catch(Exception e) {");
-            w.Write("DLL.mrb_exc_raise(l, Converter.error(l, e));");
+            w.Write("DLL.mrb_exc_raise(mrb, Converter.error(mrb, e));");
             w.Write("return default;");
             w.Write("}");
             WriteFinaly();
@@ -243,30 +243,30 @@ namespace MRuby.CodeGen
         {
             if (t.IsEnum)
             {
-                w.Write("{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", v, TypeCond.TypeDecl(t), n);
+                w.Write("{0} = ({1})LuaDLL.luaL_checkinteger(mrb, {2});", v, TypeCond.TypeDecl(t), n);
             }
             else if (t.BaseType == typeof(System.MulticastDelegate))
             {
-                w.Write("int op=checkDelegate(l,{2}{0},out {1});", n, v, nprefix);
+                w.Write("int op=checkDelegate(mrb,{2}{0},out {1});", n, v, nprefix);
             }
             else if (TypeCond.IsValueType(t))
             {
                 if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
-                    w.Write("Converter.checkNullable(l,{2}{0},out {1});", n, v, nprefix);
+                    w.Write("Converter.checkNullable(mrb,{2}{0},out {1});", n, v, nprefix);
                 }
                 else
                 {
-                    w.Write("Converter.checkValueType(l,{2}{0},out {1});", n, v, nprefix);
+                    w.Write("Converter.checkValueType(mrb,{2}{0},out {1});", n, v, nprefix);
                 }
             }
             else if (t.IsArray)
             {
-                w.Write("Converter.checkArray(l,{2}{0},out {1});", n, v, nprefix);
+                w.Write("Converter.checkArray(mrb,{2}{0},out {1});", n, v, nprefix);
             }
             else
             {
-                w.Write("Converter.checkType(l,{2}{0},out {1});", n, v, nprefix);
+                w.Write("Converter.checkType(mrb,{2}{0},out {1});", n, v, nprefix);
             }
         }
 
@@ -290,10 +290,10 @@ namespace MRuby.CodeGen
             if (cons.Count > 0)
             {
                 WriteFunctionAttr();
-                w.Write("static public mrb_value _initialize(mrb_state l, mrb_value _self) {");
+                w.Write("static public mrb_value _initialize(mrb_state mrb, mrb_value _self) {");
                 WriteTry();
                 if (cons.Count > 1)
-                    w.Write("int argc = LuaDLL.lua_gettop(l);");
+                    w.Write("int argc = LuaDLL.lua_gettop(mrb);");
                 w.Write("{0} o;", TypeCond.TypeDecl(t));
                 bool first = true;
                 for (int n = 0; n < cons.Count; n++)
@@ -307,7 +307,7 @@ namespace MRuby.CodeGen
                         if (isUniqueArgsCount(cons, ci))
                             w.Write( "{0}(argc=={1}){{", first ? "if" : "else if", ci.GetParameters().Length + 1);
                         else
-                            w.Write( "{0}(Converter.matchType(l,argc,2{1})){{", first ? "if" : "else if", TypeDecl(pars));
+                            w.Write( "{0}(Converter.matchType(mrb,argc,2{1})){{", first ? "if" : "else if", TypeDecl(pars));
 #endif
                         throw new Exception("not implemented");
                     }
@@ -319,7 +319,7 @@ namespace MRuby.CodeGen
                         CheckArgument(p.ParameterType, k, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
                     }
                     w.Write("o=new {0}({1});", TypeCond.TypeDecl(t), FuncCallCode(new MethodEntry(ci,false)));
-                    w.Write("ObjectCache.NewObjectByVal(l, _self, o);");
+                    w.Write("ObjectCache.NewObjectByVal(mrb, _self, o);");
                     w.Write("return DLL.mrb_nil_value();");
 #if false
                     if (t.Name == "String") // if export system.string, push string as ud not lua string
@@ -339,11 +339,11 @@ namespace MRuby.CodeGen
                     {
                         w.Write("{0}(argc=={1}){{", first ? "if" : "else if", 0);
                         w.Write("o=new {0}();", cls.ExportName);
-                        w.Write("return Converter.make_value(l, o);");
+                        w.Write("return Converter.make_value(mrb, o);");
                         w.Write("}");
                     }
 
-                    w.Write("return Converter.error(l,\"New object failed.\");");
+                    w.Write("return Converter.error(mrb,\"New object failed.\");");
                     WriteCatchExecption();
                     w.Write("}");
                 }
@@ -351,7 +351,7 @@ namespace MRuby.CodeGen
             else if (t.IsValueType) // default constructor
             {
                 WriteFunctionAttr();
-                w.Write("static public mrb_value _initialize(mrb_state l) {");
+                w.Write("static public mrb_value _initialize(mrb_state mrb) {");
                 WriteTry();
                 w.Write("{0} o;", cls.FullName);
                 w.Write("o=new {0}();", cls.FullName);
@@ -363,7 +363,7 @@ namespace MRuby.CodeGen
 
         void WriteReturn(string ret)
         {
-            w.Write("return Converter.make_value(l, {0});", ret);
+            w.Write("return Converter.make_value(mrb, {0});", ret);
         }
 
         void WriteError(string err)
@@ -408,7 +408,7 @@ namespace MRuby.CodeGen
                 }
 
                 WriteFunctionAttr();
-                w.Write("static public mrb_value {0}(mrb_state l, mrb_value _self) {{", m.Name);
+                w.Write("static public mrb_value {0}(mrb_state mrb, mrb_value _self) {{", m.Name);
                 WriteFunctionImpl(m);
             }
         }
@@ -416,7 +416,7 @@ namespace MRuby.CodeGen
         void WriteFunctionImpl(MethodDesc md)
         {
             WriteTry();
-            w.Write("var _argc = DLL.mrb_get_argc(l);");
+            w.Write("var _argc = DLL.mrb_get_argc(mrb);");
             if (!md.IsOverloaded) // no override function
             {
                 WriteFunctionCall(cls, md, md.Methods[0]);
@@ -424,7 +424,7 @@ namespace MRuby.CodeGen
             else // 2 or more override function
             {
                 w.Write("unsafe {");
-                w.Write("var _argv = DLL.mrb_get_argv(l);");
+                w.Write("var _argv = DLL.mrb_get_argv(mrb);");
 
                 bool first = true;
                 foreach (var m in md.Methods)
@@ -437,7 +437,7 @@ namespace MRuby.CodeGen
                         var requireParameterNum = pars.TakeWhile(p => !p.HasDefaultValue).Count();
                         var argTypes = pars.Select(p => reg.FindByType(p.ParameterType, cls).CodeName).Select(s => $"typeof({s})").ToArray();
                         var argTypesStr = string.Join(",", argTypes);
-                        w.Write("{0}(_argc >= {2} && _argc <= {3} && Converter.matchType(l, _argv, {1})){{", ifCode, argTypesStr, requireParameterNum, pars.Length);
+                        w.Write("{0}(_argc >= {2} && _argc <= {3} && Converter.matchType(mrb, _argv, {1})){{", ifCode, argTypesStr, requireParameterNum, pars.Length);
                         WriteFunctionCall(cls, md, m);
                         w.Write("}");
                         first = false;
@@ -474,13 +474,13 @@ namespace MRuby.CodeGen
             {
                 w.Write("{0} self;", TypeCond.TypeDecl(t));
                 if (TypeCond.IsBaseType(t))
-                    w.Write("Converter.checkType(l,1,out self);");
+                    w.Write("Converter.checkType(mrb,1,out self);");
                 else
-                    w.Write("Converter.checkValueType(l,1,out self);");
+                    w.Write("Converter.checkValueType(mrb,1,out self);");
             }
             else
             {
-                w.Write("{0} self=({0})Converter.checkSelf(l, _self);", TypeCond.TypeDecl(t));
+                w.Write("{0} self=({0})Converter.checkSelf(mrb, _self);", TypeCond.TypeDecl(t));
             }
         }
 
@@ -555,7 +555,7 @@ namespace MRuby.CodeGen
 
             if (me.ReturnType != typeof(void))
             {
-                w.Write("return Converter.make_value(l, ret);");
+                w.Write("return Converter.make_value(mrb, ret);");
             }
             else
             {
@@ -587,7 +587,7 @@ namespace MRuby.CodeGen
             }
 
             if (t.IsValueType && m.ReturnType == typeof(void) && !m.IsStatic)
-                w.Write( "setBack(l,self);");
+                w.Write( "setBack(mrb,self);");
 
             w.Write( "return {0};", retcount);
 #endif
@@ -642,31 +642,31 @@ namespace MRuby.CodeGen
                 }
 
                 if (t.IsEnum)
-                    w.Write("a{0} = ({1})LuaDLL.luaL_checkinteger(l, {2});", n, TypeCond.TypeDecl(t), n);
+                    w.Write("a{0} = ({1})LuaDLL.luaL_checkinteger(mrb, {2});", n, TypeCond.TypeDecl(t), n);
                 else if (t.BaseType == typeof(System.MulticastDelegate))
                 {
                     //tryMake(t);
-                    w.Write("Converter.checkDelegate(l,{0},out a{1});", n, n);
+                    w.Write("Converter.checkDelegate(mrb,{0},out a{1});", n, n);
                 }
                 else if (isparams && false /* TODO */)
                 {
                     if (t.GetElementType().IsValueType && !TypeCond.IsBaseType(t.GetElementType()))
-                        w.Write("Converter.checkValueParams(l,{0},out a{1});", n, n);
+                        w.Write("Converter.checkValueParams(mrb,{0},out a{1});", n, n);
                     else
-                        w.Write("Converter.checkParams(l,{0},out a{1});", n, n);
+                        w.Write("Converter.checkParams(mrb,{0},out a{1});", n, n);
                 }
                 else if (t.IsArray)
-                    w.Write("Converter.checkArray(l,{0},out a{1});", n, n);
+                    w.Write("Converter.checkArray(mrb,{0},out a{1});", n, n);
                 else if (TypeCond.IsValueType(t))
                 {
                     if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                        w.Write("Converter.checkNullable(l,{0},out a{1});", n, n);
+                        w.Write("Converter.checkNullable(mrb,{0},out a{1});", n, n);
                     else
-                        w.Write("Converter.checkValueType(l,{0},out a{1});", n, n);
+                        w.Write("Converter.checkValueType(mrb,{0},out a{1});", n, n);
                 }
                 else
                 {
-                    w.Write("Converter.checkType(l,{0},out a{1});", n /* + argstart */, n);
+                    w.Write("Converter.checkType(mrb,{0},out a{1});", n /* + argstart */, n);
                 }
 
                 if (hasDefaultValue)

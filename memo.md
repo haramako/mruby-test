@@ -1,7 +1,8 @@
-* extension methodに対応
 * l => mrb に変換
 * paramsに対応
 
+* TypeCache, ObjectCacheをMrbStateごとに独立させる
+* ガベージコレクション対策
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
 
 ? ArrayをC#オブジェクトのまま返すか, RubyのArrayに変換するか・・・
@@ -64,6 +65,9 @@ genericと通常メソッドは、通常メソッドが優先される
     関数本体
 
 
+# OLD TODO
+
+- extension methodに対応
 - overload対応 => とりあえず、一番基本的な感じで
 - RuntimeClassDescをつくって、実行時に順番を管理するようにする
 - FindByTypeで、ないものは足すように
