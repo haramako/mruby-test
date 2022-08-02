@@ -8,8 +8,6 @@ namespace MRuby
 {
     public static class Converter
     {
-        public static mrb_sym sym_objid;
-
 #if false
         #region enum
 		static public bool checkEnum<T>(IntPtr l, int p, out T o) where T : struct
@@ -529,6 +527,172 @@ namespace MRuby
         }
         #endregion
 
+        static public bool checkArray<T>(mrb_state mrb, int p, out T[] ta)
+        {
+            unsafe
+            {
+                mrb_value* args = DLL.mrb_get_argv(mrb);
+                mrb_value ary = args[p];
+                if (DLL.mrb_type(ary) == mrb_vtype.MRB_TT_ARRAY)
+                {
+                    uint n = DLL.mrb_rarray_len(ary);
+                    mrb_value* ptr = DLL.mrb_rarray_ptr(ary);
+                    ta = new T[n];
+                    for (int k = 0; k < n; k++)
+                    {
+                        object obj = checkVar(mrb, ptr[k]);
+                        if (obj is IConvertible)
+                        {
+                            ta[k] = (T)Convert.ChangeType(obj, typeof(T));
+                        }
+                        else
+                        {
+                            ta[k] = (T)obj;
+                        }
+                    }
+                    return true;
+                }
+                else
+                {
+                    Array array = checkVar(mrb, ary) as Array;
+                    ta = array as T[];
+                    return ta != null;
+                }
+            }
+        }
+
+        static public mrb_value make_value(mrb_state mrb, object val)
+        {
+            switch (val)
+            {
+                case Value v:
+                    return v.val;
+                case mrb_value v:
+                    return v;
+                case byte v:
+                    return DLL.mrb_fixnum_value(v);
+                case UInt16 v:
+                    return DLL.mrb_fixnum_value(v);
+                case Int16 v:
+                    return DLL.mrb_fixnum_value(v);
+                case UInt32 v:
+                    return DLL.mrb_fixnum_value(v);
+                case Int32 v:
+                    return DLL.mrb_fixnum_value(v);
+                case bool v:
+                    return DLL.mrb_bool_value(v);
+                case string v:
+                    return DLL.mrb_str_new_cstr(mrb, v);
+                case float v:
+                    return DLL.mrb_float_value(mrb, v);
+                case double v:
+                    return DLL.mrb_float_value(mrb, v);
+                default:
+                    if (val == null)
+                    {
+                        return DLL.mrb_nil_value();
+                    }
+                    else if (MrbState.FindCache(mrb).ObjectCache.TryToValue(mrb, val, out var mrb_v))
+                    {
+                        return mrb_v;
+                    }
+                    else if (MrbState.FindCache(mrb).TypeCache.TryGetClass(val.GetType(), out TypeCache.ConstructorFunc constructor))
+                    {
+                        return constructor(mrb, val);
+                    }
+                    else
+                    {
+                        throw new ArgumentException();
+                    }
+            }
+        }
+
+        static public object checkVar(mrb_state mrb, mrb_value v)
+        {
+            var type = DLL.mrb_type(v);
+            switch (type)
+            {
+                case mrb_vtype.MRB_TT_INTEGER:
+                    return DLL.mrb_as_int(mrb, v);
+                case mrb_vtype.MRB_TT_STRING:
+                    return DLL.mrb_as_string(mrb, v);
+                case mrb_vtype.MRB_TT_TRUE:
+                    return true;
+                case mrb_vtype.MRB_TT_FALSE:
+                    return false;
+#if false
+                case LuaTypes.LUA_TFUNCTION:
+                    {
+                        LuaFunction v;
+                        LuaObject.checkType(l, p, out v);
+                        return v;
+                    }
+                case LuaTypes.LUA_TTABLE:
+                    {
+                        if (isLuaValueType(l, p))
+                        {
+#if !SLUA_STANDALONE
+                            if (luaTypeCheck(l, p, "Vector2"))
+                            {
+                                Vector2 v;
+                                checkType(l, p, out v);
+                                return v;
+                            }
+                            else if (luaTypeCheck(l, p, "Vector3"))
+                            {
+                                Vector3 v;
+                                checkType(l, p, out v);
+                                return v;
+                            }
+                            else if (luaTypeCheck(l, p, "Vector4"))
+                            {
+                                Vector4 v;
+                                checkType(l, p, out v);
+                                return v;
+                            }
+                            else if (luaTypeCheck(l, p, "Quaternion"))
+                            {
+                                Quaternion v;
+                                checkType(l, p, out v);
+                                return v;
+                            }
+                            else if (luaTypeCheck(l, p, "Color"))
+                            {
+                                Color c;
+                                checkType(l, p, out c);
+                                return c;
+                            }
+#endif
+                            Logger.LogError("unknown lua value type");
+                            return null;
+                        }
+                        else if (isLuaClass(l, p))
+                        {
+                            return checkObj(l, p);
+                        }
+                        else
+                        {
+                            LuaTable v;
+                            checkType(l, p, out v);
+                            return v;
+                        }
+                    }
+                case LuaTypes.LUA_TUSERDATA:
+                    return LuaObject.checkObj(l, p);
+                case LuaTypes.LUA_TTHREAD:
+                    {
+                        LuaThread lt;
+                        LuaObject.checkType(l, p, out lt);
+                        return lt;
+                    }
+#endif
+                default:
+                    return new Exception($"unsupported type {type}"); // TODO
+                    //return null;
+            }
+        }
+
+
 #if false
         static public bool checkType(IntPtr l, int p, out LuaDelegate f)
         {
@@ -641,11 +805,9 @@ return true;
 
         static public mrb_value error(mrb_state l, Exception e)
         {
-#if false
-			LuaDLL.lua_pushboolean(l, false);
-			LuaDLL.lua_pushstring(l, e.ToString());
-#endif
-            return default;
+            var excClass = DLL.mrb_class_get(l, "RuntimeError");
+            var exc = DLL.mrb_exc_new_str(l, excClass, DLL.mrb_str_new_cstr(l, e.Message));
+            return exc;
         }
 
         static public mrb_value error(mrb_state l, string err)
@@ -688,102 +850,58 @@ return true;
 				throw new Exception("expect self, but get null");
 			return o;
 #else
-            return ObjectCache.GetObject(l, self);
+            return MrbState.FindCache(l).ObjectCache.GetObject(l, self);
 #endif
         }
 
-        public static bool matchType(IntPtr l, int p, MRubyType lt, Type t)
+        public static bool matchType(mrb_state mrb, mrb_value v, Type t)
         {
+            var type = DLL.mrb_type(v);
+            switch (type)
+            {
+                case mrb_vtype.MRB_TT_INTEGER:
+                    return t == typeof(int);
+                case mrb_vtype.MRB_TT_FLOAT:
+                    return t == typeof(float);
+                case mrb_vtype.MRB_TT_STRING:
+                    return t == typeof(string);
+                case mrb_vtype.MRB_TT_TRUE:
+                    return t == typeof(bool);
+                case mrb_vtype.MRB_TT_FALSE:
+                    return t == typeof(bool);
+                case mrb_vtype.MRB_TT_ARRAY:
+                    return t == typeof(Array);
+                case mrb_vtype.MRB_TT_OBJECT:
+                    return false;
+                default:
+                    return false;
+            }
+        }
+
 #if false
-			if (t == typeof(object))
-			{
-				return true;
-			}
-			else if (t == typeof(Type) && isTypeTable(l, p))
-			{
-				return true;
-			}
-			else if (t == typeof(char[]) || t == typeof(byte[]))
-			{
-				return lt == LuaTypes.LUA_TSTRING || lt == LuaTypes.LUA_TUSERDATA;
-			}
-
-			switch (lt)
-			{
-				case LuaTypes.LUA_TNIL:
-					return !t.IsValueType && !t.IsPrimitive;
-				case LuaTypes.LUA_TNUMBER:
-#if LUA_5_3
-					if (LuaDLL.lua_isinteger(l, p) > 0)
-						return (t.IsPrimitive && t != typeof(float) && t != typeof(double)) || t.IsEnum;
-					else
-						return t == typeof(float) || t == typeof(double);
-#else
-					return t.IsPrimitive || t.IsEnum;
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, int p, Type t1)
+        {
+            return matchType(mrb, args[p], t1);
+        }
 #endif
-				case LuaTypes.LUA_TUSERDATA:
-					object o = checkObj(l, p);
-					Type ot = o.GetType();
-					return ot == t || ot.IsSubclassOf(t) || t.IsAssignableFrom(ot);
-				case LuaTypes.LUA_TSTRING:
-					return t == typeof(string);
-				case LuaTypes.LUA_TBOOLEAN:
-					return t == typeof(bool);
-				case LuaTypes.LUA_TTABLE:
-					{
-						if (t == typeof(LuaTable) || t.IsArray)
-							return true;
-						else if (t.IsValueType)
-							return luaTypeCheck(l, p, t.Name);
-						else if (LuaDLL.luaS_subclassof(l, p, t.Name) == 1)
-							return true;
-						else
-							return false;
-					}
-				case LuaTypes.LUA_TFUNCTION:
-					return t == typeof(LuaFunction) || t.BaseType == typeof(MulticastDelegate);
-				case LuaTypes.LUA_TTHREAD:
-					return t == typeof(LuaThread);
 
-			}
-#endif
-            return false;
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1)
+        {
+            return matchType(mrb, args[0], t1);
         }
 
-        public static bool matchType(IntPtr l, int p, Type t1)
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1, Type t2)
         {
+            return matchType(mrb, args[0], t1) && matchType(mrb, args[1], t2);
+        }
+
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1, Type t2, Type t3)
+        {
+            return matchType(mrb, args[0], t1) && matchType(mrb, args[1], t2) && matchType(mrb, args[2], t3);
+        }
+
 #if false
-			MRubyType t = LuaDLL.lua_type(l, p);
-			return matchType(l, p, t, t1);
-#endif
-            return false;
-        }
-
-        public static bool matchType(IntPtr l, int total, int from, Type t1)
-        {
-            if (total - from + 1 != 1)
-                return false;
-
-            return matchType(l, from, t1);
-        }
-
-        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2)
-        {
-            if (total - from + 1 != 2)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2);
-        }
-
-        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3)
-        {
-            if (total - from + 1 != 3)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3);
-        }
-
-        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4)
+        public static bool matchType(mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4)
         {
             if (total - from + 1 != 4)
                 return false;
@@ -791,7 +909,7 @@ return true;
             return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4);
         }
 
-        public static bool matchType(IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5)
+        public static bool matchType(mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5)
         {
             if (total - from + 1 != 5)
                 return false;
@@ -801,7 +919,7 @@ return true;
         }
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6)
         {
             if (total - from + 1 != 6)
                 return false;
@@ -812,7 +930,7 @@ return true;
         }
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7)
         {
             if (total - from + 1 != 7)
                 return false;
@@ -824,7 +942,7 @@ return true;
         }
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8)
         {
             if (total - from + 1 != 8)
                 return false;
@@ -838,7 +956,7 @@ return true;
 
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9)
         {
             if (total - from + 1 != 9)
                 return false;
@@ -852,7 +970,7 @@ return true;
         }
 
         public static bool matchType
-            (IntPtr l, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9, Type t10)
+            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9, Type t10)
         {
             if (total - from + 1 != 10)
                 return false;
@@ -866,7 +984,7 @@ return true;
                     && matchType(l, from + 9, t10);
         }
 
-        public static bool matchType(IntPtr l, int total, int from, params Type[] t)
+        public static bool matchType(mrb_state mrb, int total, int from, params Type[] t)
         {
             if (total - from + 1 != t.Length)
                 return false;
@@ -880,7 +998,7 @@ return true;
             return true;
         }
 
-        public static bool matchType(IntPtr l, int total, int from, ParameterInfo[] pars)
+        public static bool matchType(mrb_state mrb, int total, int from, ParameterInfo[] pars)
         {
 #if false
 			if (total - from + 1 != pars.Length)
@@ -896,6 +1014,7 @@ return true;
 #endif
             return true;
         }
+#endif
 
         public static void define_method(mrb_state mrb, RClass cls, string funcName, MRubyCSFunction func, mrb_aspec aspec)
         {
@@ -913,11 +1032,6 @@ return true;
             DLL.mrb_define_method(mrb, cls, name + "=", setter, DLL.MRB_ARGS_REQ(1));
         }
 
-        public static mrb_value make_value(mrb_state mrb, object obj)
-        {
-            return new Value(mrb, obj).val;
-        }
-
         public static string ToString(mrb_state mrb, mrb_value val)
         {
             return AsString(mrb, Send(mrb, val, "to_s"));
@@ -933,8 +1047,16 @@ return true;
 
         public static mrb_value Send(mrb_state mrb, mrb_value val, string methodName)
         {
-            return DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);
-
+            var r = DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);
+            var exc = DLL.mrb_mrb_state_exc(mrb);
+            if (!exc.IsNil)
+            {
+                throw new Exception(new Value(mrb, exc).ToString());
+            }
+            else
+            {
+                return r;
+            }
         }
 
         static mrb_value[] argsCache = new mrb_value[16];
@@ -966,47 +1088,24 @@ return true;
 
         public static RClass GetClass(mrb_state mrb, string[] names)
         {
-            RClass module = DLL.mrb_class_get(mrb, "Object");
+            mrb_value module = DLL.mrb_obj_value(DLL.mrb_class_get(mrb, "Object").val);
             for (int i = 0; i < names.Length; i++)
             {
-                if (i == names.Length - 1)
-                {
-                    module = DLL.mrb_class_get_under(mrb, module, names[i]);
-                }
-                else
-                {
-                    module = DLL.mrb_module_get_under(mrb, module, names[i]);
-                }
+                module = DLL.mrb_const_get(mrb, module, DLL.mrb_intern_cstr(mrb, names[i]));
             }
-            return module;
+            return DLL.mrb_class_ptr(module);
         }
 
         public static RClass GetClass(mrb_state mrb, string name)
         {
-            if (name == "System.Object" || name == "UnityEngine.MonoBehaviour")
+            if (name == null || name == "System.Object" || name == "UnityEngine.MonoBehaviour")
             {
                 return DLL.mrb_class_get(mrb, "Object");
             }
             else
             {
-                return GetClass(mrb, name.Split('.'));
+                return GetClass(mrb, name.Split("::"));
             }
-        }
-
-        public static RClass CreateModule(mrb_state mrb, string[] names)
-        {
-            RClass module = DLL.mrb_module_get(mrb, "Object");
-            for (int i = 0; i < names.Length; i++)
-            {
-                module = DLL.mrb_define_module_under(mrb, module, names[i]);
-            }
-            return module;
-        }
-
-        public static RClass DefineClass(mrb_state mrb, RClass module, string name, RClass baseClass)
-        {
-            var names = name.Split('.');
-            return DLL.mrb_define_class_under(mrb, module, names[names.Length - 1], baseClass);
         }
 
         public struct ArenaLock : IDisposable

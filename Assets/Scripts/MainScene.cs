@@ -9,7 +9,7 @@ public class MainScene : MonoSingleton<MainScene>
 {
     public BoardView View;
 
-    MrbState mrbState;
+    MrbState mrb;
 
     void Start()
     {
@@ -19,21 +19,21 @@ public class MainScene : MonoSingleton<MainScene>
 
     IEnumerator testRuby()
     {
-        mrbState = new MrbState();
-        var mrb = mrbState.mrb;
+        mrb = new MrbState();
+        var _mrb = mrb.mrb;
 
-        using var arena = Converter.LockArena(mrb);
+        using var arena = Converter.LockArena(_mrb);
 
         Value r;
 
         //MRuby_MRubyUnity_Console.reg(_mrb);
 
         MRubyUnity.Core.LoadPath = MRubyUnity.Core.LoadPath.Concat(new string[] { "../tcg2" }).ToArray();
-        MRubyUnity.Core.Require(mrb, "app");
+        MRubyUnity.Core.Require(_mrb, "app");
 
-        r = new Value(DLL.mrb_load_string(mrb, "EntryPoint"));
+        r = new Value(DLL.mrb_load_string(_mrb, "EntryPoint"));
 
-        r = r.Send(mrbState, "run", View);
+        r = r.Send("run", View);
 
         //Debug.Log(r.ToString(mrbState));
 
@@ -41,20 +41,20 @@ public class MainScene : MonoSingleton<MainScene>
 
         //using (var arena = Converter.ArenaLock(mrb))
         {
-            var h = new Value(mrb, DLL.mrb_obj_new(mrb, DLL.mrb_class_get(mrb, "Hash"), 0, null));
-            h.Send(mrbState, "[]=", DLL.mrb_symbol_value(DLL.mrb_intern_cstr(mrb, "type")), DLL.mrb_symbol_value(DLL.mrb_intern_cstr(mrb, "select")));
-            h.Send(mrbState, "[]=", DLL.mrb_symbol_value(DLL.mrb_intern_cstr(mrb, "card")), 5);
+            var h = new Value(_mrb, DLL.mrb_obj_new(_mrb, DLL.mrb_class_get(_mrb, "Hash"), 0, null));
+            h.Send("[]=", DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "type")), DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "select")));
+            h.Send("[]=", DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "card")), 5);
 
-            r.Send(mrbState, "play", h);
-
-
-            h = new Value(mrb, DLL.mrb_obj_new(mrb, DLL.mrb_class_get(mrb, "Hash"), 0, null));
-            h.Send(mrbState, "[]=", DLL.mrb_symbol_value(DLL.mrb_intern_cstr(mrb, "type")), DLL.mrb_symbol_value(DLL.mrb_intern_cstr(mrb, "discard")));
-
-            r.Send(mrbState, "play", h);
+            r.Send("play", h);
 
 
-            r = r.Send(mrbState, "board").Send(mrbState, "root").Send(mrbState, "redraw_all", View);
+            h = new Value(_mrb, DLL.mrb_obj_new(_mrb, DLL.mrb_class_get(_mrb, "Hash"), 0, null));
+            h.Send("[]=", DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "type")), DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "discard")));
+
+            r.Send("play", h);
+
+
+            r = r.Send("board").Send("root").Send("redraw_all", View);
 
 
             //Debug.Log(r.ToString(mrbState));

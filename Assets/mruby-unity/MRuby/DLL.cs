@@ -14,6 +14,7 @@ namespace MRuby
     public struct mrb_value
     {
         public UInt64 val;
+        public bool IsNil => val == 0;
     }
 
     public struct RClass
@@ -40,13 +41,45 @@ namespace MRuby
         public UIntPtr val;
     }
 
+    public enum mrb_vtype
+    {
+        MRB_TT_FALSE,
+        MRB_TT_TRUE,
+        MRB_TT_SYMBOL,
+        MRB_TT_UNDEF,
+        MRB_TT_FREE,
+        MRB_TT_FLOAT,
+        MRB_TT_INTEGER,
+        MRB_TT_CPTR,
+        MRB_TT_OBJECT,
+        MRB_TT_CLASS,
+        MRB_TT_MODULE,
+        MRB_TT_ICLASS,
+        MRB_TT_SCLASS,
+        MRB_TT_PROC,
+        MRB_TT_ARRAY,
+        MRB_TT_HASH,
+        MRB_TT_STRING,
+        MRB_TT_RANGE,
+        MRB_TT_EXCEPTION,
+        MRB_TT_ENV,
+        MRB_TT_DATA,
+        MRB_TT_FIBER,
+        MRB_TT_STRUCT,
+        MRB_TT_ISTRUCT,
+        MRB_TT_BREAK,
+        MRB_TT_COMPLEX,
+        MRB_TT_RATIONAL,
+    }
+
 
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate mrb_value MRubyCSFunction(mrb_state mrb, mrb_value _self);
 #else
-	public delegate mrb_value MRubyCSFunction(mrb_state mrb, mrb_value _self);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate mrb_value MRubyCSFunction(mrb_state mrb, mrb_value _self);
 #endif
 
     public static class DLL
@@ -80,7 +113,7 @@ namespace MRuby
         public static extern mrb_value mrb_const_get(mrb_state mrb, mrb_value v, mrb_sym sym);
 
         [DllImport(Dll)]
-        public static extern RClass mrb_class_get(mrb_state mrb, RClass outer);
+        public static extern RClass mrb_class_get(mrb_state mrb, string name);
 
         [DllImport(Dll)]
         public static extern RClass mrb_class_get_under(mrb_state mrb, RClass outer, string name);
@@ -113,10 +146,14 @@ namespace MRuby
         public static extern void mrb_define_method(mrb_state mrb, RClass c, string name, MRubyCSFunction func, mrb_aspec aspec);
 
         [DllImport(Dll)]
-        public static extern RClass mrb_class_get(mrb_state mrb, string name);
+        public static extern RClass mrb_module_get(mrb_state mrb, string name);
 
         [DllImport(Dll)]
-        public static extern RClass mrb_module_get(mrb_state mrb, string name);
+        public static extern void mrb_exc_raise(mrb_state mrb, mrb_value exc);
+
+        [DllImport(Dll)]
+        public static extern mrb_value mrb_exc_new_str(mrb_state mrb, RClass c, mrb_value str);
+
 
 
         [DllImport(Dll)]
@@ -142,6 +179,14 @@ namespace MRuby
 
         [DllImport(Dll)]
         public static extern void mrbc_context_free(mrb_state mrb, mrbc_context cxt);
+
+        [DllImport(Dll)]
+        public static extern void mrb_gc_register(mrb_state mrb, mrb_value obj);
+
+        [DllImport(Dll)]
+        public static extern void mrb_gc_unregister(mrb_state mrb, mrb_value obj);
+
+
 
         #endregion
 
@@ -176,12 +221,19 @@ namespace MRuby
         [DllImport(Dll, EntryPoint = "mrb_unity_mrb_state_exc")]
         public static extern mrb_value mrb_mrb_state_exc(mrb_state mrb);
 
+        [DllImport(Dll, EntryPoint = "mrb_unity_mrb_state_clear_exc")]
+        public static extern void mrb_mrb_state_clear_exc(mrb_state mrb);
+
         [DllImport(Dll, EntryPoint = "mrb_unity_nil_p")]
         public static extern bool mrb_nil_p(mrb_value v);
 
         #endregion
 
         #region Value conversion
+
+        [DllImport(Dll, EntryPoint = "mrb_unity_type")]
+        public static extern mrb_vtype mrb_type(mrb_value o);
+
         [DllImport(Dll, EntryPoint = "mrb_unity_as_int")]
         public static extern Int64 mrb_as_int(mrb_state mrb, mrb_value obj);
 
@@ -201,6 +253,8 @@ namespace MRuby
         [DllImport(Dll, EntryPoint = "mrb_unity_gc_arena_restore")]
         public static extern void mrb_gc_arena_restore(mrb_state mrb, int idx);
 
+        [DllImport(Dll, EntryPoint = "mrb_unity_class_ptr")]
+        public static extern RClass mrb_class_ptr(mrb_value o);
 
         public static string mrb_as_string(mrb_state mrb, mrb_value str)
         {
@@ -212,16 +266,19 @@ namespace MRuby
         #endregion
 
         #region Others
-        public delegate void AbortFunc(string msg);
+        public delegate void AbortFunc(mrb_state mrb, mrb_value exc);
 
         [DllImport(Dll)]
         public static extern void mrb_unity_set_abort_func(mrb_state mrb, AbortFunc f);
 
         [DllImport(Dll, EntryPoint = "mrb_unity_funcall_argv")]
         public static extern mrb_value mrb_funcall_argv(mrb_state mrb, mrb_value val, string name, mrb_int argc, mrb_value[] vals);
+
+        [DllImport(Dll, EntryPoint = "mrb_rarray_len_noinline")]
+        public static extern uint mrb_rarray_len(mrb_value v);
+
+        [DllImport(Dll, EntryPoint = "mrb_rarray_ptr_noinline")]
+        public static unsafe extern mrb_value* mrb_rarray_ptr(mrb_value v);
         #endregion
     }
-
-
-
 }
