@@ -7,8 +7,16 @@ using System.Reflection;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
+namespace UnityEngine
+{
+    public class YieldInstruction { }
+    public class Coroutine { }
+    public class Component { }
+}
+
 namespace MRuby.CodeGen
 {
+
     public static class Naming
     {
         public static string RubyName(string name)
