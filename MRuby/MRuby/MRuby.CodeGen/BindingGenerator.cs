@@ -6,13 +6,13 @@ using System.Text;
 
 namespace MRuby.CodeGen
 {
-    public class NamespaceGen
+    public class BindingGenerator
     {
         CodeWriter w;
         Registry reg;
         string binderClassName;
 
-        public NamespaceGen(Registry _reg, string path, string _binderClassName)
+        public BindingGenerator(Registry _reg, string path, string _binderClassName)
         {
             reg = _reg;
             w = new CodeWriter(path);

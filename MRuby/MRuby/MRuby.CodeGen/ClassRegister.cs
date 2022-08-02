@@ -7,9 +7,9 @@ using System.Text;
 
 namespace MRuby.CodeGen
 {
-    public class CodeGenUtil
+    public class ClassRegister
     {
-        public CodeGenUtil()
+        public ClassRegister()
         {
 
         }

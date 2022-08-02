@@ -19,8 +19,8 @@ class Program
 
         var reg = new Registry();
 
-        var gen = new CodeGenUtil();
-        var mrubyTypes = CodeGenUtil.GetMRubyClasses(new string[] { "MRubyLib" });
+        var gen = new ClassRegister();
+        var mrubyTypes = ClassRegister.GetMRubyClasses(new string[] { "MRubyLib" });
         mrubyTypes.Add(typeof(System.Object));
         //mrubyTypes.Add(typeof(System.Array));
 
@@ -44,7 +44,7 @@ class Program
             }
         }
 
-        new NamespaceGen(reg, Path.Combine(path, "_Binder.cs"), "_Binder").Generate();
+        new BindingGenerator(reg, Path.Combine(path, "_Binder.cs"), "_Binder").Generate();
     }
 
     static void test()
