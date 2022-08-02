@@ -4,18 +4,24 @@ using System.Text;
 
 namespace MRuby
 {
-    public struct Value
+    public class Value
     {
-        public readonly mrb_state mrb;
+        public static int FinalyzerCount;
+
+        public mrb_state mrb;
         public readonly mrb_value val;
+
+        static mrb_value[] argsCache = new mrb_value[16]; // TODO: multithread
 
         public Value(mrb_state _mrb, mrb_value _val)
         {
             mrb = _mrb;
             val = _val;
+            DLL.mrb_gc_register(mrb, val);
+            MrbState.FindCache(mrb).ValueCache.AddValue(this);
         }
 
-        //public Value(object _val) : this(null, _val) { }
+        public Value(object _val) : this(null, _val) { }
 
         public Value(MrbState _mrb, object _val) : this(_mrb.mrb, _val) { }
 
@@ -23,9 +29,18 @@ namespace MRuby
         {
             mrb = _mrb;
             val = Converter.make_value(_mrb, _val);
+            DLL.mrb_gc_register(mrb, val);
+            MrbState.FindCache(mrb).ValueCache.AddValue(this);
         }
 
-        static mrb_value[] argsCache = new mrb_value[16];
+        ~Value()
+        {
+            FinalyzerCount++;
+            if (mrb.val != UIntPtr.Zero)
+            {
+                DLL.mrb_gc_unregister(mrb, val);
+            }
+        }
 
         public Value Send(string methodName)
         {

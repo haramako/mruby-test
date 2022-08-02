@@ -13,11 +13,9 @@ class CodeGenTest
     public void Setup()
     {
         mrb = new MrbState();
-        _ = DLL.mrb_gc_arena_save(mrb.mrb);
-        DLL.mrb_load_string(mrb.mrb, "GC.disable");
         Binder.Bind(mrb, _Binder.BindData);
 
-        Logger.Log("=" + TestContext.CurrentContext.Test.Name);
+        mrb.LoadString(MrbState.prelude);
     }
 
     void testError(string src, string errorMessage)
@@ -129,5 +127,32 @@ class CodeGenTest
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
     }
+
+    [Test]
+    public void TestGC()
+    {
+        Value sample;
+        using (Converter.LockArena(mrb.mrb))
+        {
+            sample = mrb.LoadString("[1,2,3]");
+        }
+
+        // Memory stress for C#
+        string hoge = "";
+        for( int i=0; i<10000; i++)
+        {
+            hoge = hoge + "hoge";
+        }
+
+        // Force GC!!!
+        GC.Collect(99, GCCollectionMode.Forced, true);
+        mrb.LoadString("GC.start");
+
+        GC.Collect(99, GCCollectionMode.Forced, true);
+        mrb.LoadString("GC.start");
+
+        Assert.AreEqual("[1, 2, 3]", sample.ToString());
+    }
+
 }
 

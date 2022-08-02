@@ -34,6 +34,7 @@ namespace MRuby
     {
         public readonly TypeCache TypeCache;
         public readonly ObjectCache ObjectCache;
+        public readonly ValueCache ValueCache;
         public readonly mrb_sym SymObjID;
 
         bool disposed;
@@ -50,6 +51,7 @@ namespace MRuby
         {
             TypeCache = new TypeCache(this);
             ObjectCache = new ObjectCache(this);
+            ValueCache = new ValueCache(this);
 
             mrb = DLL.mrb_open();
             DLL.mrb_unity_set_abort_func(mrb, abortCallback);
@@ -61,7 +63,7 @@ namespace MRuby
             var kernel = DLL.mrb_module_get(mrb, "Kernel");
             DLL.mrb_define_module_function(mrb, kernel, "require", MRubyUnity.Core._require, DLL.MRB_ARGS_REQ(1));
 
-            DLL.mrb_load_string(mrb, prelude);
+            //DLL.mrb_load_string(mrb, prelude);
         }
 
         static void abortCallback(mrb_state mrb, mrb_value exc)
@@ -81,6 +83,7 @@ namespace MRuby
         {
             if (!disposed)
             {
+                ValueCache.Clear();
                 DLL.mrb_close(mrb);
                 disposed = true;
             }
@@ -114,7 +117,7 @@ namespace MRuby
 class LoadError < Exception
 end
 
-# $stdout = MRubyUnity::Console.new
+$stdout = MRubyUnity::Console.new
 
 module Kernel
   def puts(*args)

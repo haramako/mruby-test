@@ -8,7 +8,7 @@ namespace MRuby
     {
         MrbState mrb;
         public delegate mrb_value ConstructorFunc(mrb_state mrb, object obj);
-        static Dictionary<Type, ConstructorFunc> cache = new Dictionary<Type, ConstructorFunc>();
+        Dictionary<Type, ConstructorFunc> cache = new Dictionary<Type, ConstructorFunc>();
 
         public TypeCache(MrbState _mrb)
         {
@@ -45,12 +45,12 @@ namespace MRuby
         /// <summary>
         /// Cache from mrb_value to C# object.
         /// </summary>
-        static Dictionary<int, object> cache = new Dictionary<int, object>();
+        Dictionary<int, object> cache = new Dictionary<int, object>();
 
         /// <summary>
         /// Cache from C# object to mrb_value.
         /// </summary>
-        static Dictionary<object, mrb_value> csToMRubyCache = new Dictionary<object, mrb_value>();
+        Dictionary<object, mrb_value> csToMRubyCache = new Dictionary<object, mrb_value>();
 
         public ObjectCache(MrbState mrb)
         {
@@ -105,5 +105,36 @@ namespace MRuby
             return csToMRubyCache.TryGetValue(obj, out found);
         }
 
+    }
+
+    public class ValueCache
+    {
+        MrbState mrb;
+
+        /// <summary>
+        /// Cache from mrb_value to C# object.
+        /// </summary>
+        HashSet<WeakReference<Value>> cache = new HashSet<WeakReference<Value>>();
+
+        public ValueCache(MrbState _mrb)
+        {
+            mrb = _mrb;
+        }
+
+        public void AddValue(Value v)
+        {
+            cache.Add(new WeakReference<Value>(v));
+        }
+
+        public void Clear()
+        {
+            foreach( var reference in cache)
+            {
+                if(reference.TryGetTarget(out var val))
+                {
+                    val.mrb.val = UIntPtr.Zero;
+                }
+            }
+        }
     }
 }

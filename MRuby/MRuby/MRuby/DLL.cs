@@ -180,6 +180,14 @@ namespace MRuby
         [DllImport(Dll)]
         public static extern void mrbc_context_free(mrb_state mrb, mrbc_context cxt);
 
+        [DllImport(Dll)]
+        public static extern void mrb_gc_register(mrb_state mrb, mrb_value obj);
+
+        [DllImport(Dll)]
+        public static extern void mrb_gc_unregister(mrb_state mrb, mrb_value obj);
+
+
+
         #endregion
 
         #region Value creation
