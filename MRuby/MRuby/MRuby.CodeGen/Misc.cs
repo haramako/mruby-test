@@ -80,7 +80,7 @@ namespace MRuby.CodeGen
                 string ret = "";
                 for (int n = 0; n < tt.Length; n++)
                 {
-                    string dt = TypeCond.SimpleTypeName(tt[n]);
+                    string dt = TypeUtil.SimpleTypeName(tt[n]);
                     ret += dt;
                     if (n < tt.Length - 1)
                         ret += sep;

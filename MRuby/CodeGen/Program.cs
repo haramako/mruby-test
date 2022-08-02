@@ -75,7 +75,7 @@ class Program
             Console.WriteLine();
             foreach (var m in typeof(ExtTest).GetMethods())
             {
-                Console.WriteLine($"{m} {TypeCond.IsExtensionMethod(m)}");
+                Console.WriteLine($"{m} {TypeUtil.IsExtensionMethod(m)}");
             }
         }
     }

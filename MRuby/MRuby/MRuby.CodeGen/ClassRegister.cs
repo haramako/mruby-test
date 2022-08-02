@@ -18,7 +18,7 @@ namespace MRuby.CodeGen
         {
             var cls = reg.FindByType(t, 0);
 
-            if (!t.IsGenericTypeDefinition && (!TypeCond.IsObsolete(t)
+            if (!t.IsGenericTypeDefinition && (!TypeUtil.IsObsolete(t)
                 && t != typeof(UnityEngine.YieldInstruction) && t != typeof(UnityEngine.Coroutine))
                 || (t.BaseType != null && t.BaseType == typeof(System.MulticastDelegate)))
             {
@@ -56,15 +56,15 @@ namespace MRuby.CodeGen
                     var methods = t.GetMethods();
                     foreach (var m in methods)
                     {
-                        var noinstance = TypeCond.IsStaticClass(t) && !m.IsStatic;
-                        if (TypeCond.IsPropertyAccessor(m) || noinstance)
+                        var noinstance = TypeUtil.IsStaticClass(t) && !m.IsStatic;
+                        if (TypeUtil.IsPropertyAccessor(m) || noinstance)
                         {
                             continue;
                         }
 
-                        if (TypeCond.IsExtensionMethod(m))
+                        if (TypeUtil.IsExtensionMethod(m))
                         {
-                            var extensionTargetClass = reg.FindByType(TypeCond.ExtensionTargetClass(m), cls);
+                            var extensionTargetClass = reg.FindByType(TypeUtil.ExtensionTargetClass(m), cls);
                             extensionTargetClass.AddMethod(new MethodEntry(m, true));
                         }
                         else
@@ -102,7 +102,7 @@ namespace MRuby.CodeGen
             ConstructorInfo[] cons = t.GetConstructors(BindingFlags.Instance | BindingFlags.Public);
             foreach (ConstructorInfo ci in cons)
             {
-                if (!TypeCond.IsObsolete(ci) && !TypeCond.DontExport(ci) && !TypeCond.ContainUnsafe(ci))
+                if (!TypeUtil.IsObsolete(ci) && !TypeUtil.DontExport(ci) && !TypeUtil.ContainUnsafe(ci))
                     ret.Add(ci);
             }
             return ret.ToArray();

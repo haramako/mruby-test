@@ -26,8 +26,8 @@ class MiscTest
     public void TestIsExtensionMethod()
     {
         var method = typeof(ExtTest).GetMethod("ExSet");
-        Assert.AreEqual(true, TypeCond.IsExtensionMethod(method));
-        Assert.AreEqual(typeof(Extended), TypeCond.ExtensionTargetClass(method));
+        Assert.AreEqual(true, TypeUtil.IsExtensionMethod(method));
+        Assert.AreEqual(typeof(Extended), TypeUtil.ExtensionTargetClass(method));
     }
 
 }
