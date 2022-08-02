@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace MRuby.CodeGen
 {
-    public static class TypeCond
+    public static class TypeUtil
     {
         public static bool DontExport(MemberInfo mi)
         {
@@ -260,7 +260,7 @@ namespace MRuby.CodeGen
                 return TypeDecl(t.GetElementType()) + "[]";
             }
             else
-                return TypeCond.RemoveRef(t.ToString(), false);
+                return TypeUtil.RemoveRef(t.ToString(), false);
         }
 
     }
