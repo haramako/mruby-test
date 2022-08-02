@@ -321,7 +321,7 @@ namespace MRuby.CodeGen
                         bool hasParams = p.IsDefined(typeof(ParamArrayAttribute), false);
                         CheckArgument(p.ParameterType, k, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
                     }
-                    w.Write("o=new {0}({1});", TypeCond.TypeDecl(t), FuncCallCode(new MethodEntry(ci,false)));
+                    w.Write("o=new {0}({1});", TypeCond.TypeDecl(t), FuncCallCode(new MethodEntry(ci, false)));
                     w.Write("MrbState.FindCache(mrb).ObjectCache.NewObjectByVal(mrb, _self, o);");
                     w.Write("return DLL.mrb_nil_value();");
 #if false

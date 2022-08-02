@@ -99,7 +99,7 @@ namespace MRuby
             }
             else
             {
-                return (fullname.Substring(0, idx), fullname.Substring(idx+2, fullname.Length - idx - 2));
+                return (fullname.Substring(0, idx), fullname.Substring(idx + 2, fullname.Length - idx - 2));
             }
         }
     }

@@ -115,7 +115,7 @@ namespace MRuby.CodeGen
             Console = File.CreateText("log.txt");
         }
 #endif
-            
+
 
         public static void Log(string msg)
         {
@@ -279,7 +279,7 @@ namespace MRuby.CodeGen
         {
             var (min, max, hasParamArray) = m.ParameterNum();
             var mark = m.IsStatic ? "s" : " ";
-            var param = hasParamArray ? $"{min}.." : ((min==max) ? $"{min}" : $"{min}..{max}");
+            var param = hasParamArray ? $"{min}.." : ((min == max) ? $"{min}" : $"{min}..{max}");
             write($"{mark} {m.Name}({param}) [{m.Methods.Count}]");
 
             if (m.IsOverloaded && level >= 2)

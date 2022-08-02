@@ -16,7 +16,7 @@ namespace MRuby.CodeGen
 
         public void RegisterClass(Registry reg, Type t)
         {
-            var cls = reg.FindByType(t,0);
+            var cls = reg.FindByType(t, 0);
 
             if (!t.IsGenericTypeDefinition && (!TypeCond.IsObsolete(t)
                 && t != typeof(UnityEngine.YieldInstruction) && t != typeof(UnityEngine.Coroutine))

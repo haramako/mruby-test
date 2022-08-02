@@ -128,9 +128,9 @@ namespace MRuby
 
         public void Clear()
         {
-            foreach( var reference in cache)
+            foreach (var reference in cache)
             {
-                if(reference.TryGetTarget(out var val))
+                if (reference.TryGetTarget(out var val))
                 {
                     val.mrb.val = UIntPtr.Zero;
                 }
