@@ -654,7 +654,11 @@ namespace MRuby.CodeGen
                 }
 
                 if (t.IsEnum)
-                    w.Write("a{0} = ({1})LuaDLL.luaL_checkinteger(mrb, {2});", n, TypeUtil.TypeDecl(t), n);
+                {
+                    w.Write("int a{0}i;", n);
+                    w.Write("Converter.checkType(mrb, {0}, out a{0}i);", n);
+                    w.Write("a{0} = ({1})a{0}i;", n, TypeUtil.TypeDecl(t));
+                }
                 else if (t.BaseType == typeof(System.MulticastDelegate))
                 {
                     //tryMake(t);

@@ -5,6 +5,19 @@ using MRuby;
 using System.Linq;
 using DG.Tweening;
 
+
+[CustomMRubyClass]
+public class Command
+{
+    public readonly string Type;
+    public int Card;
+
+    public Command(string t)
+    {
+        Type = t;
+    }
+}
+
 public class MainScene : MonoSingleton<MainScene>
 {
     public BoardView View;
@@ -21,6 +34,8 @@ public class MainScene : MonoSingleton<MainScene>
     {
         mrb = new MrbState();
         var _mrb = mrb.mrb;
+        Binder.Bind(mrb, _Binder.BindData);
+        mrb.LoadString(MrbState.prelude);
 
         using var arena = Converter.LockArena(_mrb);
 
@@ -31,7 +46,9 @@ public class MainScene : MonoSingleton<MainScene>
         MRubyUnity.Core.LoadPath = MRubyUnity.Core.LoadPath.Concat(new string[] { "../tcg2" }).ToArray();
         MRubyUnity.Core.Require(_mrb, "app");
 
-        r = new Value(DLL.mrb_load_string(_mrb, "EntryPoint"));
+        r = new Value(_mrb, DLL.mrb_load_string(_mrb, "EntryPoint"));
+
+        Debug.Log(r.ToString());
 
         r = r.Send("run", View);
 
@@ -41,17 +58,8 @@ public class MainScene : MonoSingleton<MainScene>
 
         //using (var arena = Converter.ArenaLock(mrb))
         {
-            var h = new Value(_mrb, DLL.mrb_obj_new(_mrb, DLL.mrb_class_get(_mrb, "Hash"), 0, null));
-            h.Send("[]=", DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "type")), DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "select")));
-            h.Send("[]=", DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "card")), 5);
-
-            r.Send("play", h);
-
-
-            h = new Value(_mrb, DLL.mrb_obj_new(_mrb, DLL.mrb_class_get(_mrb, "Hash"), 0, null));
-            h.Send("[]=", DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "type")), DLL.mrb_symbol_value(DLL.mrb_intern_cstr(_mrb, "discard")));
-
-            r.Send("play", h);
+            r.Send("play", new Command("select") { Card = 5 });
+            r.Send("play", new Command("discard"));
 
 
             r = r.Send("board").Send("root").Send("redraw_all", View);
