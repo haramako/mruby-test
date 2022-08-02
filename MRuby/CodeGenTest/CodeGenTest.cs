@@ -109,6 +109,8 @@ class CodeGenTest
     [TestCase("Sample.new.overloaded_method(1)", "1")]
     [TestCase("Sample.new.overloaded_method(1,2)", "3")]
     [TestCase("Sample.new.overloaded_method('a')", "a*")]
+    [TestCase("Sample.new.overloaded_method2()", "0")]
+    [TestCase("Sample.new.overloaded_method2(1)", "1")]
     public void TestOverload(string src, string expect)
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());

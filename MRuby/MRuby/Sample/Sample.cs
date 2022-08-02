@@ -88,6 +88,16 @@ public class Sample
         return s + "*";
     }
 
+    public int OverloadedMethod2()
+    {
+        return 0;
+    }
+
+
+    public int OverloadedMethod2(int n)
+    {
+        return n;
+    }
 }
 
 [MRuby.CustomMRubyClass]

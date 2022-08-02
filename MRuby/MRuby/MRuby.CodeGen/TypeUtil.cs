@@ -26,7 +26,7 @@ namespace MRuby.CodeGen
             }
 
             // Check in custom export function filter list.
-#if !SLUA_STANDALONE
+#if false && !SLUA_STANDALONE
             List<object> aFuncFilterList = LuaCodeGen.GetEditorField<ICustomExportPost>("FunctionFilterList");
             foreach (object aFilterList in aFuncFilterList)
             {

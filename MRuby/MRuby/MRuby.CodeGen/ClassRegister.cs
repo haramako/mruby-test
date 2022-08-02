@@ -108,6 +108,22 @@ namespace MRuby.CodeGen
             return ret.ToArray();
         }
 
+        public static List<Type> GetMRubyClasses(Assembly assembly)
+        {
+            List<Type> exports = new List<Type>();
+            Type[] types = assembly.GetExportedTypes();
+
+            foreach (Type t in types)
+            {
+                var attr = (CustomMRubyClassAttribute)Attribute.GetCustomAttribute(t, typeof(CustomMRubyClassAttribute));
+                if (attr != null)
+                {
+                    exports.Add(t);
+                }
+            }
+            return exports;
+        }
+
         public static List<Type> GetMRubyClasses(string[] asemblyNames)
         {
             List<Type> exports = new List<Type>();

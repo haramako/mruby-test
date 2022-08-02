@@ -47,7 +47,7 @@ namespace MRuby.CodeGen
         {
             reg = _reg;
             cls = _cls;
-            w = new CodeWriter(path + cls.ExportName + ".cs");
+            w = new CodeWriter(Path.Combine(path, cls.ExportName + ".cs"));
         }
 
         public void Generate()
@@ -439,8 +439,17 @@ namespace MRuby.CodeGen
                         ParameterInfo[] pars = mi.GetParameters();
                         var requireParameterNum = pars.TakeWhile(p => !p.HasDefaultValue).Count();
                         var argTypes = pars.Select(p => reg.FindByType(p.ParameterType, cls).CodeName).Select(s => $"typeof({s})").ToArray();
-                        var argTypesStr = string.Join(",", argTypes);
-                        w.Write("{0}(_argc >= {2} && _argc <= {3} && Converter.matchType(mrb, _argv, {1})){{", ifCode, argTypesStr, requireParameterNum, pars.Length);
+
+                        if (argTypes.Length > 0)
+                        {
+                            var argTypesStr = string.Join(",", argTypes);
+                            w.Write("{0}(_argc >= {2} && _argc <= {3} && Converter.matchType(mrb, _argv, {1})){{", ifCode, argTypesStr, requireParameterNum, pars.Length);
+                        }
+                        else
+                        {
+                            w.Write("{0}(_argc == 0 ){{", ifCode, requireParameterNum, pars.Length);
+                        }
+
                         WriteFunctionCall(cls, md, m);
                         w.Write("}");
                         first = false;
