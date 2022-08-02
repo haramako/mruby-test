@@ -141,7 +141,15 @@ namespace MRuby.CodeGen
 
     class CodeWriter : IDisposable
     {
-        public static EOL eol = MRubySetting.Instance.eol;
+        public enum EOL
+        {
+            Native,
+            CRLF,
+            CR,
+            LF,
+        }
+
+        public static EOL eol = EOL.Native;
 
         int indent = 0;
         StreamWriter w;
