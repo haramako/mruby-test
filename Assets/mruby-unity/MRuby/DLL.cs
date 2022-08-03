@@ -240,6 +240,9 @@ namespace MRuby
         [DllImport(Dll, EntryPoint = "mrb_unity_as_float")]
         public static extern mrb_float mrb_as_float(mrb_state mrb, mrb_value obj);
 
+        [DllImport(Dll, EntryPoint = "mrb_unity_as_bool")]
+        public static extern bool mrb_as_bool(mrb_state mrb, mrb_value obj);
+
         [DllImport(Dll, EntryPoint = "mrb_unity_string_len")]
         public static extern Int64 mrb_string_len(mrb_state mrb, mrb_value obj);
 

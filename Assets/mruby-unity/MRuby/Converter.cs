@@ -10,64 +10,43 @@ namespace MRuby
     {
 #if false
         #region enum
-		static public bool checkEnum<T>(IntPtr l, int p, out T o) where T : struct
+		static public bool checkEnum<T>(mrb_state mrb, mrb_value v, out T o) where T : struct
 		{
 			int i = (int)LuaDLL.luaL_checkinteger(l, p);
 			o = (T)Enum.ToObject(typeof(T), i);
 
 			return true;
 		}
-
-		public static void pushEnum(IntPtr l, int e)
-		{
-			pushValue(l, e);
-		}
         #endregion
+#endif
 
-		//#region Integral Types
-        #region sbyte
-		public static bool checkType(IntPtr l, int p, out sbyte v)
-		{
-			v = (sbyte)LuaDLL.luaL_checkinteger(l, p);
-			return true;
-		}
+        static public void checkType(mrb_state mrb, mrb_value v, out sbyte r)
+        {
+            r = (sbyte)DLL.mrb_as_int(mrb, v);
+        }
 
-		public static void pushValue(IntPtr l, sbyte v)
-		{
-			LuaDLL.lua_pushinteger(l, v);
-		}
+        static public void checkType(mrb_state mrb, mrb_value v, out byte r)
+        {
+            r = (byte)DLL.mrb_as_int(mrb, v);
+        }
 
-        #endregion
+        static public void checkType(mrb_state mrb, mrb_value v, out char r)
+        {
+            r = (char)DLL.mrb_as_int(mrb, v);
+        }
 
-        #region byte
-		static public bool checkType(IntPtr l, int p, out byte v)
-		{
-			v = (byte)LuaDLL.luaL_checkinteger(l, p);
-			return true;
-		}
+        static public void checkType(mrb_state mrb, mrb_value v, out short r)
+        {
+            r = (short)DLL.mrb_as_int(mrb, v);
+        }
 
-		public static void pushValue(IntPtr l, byte i)
-		{
-			LuaDLL.lua_pushinteger(l, i);
-		}
+        static public void checkType(mrb_state mrb, mrb_value v, out ushort r)
+        {
+            r = (ushort)DLL.mrb_as_int(mrb, v);
+        }
 
-		// why doesn't have a checkArray<byte[]> function accept lua string?
-		// I think you should did a Buffer class to wrap byte[] pass/accept between mono and lua vm
-        #endregion
-
-        #region char
-		static public bool checkType(IntPtr l, int p, out char c)
-		{
-			c = (char)LuaDLL.luaL_checkinteger(l, p);
-			return true;
-		}
-
-		public static void pushValue(IntPtr l, char v)
-		{
-			LuaDLL.lua_pushinteger(l, v);
-		}
-
-		static public bool checkArray(IntPtr l, int p, out char[] pars)
+#if false
+        static public bool checkArray(mrb_state mrb, mrb_value v, out char[] pars)
 		{
 			LuaDLL.luaL_checktype(l, p, LuaTypes.LUA_TSTRING);
 			string s;
@@ -75,175 +54,44 @@ namespace MRuby
 			pars = s.ToCharArray();
 			return true;
 		}
-        #endregion
-
-        #region short
-		static public bool checkType(IntPtr l, int p, out short v)
-		{
-			v = (short)LuaDLL.luaL_checkinteger(l, p);
-			return true;
-		}
-
-		public static void pushValue(IntPtr l, short i)
-		{
-			LuaDLL.lua_pushinteger(l, i);
-		}
-        #endregion
-
-        #region ushort
-		static public bool checkType(IntPtr l, int p, out ushort v)
-		{
-			v = (ushort)LuaDLL.luaL_checkinteger(l, p);
-			return true;
-		}
-
-		public static void pushValue(IntPtr l, ushort v)
-		{
-			LuaDLL.lua_pushinteger(l, v);
-		}
-
-        #endregion
-
-        #region interface
-		static public void pushInterface(IntPtr l, object i, Type t)
-		{
-			ObjectCache oc = ObjectCache.get(l);
-			oc.pushInterface(l, i, t);
-		}
-        #endregion
 #endif
 
-        #region int
-        static public void checkType(mrb_state l, mrb_value v, out int r)
+        static public void checkType(mrb_state mrb, mrb_value v, out int r)
         {
-            r = (int)DLL.mrb_as_int(l, v);
+            r = (int)DLL.mrb_as_int(mrb, v);
         }
 
-        public static void pushValue(mrb_state l, int i)
-        {
-#if false
-			LuaDLL.lua_pushinteger(l, i);
-#endif
+		static public void checkType(mrb_state mrb, mrb_value v, out uint r)
+		{
+            r = (uint)DLL.mrb_as_int(mrb, v);
+		}
+
+		static public void checkType(mrb_state mrb, mrb_value v, out long r)
+		{
+            r = (long)DLL.mrb_as_int(mrb, v);
         }
 
-        #endregion
-
-#if false
-        #region uint
-		static public bool checkType(IntPtr l, int p, out uint v)
+        static public void checkType(mrb_state mrb, mrb_value v, out ulong r)
 		{
-			v = (uint)LuaDLL.luaL_checkinteger(l, p);
-			return true;
-		}
-
-		public static void pushValue(IntPtr l, uint o)
-		{
-			LuaDLL.lua_pushnumber(l, o);
-		}
-        #endregion
-
-        #region long
-		static public bool checkType(IntPtr l, int p, out long v)
-		{
-#if LUA_5_3
-            v = (long)LuaDLL.luaL_checkinteger(l, p);
-#else
-			v = (long)LuaDLL.luaL_checknumber(l, p);
-#endif
-			return true;
-		}
-
-		public static void pushValue(IntPtr l, long i)
-		{
-#if LUA_5_3
-            LuaDLL.lua_pushinteger(l,i);
-#else
-			LuaDLL.lua_pushnumber(l, i);
-#endif
-		}
-
-        #endregion
-
-        #region ulong
-		static public bool checkType(IntPtr l, int p, out ulong v)
-		{
-#if LUA_5_3
-			v = (ulong)LuaDLL.luaL_checkinteger(l, p);
-#else
-			v = (ulong)LuaDLL.luaL_checknumber(l, p);
-#endif
-			return true;
-		}
-
-		public static void pushValue(IntPtr l, ulong o)
-		{
-#if LUA_5_3
-			LuaDLL.lua_pushinteger(l, (long)o);
-#else
-			LuaDLL.lua_pushnumber(l, o);
-#endif
-		}
-        #endregion
-
-#endif
-        //#endregion
-
-
-        #region Floating-Point Types
-        #region float
-        public static void checkType(mrb_state l, mrb_value v, out float r)
-        {
-            r = (int)DLL.mrb_as_float(l, v);
+            r = (ulong)DLL.mrb_as_int(mrb, v);
         }
 
-#if false
-		public static void pushValue(IntPtr l, float o)
-		{
-			LuaDLL.lua_pushnumber(l, o);
-		}
-#endif
+        public static void checkType(mrb_state mrb, mrb_value v, out float r)
+        {
+            r = (float)DLL.mrb_as_float(mrb, v);
+        }
 
-        #endregion
-
-#if false
-        #region double
-		static public bool checkType(IntPtr l, int p, out double v)
+		static public void checkType(mrb_state mrb, mrb_value v, out double r)
 		{
-			v = LuaDLL.luaL_checknumber(l, p);
-			return true;
+            r = (double)DLL.mrb_as_float(mrb, v);
+        }
+
+		static public void checkType(mrb_state mrb, mrb_value v, out bool r)
+		{
+            r = DLL.mrb_as_bool(mrb, v);
 		}
 
-		public static void pushValue(IntPtr l, double d)
-		{
-			LuaDLL.lua_pushnumber(l, d);
-		}
-
-        #endregion
-#endif
-        #endregion
-
-#if false
-        #region bool
-		static public bool checkType(IntPtr l, int p, out bool v)
-		{
-            unsafe
-            {
-                mrb_value* args = DLL.mrb_get_argv(l);
-                v = (int)DLL.mrb_as_int(l, args[p]);
-                return true;
-            }
-		}
-
-        public static void pushValue(IntPtr l, bool b)
-		{
-			LuaDLL.lua_pushboolean(l, b);
-		}
-
-        #endregion
-
-#endif
-
-        #region string
+#region string
         static public void checkType(mrb_state l, mrb_value v, out string r)
         {
             r = DLL.mrb_as_string(l, v);
@@ -264,28 +112,19 @@ namespace MRuby
             return true;
 #endif
         }
-
-        public static void pushValue(mrb_state l, string s)
-        {
-#if false
-			LuaDLL.lua_pushstring(l, s);
-#endif
-        }
-
-
-        #endregion
+#endregion
 
 #if false
-        #region IntPtr
-		static public bool checkType(IntPtr l, int p, out IntPtr v)
+#region IntPtr
+		static public bool checkType(mrb_state mrb, int p, out IntPtr v)
 		{
 			v = LuaDLL.lua_touserdata(l, p);
 			return true;
 		}
-        #endregion
+#endregion
 
-        #region LuaType
-		static public bool checkType(IntPtr l, int p, out LuaDelegate f)
+#region LuaType
+		static public bool checkType(mrb_state mrb, int p, out LuaDelegate f)
 		{
 			LuaState state = LuaState.get(l);
 
@@ -314,7 +153,7 @@ namespace MRuby
 			return true;
 		}
 
-		static public bool checkType(IntPtr l, int p, out LuaThread lt)
+		static public bool checkType(mrb_state mrb, int p, out LuaThread lt)
 		{
 			if (LuaDLL.lua_isnil(l, p))
 			{
@@ -328,7 +167,7 @@ namespace MRuby
 			return true;
 		}
 
-		static public bool checkType(IntPtr l, int p, out LuaFunction f)
+		static public bool checkType(mrb_state mrb, int p, out LuaFunction f)
 		{
 			if (LuaDLL.lua_isnil(l, p))
 			{
@@ -342,7 +181,7 @@ namespace MRuby
 			return true;
 		}
 
-		static public bool checkType(IntPtr l, int p, out LuaTable t)
+		static public bool checkType(mrb_state mrb, int p, out LuaTable t)
 		{
 			if (LuaDLL.lua_isnil(l, p))
 			{
@@ -355,22 +194,9 @@ namespace MRuby
 			t = new LuaTable(l, fref);
 			return true;
 		}
+#endregion
 
-		public static void pushValue(IntPtr l, LuaCSFunction f)
-		{
-			LuaState.pushcsfunction(l, f);
-		}
-
-		public static void pushValue(IntPtr l, LuaTable t)
-		{
-			if (t == null)
-				LuaDLL.lua_pushnil(l);
-			else
-				t.push(l);
-		}
-        #endregion
-
-        #region Type
+#region Type
 		private static Type MonoType = typeof(Type).GetType();
 
 		public static Type FindType(string qualifiedTypeName)
@@ -396,7 +222,7 @@ namespace MRuby
 		}
 
 
-		static public bool checkType(IntPtr l, int p, out Type t)
+		static public bool checkType(mrb_state mrb, int p, out Type t)
 		{
 			string tname = null;
 			LuaTypes lt = LuaDLL.lua_type(l, p);
@@ -443,17 +269,17 @@ namespace MRuby
 			}
 			return t != null;
 		}
-        #endregion
+#endregion
 
-        #region struct
-		static public bool checkValueType<T>(IntPtr l, int p, out T v) where T : struct
+#region struct
+		static public bool checkValueType<T>(mrb_state mrb, int p, out T v) where T : struct
 		{
 			v = (T)checkObj(l, p);
 			return true;
 		}
-        #endregion
+#endregion
 
-		static public bool checkNullable<T>(IntPtr l, int p, out Nullable<T> v) where T : struct
+		static public bool checkNullable<T>(mrb_state mrb, int p, out Nullable<T> v) where T : struct
 		{
 			if (LuaDLL.lua_isnil(l, p))
 				v = null;
@@ -467,12 +293,12 @@ namespace MRuby
 		}
 #endif
 
-        #region object
+#region object
         static public void checkType<T>(mrb_state l, mrb_value v, out T r) where T : class
         {
             r = null;
         }
-        #endregion
+#endregion
 
         static public bool checkArray<T>(mrb_state mrb, int p, out T[] ta)
         {
@@ -641,7 +467,7 @@ namespace MRuby
 
 
 #if false
-        static public bool checkType(IntPtr l, int p, out LuaDelegate f)
+        static public bool checkType(mrb_state mrb, int p, out LuaDelegate f)
         {
             LuaState state = LuaState.get(l);
 
@@ -672,7 +498,7 @@ namespace MRuby
 #endif
 
 #if false
-        static public bool checkType(IntPtr l, int p, out LuaThread lt)
+        static public bool checkType(mrb_state mrb, int p, out LuaThread lt)
         {
             if (LuaDLL.lua_isnil(l, p))
             {
@@ -688,7 +514,7 @@ namespace MRuby
 #endif
 
 #if false
-        static public bool checkType(IntPtr l, int p, out LuaFunction f)
+        static public bool checkType(mrb_state mrb, int p, out LuaFunction f)
         {
             if (LuaDLL.lua_isnil(l, p))
             {
@@ -704,7 +530,7 @@ return true;
 #endif
 
 #if false
-        static public bool checkType(IntPtr l, int p, out LuaTable t)
+        static public bool checkType(mrb_state mrb, int p, out LuaTable t)
         {
             if (LuaDLL.lua_isnil(l, p))
             {
@@ -718,37 +544,6 @@ return true;
             return true;
     }
 #endif
-
-        public static void pushValue(IntPtr l, MRubyCSFunction f)
-        {
-#if false
-            LuaState.pushcsfunction(l, f);
-#endif
-        }
-
-#if false
-        public static void pushValue(IntPtr l, LuaTable t)
-        {
-            if (t == null)
-                LuaDLL.lua_pushnil(l);
-            else
-                t.push(l);
-}
-#endif
-
-        public static void pushValue(IntPtr l, object o)
-        {
-#if false
-			pushVar(l, o);
-#endif
-        }
-
-        public static void pushValue(IntPtr l, Array a)
-        {
-#if false
-			pushObject(l, a);
-#endif
-        }
 
         static public mrb_value error(mrb_state l, Exception e)
         {
@@ -766,7 +561,7 @@ return true;
             return default;
         }
 
-        static public int error(IntPtr l, string err, params object[] args)
+        static public int error(mrb_state mrb, string err, params object[] args)
         {
 #if false
 			err = string.Format(err, args);
