@@ -90,7 +90,7 @@ namespace MRuby
 
         public static bool LogEnabled = false;
 
-        public static void Bind(MrbState mrb, params IList<RuntimeClassDesc>[] lists)
+        public static void Bind(VM mrb, params IList<RuntimeClassDesc>[] lists)
         {
             var dict = new Dictionary<string, Entry>();
             foreach (var list in lists)
@@ -113,7 +113,7 @@ namespace MRuby
 
         }
 
-        static void bindOne(MrbState _mrb, Dictionary<string, Entry> dict, Entry entry)
+        static void bindOne(VM _mrb, Dictionary<string, Entry> dict, Entry entry)
         {
             var desc = entry.Desc;
             var mrb = _mrb.mrb;

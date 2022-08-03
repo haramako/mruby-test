@@ -7,12 +7,12 @@ using MRuby.CodeGen;
 
 class ValueTest
 {
-    MrbState mrb;
+    VM mrb;
 
     [SetUp]
     public void Setup()
     {
-        mrb = new MrbState();
+        mrb = new VM();
     }
 
     [Test]

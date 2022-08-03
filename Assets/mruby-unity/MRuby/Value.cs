@@ -18,19 +18,19 @@ namespace MRuby
             mrb = _mrb;
             val = _val;
             DLL.mrb_gc_register(mrb, val);
-            MrbState.FindCache(mrb).ValueCache.AddValue(this);
+            VM.FindCache(mrb).ValueCache.AddValue(this);
         }
 
         public Value(object _val) : this(null, _val) { }
 
-        public Value(MrbState _mrb, object _val) : this(_mrb.mrb, _val) { }
+        public Value(VM _mrb, object _val) : this(_mrb.mrb, _val) { }
 
         public Value(mrb_state _mrb, object _val)
         {
             mrb = _mrb;
             val = Converter.make_value(_mrb, _val);
             DLL.mrb_gc_register(mrb, val);
-            MrbState.FindCache(mrb).ValueCache.AddValue(this);
+            VM.FindCache(mrb).ValueCache.AddValue(this);
         }
 
         ~Value()

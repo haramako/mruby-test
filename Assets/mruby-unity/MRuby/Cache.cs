@@ -6,11 +6,11 @@ namespace MRuby
 {
     public class TypeCache
     {
-        MrbState mrb;
+        VM mrb;
         public delegate mrb_value ConstructorFunc(mrb_state mrb, object obj);
         Dictionary<Type, ConstructorFunc> cache = new Dictionary<Type, ConstructorFunc>();
 
-        public TypeCache(MrbState _mrb)
+        public TypeCache(VM _mrb)
         {
             mrb = _mrb;
         }
@@ -40,7 +40,7 @@ namespace MRuby
 
     public class ObjectCache
     {
-        MrbState _mrb;
+        VM _mrb;
 
         /// <summary>
         /// Cache from mrb_value to C# object.
@@ -52,7 +52,7 @@ namespace MRuby
         /// </summary>
         Dictionary<object, mrb_value> csToMRubyCache = new Dictionary<object, mrb_value>();
 
-        public ObjectCache(MrbState mrb)
+        public ObjectCache(VM mrb)
         {
             _mrb = mrb;
         }
@@ -110,14 +110,14 @@ namespace MRuby
 
     public class ValueCache
     {
-        MrbState mrb;
+        VM mrb;
 
         /// <summary>
         /// Cache from mrb_value to C# object.
         /// </summary>
         HashSet<WeakReference<Value>> cache = new HashSet<WeakReference<Value>>();
 
-        public ValueCache(MrbState _mrb)
+        public ValueCache(VM _mrb)
         {
             mrb = _mrb;
         }

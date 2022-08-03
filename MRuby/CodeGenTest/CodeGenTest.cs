@@ -7,15 +7,15 @@ using MRuby.CodeGen;
 
 class CodeGenTest
 {
-    MrbState mrb;
+    VM mrb;
 
     [SetUp]
     public void Setup()
     {
-        mrb = new MrbState();
+        mrb = new VM();
         Binder.Bind(mrb, _Binder.BindData);
 
-        mrb.LoadString(MrbState.prelude);
+        mrb.LoadString(VM.prelude);
     }
 
     void testError(string src, string errorMessage)

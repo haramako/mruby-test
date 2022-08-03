@@ -8,7 +8,7 @@ public class BasicTest
     [Test]
     public void TestDLL()
     {
-        MrbState _mrb = new MrbState();
+        VM _mrb = new VM();
         var mrb = _mrb.mrb;
 
         using (var arena = Converter.LockArena(mrb))
@@ -22,7 +22,7 @@ public class BasicTest
     [Test]
     public void TestMrbLoadStringWithError()
     {
-        MrbState _mrb = new MrbState();
+        VM _mrb = new VM();
         var mrb = _mrb.mrb;
 
         using (var arena = Converter.LockArena(mrb))
@@ -36,7 +36,7 @@ public class BasicTest
     [Test]
     public void TestAbortCallback()
     {
-        MrbState _mrb = new MrbState();
+        VM _mrb = new VM();
         var mrb = _mrb.mrb;
 
         using (var arena = Converter.LockArena(mrb))
@@ -49,7 +49,7 @@ public class BasicTest
     [Test]
     public void TestMrbState()
     {
-        MrbState mrb = new MrbState();
+        VM mrb = new VM();
 
         using (var arena = Converter.LockArena(mrb.mrb))
         {
@@ -61,7 +61,7 @@ public class BasicTest
     [Test]
     public void TestStacktrace()
     {
-        MrbState mrb = new MrbState();
+        VM mrb = new VM();
 
         using (var arena = Converter.LockArena(mrb.mrb))
         {

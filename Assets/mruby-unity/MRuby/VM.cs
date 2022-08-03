@@ -30,7 +30,7 @@ namespace MRuby
     }
 
 
-    public class MrbState : IDisposable
+    public class VM : IDisposable
     {
         public readonly TypeCache TypeCache;
         public readonly ObjectCache ObjectCache;
@@ -40,14 +40,14 @@ namespace MRuby
         bool disposed;
         public mrb_state mrb;
 
-        static Dictionary<UIntPtr, MrbState> mrbStateCache = new Dictionary<UIntPtr, MrbState>();
+        static Dictionary<UIntPtr, VM> mrbStateCache = new Dictionary<UIntPtr, VM>();
 
-        public static MrbState FindCache(mrb_state mrb)
+        public static VM FindCache(mrb_state mrb)
         {
             return mrbStateCache[mrb.val];
         }
 
-        public MrbState()
+        public VM()
         {
             TypeCache = new TypeCache(this);
             ObjectCache = new ObjectCache(this);
@@ -71,7 +71,7 @@ namespace MRuby
             throw new AbortException(mrb, exc);
         }
 
-        public void check()
+        void check()
         {
             if (disposed)
             {
@@ -88,6 +88,8 @@ namespace MRuby
                 disposed = true;
             }
         }
+
+        public Value Run(string src) => LoadString(src);
 
         public Value LoadString(string src)
         {

@@ -11,7 +11,7 @@ public class Test : MonoBehaviour
 {
     public void OnButtonClick()
     {
-        MrbState _mrb = new MrbState();
+        VM _mrb = new VM();
         var mrb = _mrb.mrb;
 
         using (var arena = Converter.LockArena(mrb))

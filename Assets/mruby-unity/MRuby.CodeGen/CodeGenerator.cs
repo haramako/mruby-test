@@ -95,7 +95,7 @@ namespace MRuby.CodeGen
 
             // Write export function
             w.Write("static public void Register(mrb_state mrb) {");
-            w.Write("var _mrb = MRuby.MrbState.FindCache(mrb);");
+            w.Write("var _mrb = MRuby.VM.FindCache(mrb);");
 
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
@@ -110,7 +110,7 @@ namespace MRuby.CodeGen
             {
                 w.Write("Converter.define_method(mrb, _cls, \"initialize\", _mrb.Pin(_initialize), DLL.MRB_ARGS_OPT(16));");
             }
-            w.Write("MrbState.FindCache(mrb).TypeCache.AddType(typeof({0}), Construct);", cls.CodeName);
+            w.Write("VM.FindCache(mrb).TypeCache.AddType(typeof({0}), Construct);", cls.CodeName);
 
             foreach (var md in cls.MethodDescs.Values)
             {
@@ -288,7 +288,7 @@ namespace MRuby.CodeGen
             }
             else if (t.IsArray)
             {
-                w.Write("Converter.checkArray(mrb,{2}{0},out {1});", n, v, nprefix);
+                w.Write("Converter.checkArray(mrb,{2}_argv[{0}],out {1});", n, v, nprefix);
             }
             else
             {
@@ -307,7 +307,7 @@ namespace MRuby.CodeGen
         private void WriteCSConstructor()
         {
             WriteFunctionAttr();
-            w.Write("static mrb_value Construct(mrb_state mrb, object obj) => MrbState.FindCache(mrb).ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName);
+            w.Write("static mrb_value Construct(mrb_state mrb, object obj) => VM.FindCache(mrb).ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName);
         }
 
         private void WriteConstructor()
@@ -345,7 +345,7 @@ namespace MRuby.CodeGen
                         CheckArgument(p.ParameterType, k, IsOutArg(p), hasParams, p.HasDefaultValue, p.DefaultValue);
                     }
                     w.Write("o=new {0}({1});", TypeUtil.TypeDecl(t), FuncCallCode(new MethodEntry(ci, false)));
-                    w.Write("MrbState.FindCache(mrb).ObjectCache.NewObjectByVal(mrb, _self, o);");
+                    w.Write("VM.FindCache(mrb).ObjectCache.NewObjectByVal(mrb, _self, o);");
                     w.Write("return DLL.mrb_nil_value();");
 #if false
                     if (t.Name == "String") // if export system.string, push string as ud not lua string

@@ -356,11 +356,11 @@ namespace MRuby
                     {
                         return DLL.mrb_nil_value();
                     }
-                    else if (MrbState.FindCache(mrb).ObjectCache.TryToValue(mrb, val, out var mrb_v))
+                    else if (VM.FindCache(mrb).ObjectCache.TryToValue(mrb, val, out var mrb_v))
                     {
                         return mrb_v;
                     }
-                    else if (MrbState.FindCache(mrb).TypeCache.TryGetClass(val.GetType(), out TypeCache.ConstructorFunc constructor))
+                    else if (VM.FindCache(mrb).TypeCache.TryGetClass(val.GetType(), out TypeCache.ConstructorFunc constructor))
                     {
                         return constructor(mrb, val);
                     }
@@ -582,7 +582,7 @@ return true;
 				throw new Exception("expect self, but get null");
 			return o;
 #else
-            return MrbState.FindCache(l).ObjectCache.GetObject(l, self);
+            return VM.FindCache(l).ObjectCache.GetObject(l, self);
 #endif
         }
 

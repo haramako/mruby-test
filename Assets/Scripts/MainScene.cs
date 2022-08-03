@@ -27,7 +27,7 @@ public class MainScene : MonoSingleton<MainScene>
 {
     public BoardView View;
 
-    MrbState mrb;
+    VM mrb;
 
     public Value Poker;
 
@@ -39,10 +39,10 @@ public class MainScene : MonoSingleton<MainScene>
 
     IEnumerator testRuby()
     {
-        mrb = new MrbState();
+        mrb = new VM();
         var _mrb = mrb.mrb;
-        Binder.Bind(mrb, _Binder.BindData);
-        mrb.LoadString(MrbState.prelude);
+        //Binder.Bind(mrb, _Binder.BindData);
+        mrb.LoadString(VM.prelude);
 
         Value r;
 
