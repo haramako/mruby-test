@@ -157,7 +157,9 @@ class CodeGenTest
     }
 
     [TestCase("Sample.new.int_types(1,2,3,4,5,6,7,8)", "36")]
-    [TestCase("Sample.new.bool_types(true,false,0,nil)", "TrueFalseTrueFalse")]
+    [TestCase("Sample.new.int_types()", "28")]
+    [TestCase("Sample.new.bool_types(true,false,0,nil)", "True,False,True,False")]
+    [TestCase("Sample.new.bool_types()", "True,True,False,False")]
     [TestCase("Sample.new.enum_types(0)", "A,B")]
     [TestCase("Sample.new.enum_result(1)", "B")]
     public void TestArgumentTypes(string src, string expect)

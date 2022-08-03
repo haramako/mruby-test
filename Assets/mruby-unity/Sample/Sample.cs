@@ -98,14 +98,14 @@ public class Sample
         return n;
     }
 
-    public long IntTypes(byte v1, short v2, ushort v3, int v4, uint v5, long v6, ulong v7, char v8)
+    public long IntTypes(byte v1 = 0, short v2 = 1, ushort v3 = 2, int v4 = 3, uint v5 = 4, long v6 = 5, ulong v7 = 6, char v8 = (char)7)
     {
         return v1 + v2 + v3 + v4 + v5 + v6 + (long)v7 + (int)v8;
     }
 
-    public string BoolTypes(bool v1, bool v2, bool v3, bool v4)
+    public string BoolTypes(bool v1 = true, bool v2 = true, bool v3 = false, bool v4 = false)
     {
-        return $"{v1}{v2}{v3}{v4}";
+        return $"{v1},{v2},{v3},{v4}";
     }
 
 

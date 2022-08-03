@@ -637,9 +637,19 @@ namespace MRuby.CodeGen
             }
 
             var type = v.GetType();
-            if (type == typeof(int) || type == typeof(bool) || type == typeof(float))
+            if ( type == typeof(float) || type == typeof(double)
+                || type == typeof(byte) || type == typeof(sbyte) || type == typeof(short) || type == typeof(ushort) 
+                || type == typeof(int) || type == typeof(uint) || type == typeof(long) || type == typeof(ulong))
             {
                 return v.ToString();
+            }
+            else if (type == typeof(char))
+            {
+                return $"(char){(int)(char)v}";
+            }
+            else if (type == typeof(bool))
+            {
+                return $"{v.ToString().ToLower()}";
             }
             else if (type == typeof(string))
             {
