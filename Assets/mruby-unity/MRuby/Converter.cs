@@ -114,19 +114,9 @@ namespace MRuby
 #endif
 
         #region int
-        static public bool checkType(mrb_state l, int p, out int v)
+        static public void checkType(mrb_state l, mrb_value v, out int r)
         {
-#if false
-			v = (int)LuaDLL.luaL_checkinteger(l, p);
-            return true;
-#else
-            unsafe
-            {
-                mrb_value* args = DLL.mrb_get_argv(l);
-                v = (int)DLL.mrb_as_int(l, args[p]);
-                return true;
-            }
-#endif
+            r = (int)DLL.mrb_as_int(l, v);
         }
 
         public static void pushValue(mrb_state l, int i)
@@ -201,14 +191,9 @@ namespace MRuby
 
         #region Floating-Point Types
         #region float
-        public static bool checkType(mrb_state l, int p, out float v)
+        public static void checkType(mrb_state l, mrb_value v, out float r)
         {
-            unsafe
-            {
-                mrb_value* args = DLL.mrb_get_argv(l);
-                v = (int)DLL.mrb_as_float(l, args[p]);
-                return true;
-            }
+            r = (int)DLL.mrb_as_float(l, v);
         }
 
 #if false
@@ -259,34 +244,9 @@ namespace MRuby
 #endif
 
         #region string
-        static public bool checkType(mrb_state l, int p, out string v)
+        static public void checkType(mrb_state l, mrb_value v, out string r)
         {
-#if false
-			if (LuaDLL.lua_isuserdata(l, p) > 0)
-            {
-                object o = checkObj(l, p);
-                if (o is string)
-                {
-                    v = o as string;
-                    return true;
-                }
-            }
-            else if (LuaDLL.lua_isstring(l, p))
-            {
-                v = LuaDLL.lua_tostring(l, p);
-                return true;
-            }
-
-            v = null;
-            return false;
-#else
-            unsafe
-            {
-                mrb_value* args = DLL.mrb_get_argv(l);
-                v = DLL.mrb_as_string(l, args[p]);
-            }
-            return true;
-#endif
+            r = DLL.mrb_as_string(l, v);
         }
 
         static public bool checkBinaryString(mrb_state l, int p, out byte[] bytes)
@@ -508,25 +468,9 @@ namespace MRuby
 #endif
 
         #region object
-        static public bool checkType<T>(mrb_state l, int p, out T o) where T : class
+        static public void checkType<T>(mrb_state l, mrb_value v, out T r) where T : class
         {
-#if false
-			object obj = checkVar(l, p);
-			if (obj == null)
-			{
-				o = null;
-				return true;
-			}
-
-			o = obj as T;
-			if (o == null)
-				throw new Exception(string.Format("arg {0} is not type of {1}", p, typeof(T).Name));
-
-			return true;
-#else
-            o = null;
-            return false;
-#endif
+            r = null;
         }
         #endregion
 

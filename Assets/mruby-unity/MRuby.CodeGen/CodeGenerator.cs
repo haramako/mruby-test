@@ -159,7 +159,7 @@ namespace MRuby.CodeGen
                 {
                     WriteFunctionAttr();
                     w.Write("static public mrb_value get_{0}(mrb_state mrb, mrb_value _self) {{", f.Name);
-                    WriteTry();
+                    WriteFunctionBegin();
 
                     if (f.IsStatic)
                     {
@@ -171,7 +171,7 @@ namespace MRuby.CodeGen
                         WriteReturn(string.Format("self.{0}", f.Name));
                     }
 
-                    WriteCatchExecption();
+                    WriteFunctionEnd();
                     w.Write("}");
 
                 }
@@ -180,7 +180,7 @@ namespace MRuby.CodeGen
                 {
                     WriteFunctionAttr();
                     w.Write("static public mrb_value set_{0}(mrb_state mrb, mrb_value _self) {{", f.Name);
-                    WriteTry();
+                    WriteFunctionBegin();
                     if (f.IsStatic)
                     {
                         w.Write("{0} v;", TypeUtil.TypeDecl(f.Type));
@@ -194,13 +194,37 @@ namespace MRuby.CodeGen
                     }
                     w.Write("self.{0} = v;", f.Name);
                     WriteReturn("v");
-                    WriteCatchExecption();
+
+                    WriteFunctionEnd();
                     w.Write("}");
                 }
             }
         }
 
         #region Utility Writers
+
+        /// <summary>
+        /// Write function header.
+        /// 
+        /// unsafe / _argc+_argv / try .
+        /// </summary>
+        void WriteFunctionBegin()
+        {
+            w.Write("unsafe {");
+            w.Write("var _argc = DLL.mrb_get_argc(mrb);");
+            w.Write("var _argv = DLL.mrb_get_argv(mrb);");
+            WriteTry();
+        }
+
+        /// <summary>
+        /// The pair of WriteFunctionBegin().
+        /// </summary>
+        void WriteFunctionEnd()
+        {
+            WriteCatchExecption();
+            w.Write("}");
+        }
+
         void WriteTry()
         {
             w.Write("try {");
@@ -268,7 +292,7 @@ namespace MRuby.CodeGen
             }
             else
             {
-                w.Write("Converter.checkType(mrb,{2}{0},out {1});", n, v, nprefix);
+                w.Write("Converter.checkType(mrb,{2}_argv[{0}],out {1});", n, v, nprefix);
             }
         }
 
@@ -294,9 +318,8 @@ namespace MRuby.CodeGen
             {
                 WriteFunctionAttr();
                 w.Write("static public mrb_value _initialize(mrb_state mrb, mrb_value _self) {");
-                WriteTry();
-                if (cons.Count > 1)
-                    w.Write("int argc = LuaDLL.lua_gettop(mrb);");
+                WriteFunctionBegin();
+
                 w.Write("{0} o;", TypeUtil.TypeDecl(t));
                 bool first = true;
                 for (int n = 0; n < cons.Count; n++)
@@ -330,9 +353,6 @@ namespace MRuby.CodeGen
                     else
                         WriteReturn(file, "o");
 #endif
-                    if (cons.Count == 1)
-                        WriteCatchExecption();
-                    w.Write("}");
                     first = false;
                 }
 
@@ -347,19 +367,19 @@ namespace MRuby.CodeGen
                     }
 
                     w.Write("return Converter.error(mrb,\"New object failed.\");");
-                    WriteCatchExecption();
-                    w.Write("}");
                 }
+                WriteFunctionEnd();
+                w.Write("}");
             }
             else if (t.IsValueType) // default constructor
             {
                 WriteFunctionAttr();
                 w.Write("static public mrb_value _initialize(mrb_state mrb) {");
-                WriteTry();
+                WriteFunctionBegin();
                 w.Write("{0} o;", cls.FullName);
                 w.Write("o=new {0}();", cls.FullName);
                 WriteReturn("o");
-                WriteCatchExecption();
+                WriteFunctionEnd();
                 w.Write("}");
             }
         }
@@ -418,17 +438,14 @@ namespace MRuby.CodeGen
 
         void WriteFunctionImpl(MethodDesc md)
         {
-            WriteTry();
-            w.Write("var _argc = DLL.mrb_get_argc(mrb);");
+            WriteFunctionBegin();
+
             if (!md.IsOverloaded) // no override function
             {
                 WriteFunctionCall(cls, md, md.Methods[0]);
             }
             else // 2 or more override function
             {
-                w.Write("unsafe {");
-                w.Write("var _argv = DLL.mrb_get_argv(mrb);");
-
                 bool first = true;
                 foreach (var m in md.Methods)
                 {
@@ -462,12 +479,12 @@ namespace MRuby.CodeGen
                 }
 
                 WriteNotMatch(md.Name);
-                w.Write("}");
             }
-            WriteCatchExecption();
+
+            WriteFunctionEnd();
             w.Write("}");
 
-            //riteOverridedMethod(file, overridedMethods, t, bf); // TODO
+            //writeOverridedMethod(file, overridedMethods, t, bf); // TODO
         }
 
         void WriteSimpleFunction(string fn, MethodInfo mi, BindingFlags bf)
@@ -656,13 +673,13 @@ namespace MRuby.CodeGen
                 if (t.IsEnum)
                 {
                     w.Write("int a{0}i;", n);
-                    w.Write("Converter.checkType(mrb, {0}, out a{0}i);", n);
+                    w.Write("Converter.checkType(mrb, _argv[{0}], out a{0}i);", n);
                     w.Write("a{0} = ({1})a{0}i;", n, TypeUtil.TypeDecl(t));
                 }
                 else if (t.BaseType == typeof(System.MulticastDelegate))
                 {
                     //tryMake(t);
-                    w.Write("Converter.checkDelegate(mrb,{0},out a{1});", n, n);
+                    w.Write("Converter.checkDelegate(mrb, _argv[{0}], out a{1});", n, n);
                 }
                 else if (isparams && false /* TODO */)
                 {
@@ -672,17 +689,23 @@ namespace MRuby.CodeGen
                         w.Write("Converter.checkParams(mrb,{0},out a{1});", n, n);
                 }
                 else if (t.IsArray)
+                {
                     w.Write("Converter.checkArray(mrb,{0},out a{1});", n, n);
+                }
                 else if (TypeUtil.IsValueType(t))
                 {
                     if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                        w.Write("Converter.checkNullable(mrb,{0},out a{1});", n, n);
+                    {
+                        w.Write("Converter.checkNullable(mrb, _argv[{0}], out a{1});", n, n);
+                    }
                     else
-                        w.Write("Converter.checkValueType(mrb,{0},out a{1});", n, n);
+                    {
+                        w.Write("Converter.checkValueType(mrb, _argv[{0}],out a{1});", n, n);
+                    }
                 }
                 else
                 {
-                    w.Write("Converter.checkType(mrb,{0},out a{1});", n /* + argstart */, n);
+                    w.Write("Converter.checkType(mrb, _argv[{0}], out a{1});", n, n);
                 }
 
                 if (hasDefaultValue)

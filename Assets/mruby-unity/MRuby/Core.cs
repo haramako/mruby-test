@@ -14,10 +14,14 @@ namespace MRubyUnity
 
         public static mrb_value _require(mrb_state mrb, mrb_value _self)
         {
-            System.String name;
-            Converter.checkType(mrb, 0, out name);
-            Require(mrb, name);
-            return DLL.mrb_nil_value();
+            unsafe
+            {
+                System.String name;
+                var _argv = DLL.mrb_get_argv(mrb);
+                Converter.checkType(mrb, _argv[0], out name);
+                Require(mrb, name);
+                return DLL.mrb_nil_value();
+            }
         }
 
         public static void Require(mrb_state mrb, string name)

@@ -3,6 +3,7 @@
 * Binderの自動収集対応
 * stacktraceの行番号をだす
 * Ruby側のCGをObjectCacheで抑制する
+* コンストラクタのオーバーロード対応
 
 * ガベージコレクション対策:Ruby側のオブジェクトは、ValueをWeakキャッシュすることで対応可能
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
