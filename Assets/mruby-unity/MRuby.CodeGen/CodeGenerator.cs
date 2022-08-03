@@ -690,7 +690,7 @@ namespace MRuby.CodeGen
                 }
                 else if (t.IsArray)
                 {
-                    w.Write("Converter.checkArray(mrb,{0},out a{1});", n, n);
+                    w.Write("Converter.checkArray(mrb, _argv[{0}],out a{1});", n, n);
                 }
                 else if (TypeUtil.IsValueType(t))
                 {

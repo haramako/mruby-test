@@ -156,5 +156,11 @@ class CodeGenTest
         Assert.AreEqual("[1, 2, 3]", sample.ToString());
     }
 
+    [TestCase("Sample.new.int_types(1,2,3,4,5,6,7,8)", "36")]
+    [TestCase("Sample.new.bool_types(true,false,0,nil)", "TrueFalseTrueFalse")]
+    public void TestArgumentTypes(string src, string expect)
+    {
+        Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+    }
 }
 

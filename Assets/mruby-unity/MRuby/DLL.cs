@@ -227,6 +227,14 @@ namespace MRuby
         [DllImport(Dll, EntryPoint = "mrb_unity_nil_p")]
         public static extern bool mrb_nil_p(mrb_value v);
 
+        [DllImport(Dll, EntryPoint = "mrb_bool_noinline")]
+        public static extern bool mrb_bool(mrb_value v);
+
+        [DllImport(Dll, EntryPoint = "mrb_true_p_noinline")]
+        public static extern bool mrb_true_p(mrb_value v);
+
+        [DllImport(Dll, EntryPoint = "mrb_false_p_noinline")]
+        public static extern bool mrb_false_p(mrb_value v);
         #endregion
 
         #region Value conversion
@@ -239,9 +247,6 @@ namespace MRuby
 
         [DllImport(Dll, EntryPoint = "mrb_unity_as_float")]
         public static extern mrb_float mrb_as_float(mrb_state mrb, mrb_value obj);
-
-        [DllImport(Dll, EntryPoint = "mrb_unity_as_bool")]
-        public static extern bool mrb_as_bool(mrb_state mrb, mrb_value obj);
 
         [DllImport(Dll, EntryPoint = "mrb_unity_string_len")]
         public static extern Int64 mrb_string_len(mrb_state mrb, mrb_value obj);

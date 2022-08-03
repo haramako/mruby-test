@@ -88,7 +88,7 @@ namespace MRuby
 
 		static public void checkType(mrb_state mrb, mrb_value v, out bool r)
 		{
-            r = DLL.mrb_as_bool(mrb, v);
+            r = DLL.mrb_bool(v);
 		}
 
 #region string
@@ -293,44 +293,35 @@ namespace MRuby
 		}
 #endif
 
-#region object
         static public void checkType<T>(mrb_state l, mrb_value v, out T r) where T : class
         {
+            // TODO
             r = null;
         }
-#endregion
 
-        static public bool checkArray<T>(mrb_state mrb, int p, out T[] ta)
+        unsafe static public void checkArray<T>(mrb_state mrb, mrb_value ary, out T[] r)
         {
-            unsafe
+            if (DLL.mrb_type(ary) == mrb_vtype.MRB_TT_ARRAY)
             {
-                mrb_value* args = DLL.mrb_get_argv(mrb);
-                mrb_value ary = args[p];
-                if (DLL.mrb_type(ary) == mrb_vtype.MRB_TT_ARRAY)
+                uint n = DLL.mrb_rarray_len(ary);
+                mrb_value* ptr = DLL.mrb_rarray_ptr(ary);
+                r = new T[n];
+                for (int k = 0; k < n; k++)
                 {
-                    uint n = DLL.mrb_rarray_len(ary);
-                    mrb_value* ptr = DLL.mrb_rarray_ptr(ary);
-                    ta = new T[n];
-                    for (int k = 0; k < n; k++)
+                    object obj = checkVar(mrb, ptr[k]);
+                    if (obj is IConvertible)
                     {
-                        object obj = checkVar(mrb, ptr[k]);
-                        if (obj is IConvertible)
-                        {
-                            ta[k] = (T)Convert.ChangeType(obj, typeof(T));
-                        }
-                        else
-                        {
-                            ta[k] = (T)obj;
-                        }
+                        r[k] = (T)Convert.ChangeType(obj, typeof(T));
                     }
-                    return true;
+                    else
+                    {
+                        r[k] = (T)obj;
+                    }
                 }
-                else
-                {
-                    Array array = checkVar(mrb, ary) as Array;
-                    ta = array as T[];
-                    return ta != null;
-                }
+            }
+            else
+            {
+                r = checkVar(mrb, ary) as T[];
             }
         }
 
@@ -461,7 +452,6 @@ namespace MRuby
 #endif
                 default:
                     return new Exception($"unsupported type {type}"); // TODO
-                    //return null;
             }
         }
 

@@ -93,10 +93,19 @@ public class Sample
         return 0;
     }
 
-
     public int OverloadedMethod2(int n)
     {
         return n;
+    }
+
+    public long IntTypes(byte v1, short v2, ushort v3, int v4, uint v5, long v6, ulong v7, char v8)
+    {
+        return v1 + v2 + v3 + v4 + v5 + v6 + (long)v7 + (int)v8;
+    }
+
+    public string BoolTypes(bool v1, bool v2, bool v3, bool v4)
+    {
+        return $"{v1}{v2}{v3}{v4}";
     }
 }
 
