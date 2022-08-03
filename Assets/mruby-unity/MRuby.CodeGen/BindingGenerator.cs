@@ -22,7 +22,7 @@ namespace MRuby.CodeGen
         public void Generate()
         {
             w.Write("using MRuby;");
-            w.Write("[MRuby.LuaBinder]");
+            w.Write("[MRuby.MRubyBinder]");
             w.Write("public class {0} {{", binderClassName);
 
             w.Write("public static RuntimeClassDesc[] BindData = new[]");
@@ -42,6 +42,10 @@ namespace MRuby.CodeGen
                         if (cls.Type == typeof(Object))
                         {
                             baseType = "null";
+                        }
+                        else if (!reg.FindByType(cls.BaseType, cls).Exported)
+                        {
+                            baseType = "\"" + "System::Object" + "\"";
                         }
                         else
                         {

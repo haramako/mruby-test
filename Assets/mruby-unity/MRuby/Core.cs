@@ -93,7 +93,7 @@ namespace MRubyUnity
 
         public void Write(string s)
         {
-#if SLUA_STANDALONE
+#if !UNITY_2020_OR_NEWER
             System.Console.WriteLine(s);
 #else
             UnityEngine.Debug.Log(s);

@@ -96,7 +96,7 @@ namespace MRuby.CodeGen
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
             {
-                w.Write("LuaUnityEvent_{1}.reg(mrb);", cls.ExportName, reg.FindByType(cls.BaseType, cls).RubyFullName);
+                w.Write("MRubyUnityEvent_{1}.reg(mrb);", cls.ExportName, reg.FindByType(cls.BaseType, cls).RubyFullName);
             }
 
             w.Write("_cls = Converter.GetClass(mrb, \"{0}\");", cls.RubyFullName);
@@ -517,7 +517,7 @@ namespace MRuby.CodeGen
         {
             if (t.IsEnum)
             {
-                w.Write("{0} = ({1})LuaDLL.luaL_checkinteger(mrb, {2});", v, TypeUtil.TypeDecl(t), n);
+                w.Write("{0} = ({1})DLL.checkinteger(mrb, {2});", v, TypeUtil.TypeDecl(t), n);
             }
             else if (t.BaseType == typeof(System.MulticastDelegate))
             {

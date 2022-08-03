@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;SLUA_STANDALONE</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -14,9 +14,9 @@
     <None Update="mruby.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</None>
-    <Compile Include="..\..\Assets\mruby-unity\MRuby\*.cs" Link="MRuby\%(RecursiveDir)%(FileName)%(Extension)"/>
-	  <Compile Include="..\..\Assets\mruby-unity\MRuby.CodeGen\*.cs" Link="MRuby.CodeGen\%(RecursiveDir)%(FileName)%(Extension)"/>
-	  <Compile Include="..\..\Assets\mruby-unity\Sample\*.cs" Link="Sample\%(RecursiveDir)%(FileName)%(Extension)"/>
+    <Compile Include="..\..\Assets\mruby-unity\MRuby\*.cs" Link="MRuby\%(RecursiveDir)%(FileName)%(Extension)" />
+	  <Compile Include="..\..\Assets\mruby-unity\MRuby.CodeGen\*.cs" Link="MRuby.CodeGen\%(RecursiveDir)%(FileName)%(Extension)" />
+	  <Compile Include="..\..\Assets\mruby-unity\Sample\*.cs" Link="Sample\%(RecursiveDir)%(FileName)%(Extension)" />
 </ItemGroup>
 
 </Project>

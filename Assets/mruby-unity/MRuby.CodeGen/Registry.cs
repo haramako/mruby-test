@@ -24,7 +24,7 @@ namespace MRuby.CodeGen
                 }
                 else
                 {
-                    cur = new ClassDesc(cur, name, pop);
+                    cur = new ClassDesc(cur, name, Math.Max(0, pop));
                     classes.Add(cur.FullName, cur);
                 }
             }
@@ -46,7 +46,7 @@ namespace MRuby.CodeGen
                 }
             }
 
-            if (cur.PopCountFromExport > pop)
+            if (pop >= 0 && cur.PopCountFromExport > pop)
             {
                 cur.PopCountFromExport = pop;
             }
@@ -58,7 +58,7 @@ namespace MRuby.CodeGen
         {
             if (classes.TryGetValue(t.ToString(), out var found))
             {
-                if (found.PopCountFromExport > pop)
+                if (pop >= 0 && found.PopCountFromExport > pop)
                 {
                     found.PopCountFromExport = pop;
                 }
@@ -93,6 +93,8 @@ namespace MRuby.CodeGen
         /// C#のなかでの名前
         /// </summary>
         public string FullName { get; private set; }
+
+        public bool Registered;
 
         public bool Exported;
 

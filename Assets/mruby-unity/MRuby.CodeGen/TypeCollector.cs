@@ -20,9 +20,13 @@ namespace MRuby.CodeGen
             }
         }
 
-        public void RegisterType(Registry reg, Type t)
+        public void RegisterType(Registry reg, Type t, int pop = 0)
         {
-            var cls = reg.FindByType(t, 0);
+            if (t == null) return;
+
+            var cls = reg.FindByType(t, pop);
+
+            if (cls.Registered) return;
 
             if (!t.IsGenericTypeDefinition && (!TypeUtil.IsObsolete(t)
                 && t != typeof(UnityEngine.YieldInstruction) && t != typeof(UnityEngine.Coroutine))
@@ -90,6 +94,8 @@ namespace MRuby.CodeGen
                     {
                         cls.AddProperty(p);
                     }
+
+                    cls.Registered = true;
                 }
 
             }

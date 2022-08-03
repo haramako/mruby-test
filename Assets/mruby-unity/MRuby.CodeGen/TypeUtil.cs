@@ -24,18 +24,6 @@ namespace MRuby.CodeGen
                 }
             }
 
-            // Check in custom export function filter list.
-#if false && !SLUA_STANDALONE
-            List<object> aFuncFilterList = LuaCodeGen.GetEditorField<ICustomExportPost>("FunctionFilterList");
-            foreach (object aFilterList in aFuncFilterList)
-            {
-                if (((List<string>)aFilterList).Contains(methodString))
-                {
-                    return true;
-                }
-            }
-#endif
-
             if (mi.DeclaringType.IsGenericType && mi.DeclaringType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
             {
                 if (mi.MemberType == MemberTypes.Constructor)
@@ -60,7 +48,7 @@ namespace MRuby.CodeGen
                 }
             }
 
-            return mi.IsDefined(typeof(DoNotToLuaAttribute), false);
+            return mi.IsDefined(typeof(DoNotToMRubyAttribute), false);
         }
 
         public static bool ContainUnsafe(MethodBase mi)
@@ -75,11 +63,6 @@ namespace MRuby.CodeGen
 
         public static bool IsPInvoke(MethodInfo mi, out bool instanceFunc)
         {
-            if (mi.IsDefined(typeof(MRuby.MonoPInvokeCallbackAttribute), false))
-            {
-                instanceFunc = !mi.IsDefined(typeof(StaticExportAttribute), false);
-                return true;
-            }
             instanceFunc = true;
             return false;
         }
@@ -229,7 +212,7 @@ namespace MRuby.CodeGen
             {
                 ret += ",typeof(";
                 if (pars[n].IsOut)
-                    ret += "LuaOut";
+                    ret += "MRubyOut";
                 else
                     ret += SimpleTypeName(pars[n].ParameterType);
                 ret += ")";

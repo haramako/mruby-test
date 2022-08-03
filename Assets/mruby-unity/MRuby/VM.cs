@@ -142,7 +142,7 @@ namespace MRuby
             {
                 foreach (var type in assembly.GetTypes())
                 {
-                    var attr = Attribute.GetCustomAttribute(type, typeof(LuaBinderAttribute)) as LuaBinderAttribute;
+                    var attr = Attribute.GetCustomAttribute(type, typeof(MRubyBinderAttribute)) as MRubyBinderAttribute;
                     if (attr != null)
                     {
                         var f = type.GetField("BindData");

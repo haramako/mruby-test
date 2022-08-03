@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
-#if SLUA_STANDALONE
+#if !UNITY_2020_1_OR_NEWER
 namespace UnityEngine
 {
     public class YieldInstruction { }
@@ -251,16 +251,16 @@ namespace MRuby.CodeGen
         {
             if (cls.IsNamespace)
             {
-                write("{1} ns    {0,-20}", cls.FullName, cls.PopCountFromExport);
+                write("{1} N {0,-20}", cls.FullName, cls.PopCountFromExport);
             }
             else
             {
-                write("{1} class {0,-20}", cls.FullName, cls.PopCountFromExport);
+                write("{1} C {0,-20}", cls.FullName, cls.PopCountFromExport);
             }
 
             if (level >= 1)
             {
-                indent++;
+                indent += 2;
                 foreach (var m in cls.MethodDescs.Values)
                 {
                     PrintMethodDesc(m);
@@ -269,16 +269,16 @@ namespace MRuby.CodeGen
                 {
                     PrintField(f);
                 }
-                indent--;
+                indent -= 2;
             }
         }
 
         public void PrintMethodDesc(MethodDesc m)
         {
             var (min, max, hasParamArray) = m.ParameterNum();
-            var mark = m.IsConstructor ? "C" : (m.IsStatic ? "s" : " ");
+            var mark = m.IsConstructor ? "c" : (m.IsStatic ? "s" : " ");
             var param = hasParamArray ? $"{min}.." : ((min == max) ? $"{min}" : $"{min}..{max}");
-            write($"{mark} {m.Name}({param}) [{m.Methods.Count}]");
+            write($"{mark}  {m.Name}({param}) [{m.Methods.Count}]");
 
             if (m.IsOverloaded && level >= 2)
             {
@@ -296,9 +296,10 @@ namespace MRuby.CodeGen
         public void PrintField(FieldDesc f)
         {
             var kind = f.IsProperty ? "p" : "f";
+            var mark = (f.IsStatic ? "s" : " ");
             var canRead = f.CanRead ? "r" : "-";
             var canWrite = f.CanWrite ? "w" : "-";
-            write($"{kind} {f.Name} {canRead}{canWrite}");
+            write($"{kind}{mark} {f.Name} {canRead}{canWrite}");
         }
     }
 

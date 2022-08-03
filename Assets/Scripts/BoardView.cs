@@ -20,7 +20,6 @@ public class BoardObject : MonoBehaviour
 [CustomMRubyClass]
 public class BoardView : MonoBehaviour
 {
-    [DoNotToLua]
     public BoardObject[] Templates;
 
     Dictionary<int, BoardObject> objects = new Dictionary<int, BoardObject>();

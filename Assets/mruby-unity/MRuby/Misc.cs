@@ -23,45 +23,18 @@ namespace MRuby
         }
     }
 
-    public class DoNotToLuaAttribute : System.Attribute
+    public class DoNotToMRubyAttribute : System.Attribute
     {
-        public DoNotToLuaAttribute()
+        public DoNotToMRubyAttribute()
         {
         }
     }
 
-    public class LuaBinderAttribute : System.Attribute
+    public class MRubyBinderAttribute : System.Attribute
     {
-        public LuaBinderAttribute()
+        public MRubyBinderAttribute()
         {
         }
-    }
-
-    [AttributeUsage(AttributeTargets.Method)]
-    public class StaticExportAttribute : System.Attribute
-    {
-        public StaticExportAttribute()
-        {
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Method)]
-    public class LuaOverrideAttribute : System.Attribute
-    {
-        public string fn;
-        public LuaOverrideAttribute(string fn)
-        {
-            this.fn = fn;
-        }
-    }
-
-    public class OverloadLuaClassAttribute : System.Attribute
-    {
-        public OverloadLuaClassAttribute(Type target)
-        {
-            targetType = target;
-        }
-        public Type targetType;
     }
     #endregion
 

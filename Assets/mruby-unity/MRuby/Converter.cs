@@ -391,7 +391,6 @@ namespace MRuby
                     {
                         if (isLuaValueType(l, p))
                         {
-#if !SLUA_STANDALONE
                             if (luaTypeCheck(l, p, "Vector2"))
                             {
                                 Vector2 v;
@@ -422,7 +421,6 @@ namespace MRuby
                                 checkType(l, p, out c);
                                 return c;
                             }
-#endif
                             Logger.LogError("unknown lua value type");
                             return null;
                         }
