@@ -16,6 +16,11 @@ public class Command
     {
         Type = t;
     }
+
+    public override string ToString()
+    {
+        return $"{Type} {Card}";
+    }
 }
 
 public class MainScene : MonoSingleton<MainScene>
@@ -23,6 +28,8 @@ public class MainScene : MonoSingleton<MainScene>
     public BoardView View;
 
     MrbState mrb;
+
+    public Value Poker;
 
     void Start()
     {
@@ -37,40 +44,32 @@ public class MainScene : MonoSingleton<MainScene>
         Binder.Bind(mrb, _Binder.BindData);
         mrb.LoadString(MrbState.prelude);
 
-        using var arena = Converter.LockArena(_mrb);
-
         Value r;
-
-        //MRuby_MRubyUnity_Console.reg(_mrb);
 
         MRubyUnity.Core.LoadPath = MRubyUnity.Core.LoadPath.Concat(new string[] { "../tcg2" }).ToArray();
         MRubyUnity.Core.Require(_mrb, "app");
 
-        r = new Value(_mrb, DLL.mrb_load_string(_mrb, "EntryPoint"));
+        r = mrb.LoadString("PokerRule.new");
+        Poker = r;
 
-        Debug.Log(r.ToString());
-
-        r = r.Send("run", View);
-
-        //Debug.Log(r.ToString(mrbState));
-
+        r.Send("board").Send("root").Send("redraw_all", View);
         yield return new WaitForSeconds(1.0f);
 
-        //using (var arena = Converter.ArenaLock(mrb))
-        {
-            r.Send("play", new Command("select") { Card = 5 });
-            r.Send("play", new Command("discard"));
+        r.Send("play", new Command("start"));
+#if false
+        r.Send("play", new Command("select") { Card = 5 });
+        r.Send("play", new Command("discard"));
 
+        r.Send("board").Send("root").Send("redraw_all", View);
+        yield return new WaitForSeconds(1.0f);
 
-            r = r.Send("board").Send("root").Send("redraw_all", View);
+        r.Send("play", new Command("select") { Card = 6 });
+        r.Send("play", new Command("discard"));
 
-
-            //Debug.Log(r.ToString(mrbState));
-        }
-
-
-        //r.Send("app", );
-
+        r.Send("board").Send("root").Send("redraw_all", View);
+#endif
+        r.Send("board").Send("root").Send("redraw_all", View);
+        yield return new WaitForSeconds(1.0f);
     }
 
     void testBoard()
@@ -80,6 +79,22 @@ public class MainScene : MonoSingleton<MainScene>
         //c1.transform.localPosition = new Vector3(100, -100, 0);
 
         //c1.transform.DOLocalMoveX(200, 1.0f).SetEase(Ease.OutBounce);
+    }
+
+    public void OnStartClick()
+    {
+        Play(new Command("start"));
+    }
+
+    public void OnDiscardClick()
+    {
+        Play(new Command("discard"));
+    }
+
+    public void Play(Command cmd)
+    {
+        Poker.Send("play", cmd);
+        Poker.Send("board").Send("root").Send("redraw_all", View);
     }
 
 }

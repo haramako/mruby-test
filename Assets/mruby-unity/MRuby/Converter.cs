@@ -241,12 +241,15 @@ namespace MRuby
         #region bool
 		static public bool checkType(IntPtr l, int p, out bool v)
 		{
-			LuaDLL.luaL_checktype(l, p, LuaTypes.LUA_TBOOLEAN);
-			v = LuaDLL.lua_toboolean(l, p);
-			return true;
+            unsafe
+            {
+                mrb_value* args = DLL.mrb_get_argv(l);
+                v = (int)DLL.mrb_as_int(l, args[p]);
+                return true;
+            }
 		}
 
-		public static void pushValue(IntPtr l, bool b)
+        public static void pushValue(IntPtr l, bool b)
 		{
 			LuaDLL.lua_pushboolean(l, b);
 		}

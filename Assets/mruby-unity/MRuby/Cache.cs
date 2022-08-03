@@ -60,6 +60,7 @@ namespace MRuby
         public int AddObject(object obj, mrb_value v)
         {
             var id = RuntimeHelpers.GetHashCode(obj);
+            DLL.mrb_gc_register(_mrb.mrb, v);
             cache.Add(id, obj);
             csToMRubyCache.Add(obj, v);
             return id;
