@@ -13,7 +13,10 @@
   <ItemGroup>
     <None Update="mruby.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	</None>
+    <Compile Include="..\..\Assets\mruby-unity\MRuby\*.cs" Link="MRuby\%(RecursiveDir)%(FileName)%(Extension)"/>
+	  <Compile Include="..\..\Assets\mruby-unity\MRuby.CodeGen\*.cs" Link="MRuby.CodeGen\%(RecursiveDir)%(FileName)%(Extension)"/>
+	  <Compile Include="..\..\Assets\mruby-unity\Sample\*.cs" Link="Sample\%(RecursiveDir)%(FileName)%(Extension)"/>
+</ItemGroup>
 
 </Project>
