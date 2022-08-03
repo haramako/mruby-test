@@ -91,6 +91,8 @@ namespace MRuby.CodeGen
                 /* method.Name != "ToString" && */ method.Name != "Clone" &&
                 method.Name != "GetEnumerator" && method.Name != "CopyTo" &&
                 method.Name != "op_Implicit" && method.Name != "op_Explicit" &&
+                method.Name != "StartCoroutine_Auto" &&
+                method.Name != "GetComponents" &&
                 !method.Name.StartsWith("get_", StringComparison.Ordinal) &&
                 !method.Name.StartsWith("set_", StringComparison.Ordinal) &&
                 !method.Name.StartsWith("add_", StringComparison.Ordinal) &&

@@ -41,7 +41,7 @@ public class MainScene : MonoSingleton<MainScene>
     {
         mrb = new VM();
         var _mrb = mrb.mrb;
-        //Binder.Bind(mrb, _Binder.BindData);
+        Binder.Bind(mrb, _Binder.BindData);
         mrb.LoadString(VM.prelude);
 
         Value r;

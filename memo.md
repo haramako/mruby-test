@@ -1,9 +1,10 @@
 * paramsに対応
-* Binderの自動収集対応
+- Binderの自動収集対応
 * stacktraceの行番号をだす
 * Ruby側のCGをObjectCacheで抑制する => 仮対応でValueにgc_registerを追加した（開放しない）
 * コンストラクタのオーバーロード対応
-* MrbState => VMに変更
+- MrbState => VMに変更
+* preludeはbindを不要にする
 
 * ガベージコレクション対策:Ruby側のオブジェクトは、ValueをWeakキャッシュすることで対応可能
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする

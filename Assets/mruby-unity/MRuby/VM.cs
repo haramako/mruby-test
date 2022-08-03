@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace MRuby
@@ -29,9 +30,16 @@ namespace MRuby
         public AbortException(mrb_state _mrb, mrb_value _exc) : base(_mrb, _exc) { }
     }
 
+    public class VMOption
+    {
+        public bool BindAutomatically = true;
+    }
+
 
     public class VM : IDisposable
     {
+        public static VMOption DefaultOption = new VMOption();
+
         public readonly TypeCache TypeCache;
         public readonly ObjectCache ObjectCache;
         public readonly ValueCache ValueCache;
@@ -47,8 +55,10 @@ namespace MRuby
             return mrbStateCache[mrb.val];
         }
 
-        public VM()
+        public VM(VMOption opt = null)
         {
+            opt ??= DefaultOption;
+
             TypeCache = new TypeCache(this);
             ObjectCache = new ObjectCache(this);
             ValueCache = new ValueCache(this);
@@ -63,7 +73,11 @@ namespace MRuby
             var kernel = DLL.mrb_module_get(mrb, "Kernel");
             DLL.mrb_define_module_function(mrb, kernel, "require", MRubyUnity.Core._require, DLL.MRB_ARGS_REQ(1));
 
-            //DLL.mrb_load_string(mrb, prelude);
+            if (opt.BindAutomatically)
+            {
+                bindAll();
+            }
+            DLL.mrb_load_string(mrb, prelude);
         }
 
         static void abortCallback(mrb_state mrb, mrb_value exc)
@@ -114,8 +128,36 @@ namespace MRuby
             return f;
         }
 
+        /// <summary>
+        /// Bind all BindData.
+        /// </summary>
+        void bindAll()
+        {
+            var assemblys = AppDomain.CurrentDomain.GetAssemblies();
+            var bindList = new List<(Type, RuntimeClassDesc[])>();
+            foreach (var assembly in assemblys)
+            {
+                foreach (var type in assembly.GetTypes())
+                {
+                    var attr = Attribute.GetCustomAttribute(type, typeof(LuaBinderAttribute)) as LuaBinderAttribute;
+                    if (attr != null)
+                    {
+                        var f = type.GetField("BindData");
+                        var list = f.GetValue(null) as RuntimeClassDesc[];
+                        if (list != null)
+                        {
+                            bindList.Add((type, list));
+                        }
+                    }
+                }
+            }
 
-        public static string prelude = @"
+            CodeGen.Logger.Log("Mruby.VM: Bind " + string.Join(", ", bindList.Select(i => i.Item1)));
+            Binder.Bind(this, bindList.Select(i => i.Item2).ToArray());
+        }
+
+
+        static string prelude = @"
 class LoadError < Exception
 end
 

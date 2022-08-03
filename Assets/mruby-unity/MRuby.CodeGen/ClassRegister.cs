@@ -57,7 +57,7 @@ namespace MRuby.CodeGen
                     foreach (var m in methods)
                     {
                         var noinstance = TypeUtil.IsStaticClass(t) && !m.IsStatic;
-                        if (TypeUtil.IsPropertyAccessor(m) || noinstance)
+                        if (TypeUtil.IsPropertyAccessor(m) || !TypeUtil.IsUsefullMethod(m) || noinstance)
                         {
                             continue;
                         }

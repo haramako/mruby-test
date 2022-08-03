@@ -13,9 +13,6 @@ class CodeGenTest
     public void Setup()
     {
         mrb = new VM();
-        Binder.Bind(mrb, _Binder.BindData);
-
-        mrb.LoadString(VM.prelude);
     }
 
     void testError(string src, string errorMessage)
