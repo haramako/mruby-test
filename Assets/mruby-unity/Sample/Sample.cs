@@ -107,6 +107,19 @@ public class Sample
     {
         return $"{v1}{v2}{v3}{v4}";
     }
+
+
+    public enum TestEnum { A, B, C }
+
+    public string EnumTypes(TestEnum v1, TestEnum v2 = TestEnum.B)
+    {
+        return $"{v1},{v2}";
+    }
+
+    public TestEnum EnumResult(int n)
+    {
+        return (TestEnum)n;
+    }
 }
 
 [MRuby.CustomMRubyClass]

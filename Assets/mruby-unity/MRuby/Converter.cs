@@ -8,18 +8,16 @@ namespace MRuby
 {
     public static class Converter
     {
-#if false
         #region enum
 		static public bool checkEnum<T>(mrb_state mrb, mrb_value v, out T o) where T : struct
 		{
-			int i = (int)LuaDLL.luaL_checkinteger(l, p);
+            int i = (int)DLL.mrb_as_int(mrb, v);
 			o = (T)Enum.ToObject(typeof(T), i);
-
 			return true;
 		}
         #endregion
-#endif
 
+        #region checkType
         static public void checkType(mrb_state mrb, mrb_value v, out sbyte r)
         {
             r = (sbyte)DLL.mrb_as_int(mrb, v);
@@ -91,7 +89,9 @@ namespace MRuby
             r = DLL.mrb_bool(v);
 		}
 
-#region string
+        #endregion
+
+        #region string
         static public void checkType(mrb_state l, mrb_value v, out string r)
         {
             r = DLL.mrb_as_string(l, v);

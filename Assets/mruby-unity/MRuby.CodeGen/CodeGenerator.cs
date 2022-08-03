@@ -646,6 +646,11 @@ namespace MRuby.CodeGen
                 return $"\"{v}\"";
 
             }
+            else if (type.IsEnum)
+            {
+                var t = reg.FindByType(type, cls);
+                return $"{t.CodeName}.{v}";
+            }
             else
             {
                 throw new Exception($"Can't support defaultValueType {v}, type = {type}");
@@ -667,9 +672,7 @@ namespace MRuby.CodeGen
 
                 if (t.IsEnum)
                 {
-                    w.Write("int a{0}i;", n);
-                    w.Write("Converter.checkType(mrb, _argv[{0}], out a{0}i);", n);
-                    w.Write("a{0} = ({1})a{0}i;", n, TypeUtil.TypeDecl(t));
+                    w.Write("Converter.checkEnum(mrb, _argv[{0}], out a{0});", n);
                 }
                 else if (t.BaseType == typeof(System.MulticastDelegate))
                 {
