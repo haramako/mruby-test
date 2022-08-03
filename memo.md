@@ -1,9 +1,9 @@
+* コンストラクタのオーバーロード対応
 * paramsに対応
 * stacktraceの行番号をだす
-* Ruby側のCGをObjectCacheで抑制する => 仮対応でValueにgc_registerを追加した（開放しない）
-* コンストラクタのオーバーロード対応
 * preludeはbindを不要にする
 
+* Ruby側のCGをObjectCacheで抑制する => 仮対応でValueにgc_registerを追加した（開放しない）
 * ガベージコレクション対策:Ruby側のオブジェクトは、ValueをWeakキャッシュすることで対応可能
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
 
@@ -20,7 +20,7 @@
 * delegate対応
 * eventに対応
 * directFuncは消したけど、なんだっけ？
-* [], []=に対応
+* [], []=に対応 => AsArray(), AsHash() などで structをつくる, implicit conversion で Value に変換
 * 拡張メソッドに対応 => いらん？
 * ref, out, inに対応 => いらん？
 * 予約語の回避(CodeGenerator.NormalName)
