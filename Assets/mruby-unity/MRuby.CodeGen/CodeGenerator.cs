@@ -24,15 +24,10 @@
 
 namespace MRuby.CodeGen
 {
-    using UnityEngine;
-    using System.Collections.Generic;
     using System.Linq;
     using System.IO;
     using System;
     using System.Reflection;
-    using System.Text;
-    using System.Text.RegularExpressions;
-    using System.Runtime.CompilerServices;
 
     public class CodeGenerator
     {
@@ -58,7 +53,9 @@ namespace MRuby.CodeGen
             WriteField();
             WriteRegister();
             WriteEnd();
+
             cls.Exported = true;
+            w.Dispose();
         }
 
         private void WriteHead()
@@ -70,17 +67,16 @@ namespace MRuby.CodeGen
             w.Write("public class {0} {{", cls.ExportName);
 
             w.Write("static RClass _cls;");
-            w.Write("static mrb_value _cls_value;");
+            w.Write("static mrb_value _clsval;");
 
             WriteFunctionAttr();
-            w.Write("static mrb_value Construct(mrb_state mrb, object obj) => VM.FindCache(mrb).ObjectCache.NewObject(mrb, _cls_value, obj);", cls.ExportName);
+            w.Write("static mrb_value Construct(mrb_state mrb, object obj) => mrb.GetVM().ObjectCache.NewObject(mrb, _clsval, obj);", cls.ExportName);
         }
 
         private void WriteEnd()
         {
             w.Write("}");
             w.Write("#endif");
-            w.Dispose();
         }
 
         #region Write Register
@@ -96,7 +92,7 @@ namespace MRuby.CodeGen
 
             // Write export function
             w.Write("static public void Register(mrb_state mrb) {");
-            w.Write("var _mrb = MRuby.VM.FindCache(mrb);");
+            w.Write("var _vm = mrb.GetVM();");
 
 
             if (t.BaseType != null && t.BaseType.Name.Contains("UnityEvent`"))
@@ -105,26 +101,21 @@ namespace MRuby.CodeGen
             }
 
             w.Write("_cls = Converter.GetClass(mrb, \"{0}\");", cls.RubyFullName);
-            w.Write("_cls_value = DLL.mrb_obj_value(_cls.val);");
+            w.Write("_clsval = DLL.mrb_obj_value(_cls.val);");
 
-            w.Write("VM.FindCache(mrb).TypeCache.AddType(typeof({0}), Construct);", cls.CodeName);
+            w.Write("mrb.GetVM().TypeCache.AddType(typeof({0}), Construct);", cls.CodeName);
 
             foreach (var md in cls.MethodDescs.Values)
             {
                 var f = md.Name;
 
-                if (md.IsGeneric)
-                {
-                    continue;
-                }
-
                 if (md.IsStatic)
                 {
-                    w.Write("DLL.mrb_define_class_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f); // TODO
+                    w.Write("DLL.mrb_define_class_method(mrb, _cls, \"{0}\", _vm.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f); // TODO
                 }
                 else
                 {
-                    w.Write("DLL.mrb_define_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f);
+                    w.Write("DLL.mrb_define_method(mrb, _cls, \"{0}\", _vm.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f);
                 }
             }
 
@@ -132,11 +123,11 @@ namespace MRuby.CodeGen
             {
                 if (f.CanRead)
                 {
-                    w.Write("DLL.mrb_define_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.GetterName);
+                    w.Write("DLL.mrb_define_method(mrb, _cls, \"{0}\", _vm.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.GetterName);
                 }
                 if (f.CanWrite)
                 {
-                    w.Write("DLL.mrb_define_method(mrb, _cls, \"{0}=\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.SetterName);
+                    w.Write("DLL.mrb_define_method(mrb, _cls, \"{0}=\", _vm.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.SetterName);
                 }
             }
 
@@ -208,11 +199,6 @@ namespace MRuby.CodeGen
         {
             foreach (var m in cls.MethodDescs.Values)
             {
-                if (m.IsGeneric)
-                {
-                    continue;
-                }
-
                 WriteFunctionAttr();
                 w.Write("static public mrb_value {0}(mrb_state mrb, mrb_value _self) {{", m.Name);
                 WriteFunctionImpl(m);
@@ -225,7 +211,10 @@ namespace MRuby.CodeGen
 
             if (!md.IsOverloaded) // no override function
             {
-                WriteFunctionCall(cls, md, md.Methods[0]);
+                var m = md.Methods[0];
+                w.Write("Converter.CheckArgc(_argc, {0}, {1});", m.RequiredParamNum, m.ParamNum);
+
+                WriteFunctionCall(md, m);
             }
             else // 2 or more override function
             {
@@ -250,7 +239,7 @@ namespace MRuby.CodeGen
                             w.Write("{0}(_argc == 0 ){{", ifCode, requireParameterNum, pars.Length);
                         }
 
-                        WriteFunctionCall(cls, md, m);
+                        WriteFunctionCall(md, m);
                         w.Write("}");
                         first = false;
                     }
@@ -261,7 +250,7 @@ namespace MRuby.CodeGen
                     first = false;
                 }
 
-                WriteNotMatch(md.Name);
+                w.Write("throw new Exception(\"No matched override function {0} to call\");", md.Name);
             }
 
             WriteFunctionEnd();
@@ -285,15 +274,11 @@ namespace MRuby.CodeGen
             }
         }
 
-        private void WriteFunctionCall(ClassDesc cls, MethodDesc md, MethodEntry me)
+        private void WriteFunctionCall(MethodDesc md, MethodEntry me)
         {
             ParameterInfo[] pars = me.Parameters;
             var t = cls.Type;
             var m = me.Info;
-
-            // Is argument number more than parameter number?
-            var requireParameterNum = m.GetParameters().ToArray().TakeWhile(p => !p.HasDefaultValue).Count();
-            w.Write("Converter.CheckArgc(_argc, {0}, {1});", me.RequiredParamNum, me.ParamNum);
 
             if (!me.IsStatic && !md.IsConstructor)
             {
@@ -316,7 +301,7 @@ namespace MRuby.CodeGen
             if(md.IsConstructor)
             {
                 w.Write("var ret = new {0}({1});", cls.CodeName, FuncCallCode(me), ret);
-                w.Write("VM.FindCache(mrb).ObjectCache.NewObjectByVal(mrb, _self, ret);");
+                w.Write("mrb.GetVM().ObjectCache.NewObjectByVal(mrb, _self, ret);");
             }
             else if (me.IsStatic && !me.IsExtension)
             {
@@ -392,11 +377,6 @@ namespace MRuby.CodeGen
 
             w.Write( "return {0};", retcount);
 #endif
-        }
-
-        void WriteNotMatch(string fn)
-        {
-            WriteError($"No matched override function {fn} to call");
         }
 
         bool IsOutArg(ParameterInfo p)
@@ -533,6 +513,60 @@ namespace MRuby.CodeGen
             }
             return str;
         }
+
+        void WriteCheckType(Type t, int n, string v = "v", string nprefix = "")
+        {
+            if (t.IsEnum)
+            {
+                w.Write("{0} = ({1})LuaDLL.luaL_checkinteger(mrb, {2});", v, TypeUtil.TypeDecl(t), n);
+            }
+            else if (t.BaseType == typeof(System.MulticastDelegate))
+            {
+                w.Write("int op=checkDelegate(mrb,{2}{0},out {1});", n, v, nprefix);
+            }
+            else if (TypeUtil.IsValueType(t))
+            {
+                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
+                {
+                    w.Write("Converter.checkNullable(mrb,{2}{0},out {1});", n, v, nprefix);
+                }
+                else
+                {
+                    w.Write("Converter.checkValueType(mrb,{2}{0},out {1});", n, v, nprefix);
+                }
+            }
+            else if (t.IsArray)
+            {
+                w.Write("Converter.checkArray(mrb,{2}_argv[{0}],out {1});", n, v, nprefix);
+            }
+            else
+            {
+                w.Write("Converter.checkType(mrb,{2}_argv[{0}],out {1});", n, v, nprefix);
+            }
+        }
+
+        // fill Generic Parameters if needed
+        string MethodDecl(MethodBase m)
+        {
+            if (m.IsGenericMethod)
+            {
+                string parameters = "";
+                bool first = true;
+                foreach (Type genericType in m.GetGenericArguments())
+                {
+                    if (first)
+                        first = false;
+                    else
+                        parameters += ",";
+                    parameters += genericType.ToString();
+
+                }
+                return string.Format("{0}<{1}>", m.Name, parameters);
+            }
+            else
+                return m.Name;
+        }
+
         #endregion
 
         #region Utility Writers
@@ -599,37 +633,6 @@ namespace MRuby.CodeGen
 #endif
         }
 
-        void WriteCheckType(Type t, int n, string v = "v", string nprefix = "")
-        {
-            if (t.IsEnum)
-            {
-                w.Write("{0} = ({1})LuaDLL.luaL_checkinteger(mrb, {2});", v, TypeUtil.TypeDecl(t), n);
-            }
-            else if (t.BaseType == typeof(System.MulticastDelegate))
-            {
-                w.Write("int op=checkDelegate(mrb,{2}{0},out {1});", n, v, nprefix);
-            }
-            else if (TypeUtil.IsValueType(t))
-            {
-                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                {
-                    w.Write("Converter.checkNullable(mrb,{2}{0},out {1});", n, v, nprefix);
-                }
-                else
-                {
-                    w.Write("Converter.checkValueType(mrb,{2}{0},out {1});", n, v, nprefix);
-                }
-            }
-            else if (t.IsArray)
-            {
-                w.Write("Converter.checkArray(mrb,{2}_argv[{0}],out {1});", n, v, nprefix);
-            }
-            else
-            {
-                w.Write("Converter.checkType(mrb,{2}_argv[{0}],out {1});", n, v, nprefix);
-            }
-        }
-
         private void WriteFunctionAttr()
         {
             w.Write("[MRuby.MonoPInvokeCallbackAttribute(typeof(MRubyCSFunction))]");
@@ -641,33 +644,6 @@ namespace MRuby.CodeGen
         void WriteReturn(string ret)
         {
             w.Write("return Converter.make_value(mrb, {0});", ret);
-        }
-
-        void WriteError(string err)
-        {
-            w.Write("throw new Exception(\"{0}\");", err);
-        }
-
-        // fill Generic Parameters if needed
-        string MethodDecl(MethodBase m)
-        {
-            if (m.IsGenericMethod)
-            {
-                string parameters = "";
-                bool first = true;
-                foreach (Type genericType in m.GetGenericArguments())
-                {
-                    if (first)
-                        first = false;
-                    else
-                        parameters += ",";
-                    parameters += genericType.ToString();
-
-                }
-                return string.Format("{0}<{1}>", m.Name, parameters);
-            }
-            else
-                return m.Name;
         }
 
         #endregion

@@ -9,6 +9,7 @@ namespace MRuby
     public struct mrb_state
     {
         public UIntPtr val;
+        public VM GetVM() => VM.FindCache(this);
     }
 
     public struct mrb_value
