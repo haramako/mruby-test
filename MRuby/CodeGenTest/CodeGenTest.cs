@@ -163,5 +163,20 @@ class CodeGenTest
     {
         Assert.AreEqual(expect, mrb.LoadString(src).ToString());
     }
+
+    [TestCase("Sample.new() .int_field", "1")]
+    [TestCase("Sample.new(2,'s') .string_field", "s")]
+    public void TestConstructor(string src, string expect)
+    {
+        Assert.AreEqual(expect, mrb.LoadString(src).ToString());
+    }
+
+    [TestCase("Sample.new(2)", "No matched override function __initialize__ to call")]
+    [TestCase("Sample.new(1,2)", "No matched override function __initialize__ to call")]
+    [TestCase("Sample.new(1,'a',2)", "No matched override function __initialize__ to call")]
+    public void TestConstructorError(string src, string errorMessage)
+    {
+        testError(src, errorMessage);
+    }
 }
 

@@ -106,9 +106,6 @@ namespace MRuby.CodeGen
         Dictionary<string, MethodDesc> methodDescs = new Dictionary<string, MethodDesc>();
         public readonly IReadOnlyDictionary<string, MethodDesc> MethodDescs;
 
-        List<ConstructorInfo> constructors = new List<ConstructorInfo>();
-        public readonly IReadOnlyList<ConstructorInfo> Constructors;
-
         Dictionary<string, FieldDesc> fields = new Dictionary<string, FieldDesc>();
         public readonly IReadOnlyDictionary<string, FieldDesc> Fields;
 
@@ -130,7 +127,6 @@ namespace MRuby.CodeGen
             Parent?.Children.Add(name, this);
 
             MethodDescs = methodDescs;
-            Constructors = constructors;
             Fields = fields;
         }
 
@@ -169,12 +165,13 @@ namespace MRuby.CodeGen
         }
 
 
-        public MethodDesc AddMethod(MethodEntry m)
+        public MethodDesc AddMethod(MethodEntry m, bool isConstructor = false)
         {
-            if (!methodDescs.TryGetValue(m.Name, out var found))
+            var name = (isConstructor ? "__initialize__" : m.Name);
+            if (!methodDescs.TryGetValue(name, out var found))
             {
-                found = new MethodDesc(this, m.Name);
-                methodDescs.Add(m.Name, found);
+                found = new MethodDesc(this, name, isConstructor);
+                methodDescs.Add(name, found);
             }
             found.AddMethodEntry(m);
             return found;
@@ -182,7 +179,7 @@ namespace MRuby.CodeGen
 
         public void AddConstructor(ConstructorInfo c)
         {
-            constructors.Add(c);
+            AddMethod(new MethodEntry(c), isConstructor: true);
         }
 
         public void AddField(FieldInfo f)
@@ -208,16 +205,18 @@ namespace MRuby.CodeGen
         public readonly IReadOnlyList<MethodEntry> Methods;
 
         public readonly string Name;
+        public readonly bool IsConstructor;
 
-        public MethodDesc(ClassDesc owner, string name)
+        public MethodDesc(ClassDesc owner, string name, bool isConstructor = false)
         {
             Methods = methods;
             Name = name;
+            IsConstructor = isConstructor;
         }
 
         public void AddMethodEntry(MethodEntry m)
         {
-            Debug.Assert(m.Info.Name == Name);
+            Debug.Assert(IsConstructor || m.Info.Name == Name);
             methods.Add(m);
         }
 
@@ -239,7 +238,7 @@ namespace MRuby.CodeGen
 
         public bool IsOverloaded => (methods.Count > 1);
 
-        public string RubyName => Naming.ToSnakeCase(Name);
+        public string RubyName => IsConstructor ? "initialize" : Naming.ToSnakeCase(Name);
     }
 
     /// <summary>
@@ -293,7 +292,7 @@ namespace MRuby.CodeGen
 
         public readonly Type ReturnType;
 
-        public MethodEntry(MethodBase info, bool isExtension = false)
+        public MethodEntry(MethodBase info, bool isExtension = false, bool isConstructor = false)
         {
             Info = info;
             Parameters = info.GetParameters();

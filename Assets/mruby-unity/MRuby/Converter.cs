@@ -748,22 +748,6 @@ return true;
         }
 #endif
 
-        public static void define_method(mrb_state mrb, RClass cls, string funcName, MRubyCSFunction func, mrb_aspec aspec)
-        {
-            DLL.mrb_define_method(mrb, cls, funcName, func, aspec);
-        }
-
-        public static void define_class_method(mrb_state mrb, RClass cls, string funcName, MRubyCSFunction func, mrb_aspec aspec)
-        {
-            DLL.mrb_define_class_method(mrb, cls, funcName, func, aspec);
-        }
-
-        public static void define_property(mrb_state mrb, RClass cls, string name, MRubyCSFunction getter, MRubyCSFunction setter, bool isInstance)
-        {
-            DLL.mrb_define_method(mrb, cls, name, getter, DLL.MRB_ARGS_NONE());
-            DLL.mrb_define_method(mrb, cls, name + "=", setter, DLL.MRB_ARGS_REQ(1));
-        }
-
         public static string ToString(mrb_state mrb, mrb_value val)
         {
             return AsString(mrb, Send(mrb, val, "to_s"));

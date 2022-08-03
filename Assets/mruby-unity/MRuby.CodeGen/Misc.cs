@@ -280,7 +280,7 @@ namespace MRuby.CodeGen
         public void PrintMethodDesc(MethodDesc m)
         {
             var (min, max, hasParamArray) = m.ParameterNum();
-            var mark = m.IsStatic ? "s" : " ";
+            var mark = m.IsConstructor ? "C" : (m.IsStatic ? "s" : " ");
             var param = hasParamArray ? $"{min}.." : ((min == max) ? $"{min}" : $"{min}..{max}");
             write($"{mark} {m.Name}({param}) [{m.Methods.Count}]");
 

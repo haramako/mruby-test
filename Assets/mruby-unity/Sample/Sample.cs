@@ -14,6 +14,12 @@ public class Sample
     public int IntProperty { get; set; }
     public string StringProperty { get; set; }
 
+    public Sample(int i, string s)
+    {
+        IntField = i;
+        StringField = s;
+    }
+
     public Sample()
     {
         IntField = 1;

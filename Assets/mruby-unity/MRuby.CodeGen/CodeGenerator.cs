@@ -106,15 +106,12 @@ namespace MRuby.CodeGen
             w.Write("_cls = Converter.GetClass(mrb, \"{0}\");", cls.RubyFullName);
             w.Write("_cls_value = DLL.mrb_obj_value(_cls.val);");
 
-            if (cls.Constructors.Count > 0)
-            {
-                w.Write("Converter.define_method(mrb, _cls, \"initialize\", _mrb.Pin(_initialize), DLL.MRB_ARGS_OPT(16));");
-            }
             w.Write("VM.FindCache(mrb).TypeCache.AddType(typeof({0}), Construct);", cls.CodeName);
 
             foreach (var md in cls.MethodDescs.Values)
             {
                 var f = md.Name;
+
                 if (md.IsGeneric)
                 {
                     continue;
@@ -122,11 +119,11 @@ namespace MRuby.CodeGen
 
                 if (md.IsStatic)
                 {
-                    w.Write("Converter.define_class_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f); // TODO
+                    w.Write("DLL.mrb_define_class_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f); // TODO
                 }
                 else
                 {
-                    w.Write("Converter.define_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f);
+                    w.Write("DLL.mrb_define_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", md.RubyName, f);
                 }
             }
 
@@ -134,11 +131,11 @@ namespace MRuby.CodeGen
             {
                 if (f.CanRead)
                 {
-                    w.Write("Converter.define_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.GetterName);
+                    w.Write("DLL.mrb_define_method(mrb, _cls, \"{0}\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.GetterName);
                 }
                 if (f.CanWrite)
                 {
-                    w.Write("Converter.define_method(mrb, _cls, \"{0}=\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.SetterName);
+                    w.Write("DLL.mrb_define_method(mrb, _cls, \"{0}=\", _mrb.Pin({1}), DLL.MRB_ARGS_OPT(16));", f.RubyName, f.SetterName);
                 }
             }
 
@@ -312,6 +309,7 @@ namespace MRuby.CodeGen
 
         private void WriteConstructor()
         {
+#if false
             var t = cls.Type;
             var cons = cls.Constructors;
             if (cons.Count > 0)
@@ -382,6 +380,7 @@ namespace MRuby.CodeGen
                 WriteFunctionEnd();
                 w.Write("}");
             }
+#endif
         }
 
         void WriteReturn(string ret)
@@ -450,9 +449,9 @@ namespace MRuby.CodeGen
                 foreach (var m in md.Methods)
                 {
                     var ifCode = first ? "if" : "else if";
-                    if (m.Info.MemberType == MemberTypes.Method)
+                    if (m.Info.MemberType == MemberTypes.Method || m.Info.MemberType == MemberTypes.Constructor)
                     {
-                        MethodInfo mi = m.Info as MethodInfo;
+                        var mi = m.Info as MethodBase;
                         ParameterInfo[] pars = mi.GetParameters();
                         var requireParameterNum = pars.TakeWhile(p => !p.HasDefaultValue).Count();
                         var argTypes = pars.Select(p => reg.FindByType(p.ParameterType, cls).CodeName).Select(s => $"typeof({s})").ToArray();
@@ -523,7 +522,7 @@ namespace MRuby.CodeGen
             var requireParameterNum = m.GetParameters().ToArray().TakeWhile(p => !p.HasDefaultValue).Count();
             w.Write("Converter.CheckArgc(_argc, {0}, {1});", me.RequiredParamNum, me.ParamNum);
 
-            if (!me.IsStatic)
+            if (!me.IsStatic && !md.IsConstructor)
             {
                 WriteCheckSelf();
             }
@@ -541,7 +540,12 @@ namespace MRuby.CodeGen
                 ret = "var ret=";
             }
 
-            if (me.IsStatic && !me.IsExtension)
+            if(md.IsConstructor)
+            {
+                w.Write("var ret = new {0}({1});", cls.CodeName, FuncCallCode(me), ret);
+                w.Write("VM.FindCache(mrb).ObjectCache.NewObjectByVal(mrb, _self, ret);");
+            }
+            else if (me.IsStatic && !me.IsExtension)
             {
                 if (m.Name == "op_Multiply")
                     w.Write("{0}a1*a2;", ret);
@@ -577,7 +581,7 @@ namespace MRuby.CodeGen
                 w.Write("{2}self.{0}({1});", MethodDecl(m), FuncCallCode(me), ret);
             }
 
-            if (me.ReturnType != typeof(void))
+            if (me.ReturnType != typeof(void) && !md.IsConstructor)
             {
                 w.Write("return Converter.make_value(mrb, ret);");
             }
@@ -637,8 +641,8 @@ namespace MRuby.CodeGen
             }
 
             var type = v.GetType();
-            if ( type == typeof(float) || type == typeof(double)
-                || type == typeof(byte) || type == typeof(sbyte) || type == typeof(short) || type == typeof(ushort) 
+            if (type == typeof(float) || type == typeof(double)
+                || type == typeof(byte) || type == typeof(sbyte) || type == typeof(short) || type == typeof(ushort)
                 || type == typeof(int) || type == typeof(uint) || type == typeof(long) || type == typeof(ulong))
             {
                 return v.ToString();
