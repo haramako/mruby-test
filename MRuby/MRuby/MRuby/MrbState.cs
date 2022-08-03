@@ -121,7 +121,7 @@ $stdout = MRubyUnity::Console.new
 
 module Kernel
   def puts(*args)
-    $stdout.write args.join(""\\n"")
+    $stdout.write args.join(""\n"")
   end
 
   def print(*args)
