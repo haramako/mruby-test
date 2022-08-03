@@ -521,12 +521,7 @@ namespace MRuby.CodeGen
 
             // Is argument number more than parameter number?
             var requireParameterNum = m.GetParameters().ToArray().TakeWhile(p => !p.HasDefaultValue).Count();
-            w.Write("if (_argc > {0}){{", me.ParamNum);
-            w.Write("  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", me.ParamNum);
-            w.Write("}");
-            w.Write("else if (_argc < {0}){{", me.RequiredParamNum);
-            w.Write("  throw new Exception($\"wrong number of arguments (given {{_argc}}, expected {0})\");", me.RequiredParamNum);
-            w.Write("}");
+            w.Write("Converter.CheckArgc(_argc, {0}, {1});", me.RequiredParamNum, me.ParamNum);
 
             if (!me.IsStatic)
             {
@@ -666,7 +661,7 @@ namespace MRuby.CodeGen
                 if (hasDefaultValue)
                 {
                     w.Write("if (_argc <= {0}) {{", n);
-                    w.Write("    a{0} = {1};", n, DefaultValueToCode(defaultValue));
+                    w.Write("a{0} = {1};", n, DefaultValueToCode(defaultValue));
                     w.Write("} else {");
                 }
 

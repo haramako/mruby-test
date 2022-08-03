@@ -840,6 +840,18 @@ return true;
             }
         }
 
+        public static void CheckArgc(long argc, int min, int max)
+        {
+            if( min == max && argc != min)
+            {
+                throw new Exception($"wrong number of arguments (given {argc}, expected {min})");
+            }
+            else if (argc > max || argc < min)
+            {
+                throw new Exception($"wrong number of arguments (given {argc}, expected {min}..{max})");
+            }
+        }
+
         public struct ArenaLock : IDisposable
         {
             mrb_state mrb;
