@@ -39,37 +39,21 @@ public class MainScene : MonoSingleton<MainScene>
 
     IEnumerator testRuby()
     {
-        mrb = new VM();
-        var _mrb = mrb.mrb;
-        Binder.Bind(mrb, _Binder.BindData);
-        mrb.LoadString(VM.prelude);
+        var opt = new VMOption()
+        {
+            LoadPath = new string[] { "../tcg2" },
+        };
+        mrb = new VM(opt);
 
         Value r;
 
-        MRubyUnity.Core.LoadPath = MRubyUnity.Core.LoadPath.Concat(new string[] { "../tcg2" }).ToArray();
-        MRubyUnity.Core.Require(_mrb, "app");
+        mrb.Run("require 'app'");
 
-        r = mrb.LoadString("PokerRule.new");
+        r = mrb.Run("PokerRule.new");
         Poker = r;
 
-        r.Send("board").Send("root").Send("redraw_all", View);
-        yield return new WaitForSeconds(1.0f);
-
-        r.Send("play", new Command("start"));
-#if false
-        r.Send("play", new Command("select") { Card = 5 });
-        r.Send("play", new Command("discard"));
-
-        r.Send("board").Send("root").Send("redraw_all", View);
-        yield return new WaitForSeconds(1.0f);
-
-        r.Send("play", new Command("select") { Card = 6 });
-        r.Send("play", new Command("discard"));
-
-        r.Send("board").Send("root").Send("redraw_all", View);
-#endif
-        r.Send("board").Send("root").Send("redraw_all", View);
-        yield return new WaitForSeconds(1.0f);
+        Play(new Command("start"));
+        yield return new WaitForSeconds(0.5f);
     }
 
     void testBoard()
@@ -93,8 +77,8 @@ public class MainScene : MonoSingleton<MainScene>
 
     public void Play(Command cmd)
     {
-        Poker.Send("play", cmd);
-        Poker.Send("board").Send("root").Send("redraw_all", View);
+        Poker.x("play", cmd);
+        Poker.x("board").x("root").x("redraw_all", View);
     }
 
 }

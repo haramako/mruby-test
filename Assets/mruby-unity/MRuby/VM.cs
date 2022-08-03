@@ -33,6 +33,7 @@ namespace MRuby
     public class VMOption
     {
         public bool BindAutomatically = true;
+        public string[] LoadPath = new string[] { "." };
     }
 
 
@@ -44,6 +45,8 @@ namespace MRuby
         public readonly ObjectCache ObjectCache;
         public readonly ValueCache ValueCache;
         public readonly mrb_sym SymObjID;
+
+        public readonly VMOption Option;
 
         bool disposed;
         public mrb_state mrb;
@@ -57,7 +60,7 @@ namespace MRuby
 
         public VM(VMOption opt = null)
         {
-            opt ??= DefaultOption;
+            Option = opt ?? DefaultOption;
 
             TypeCache = new TypeCache(this);
             ObjectCache = new ObjectCache(this);
@@ -73,10 +76,13 @@ namespace MRuby
             var kernel = DLL.mrb_module_get(mrb, "Kernel");
             DLL.mrb_define_module_function(mrb, kernel, "require", MRubyUnity.Core._require, DLL.MRB_ARGS_REQ(1));
 
-            if (opt.BindAutomatically)
+            MRubyUnity.Core.LoadPath = Option.LoadPath;
+
+            if (Option.BindAutomatically)
             {
                 bindAll();
             }
+
             DLL.mrb_load_string(mrb, prelude);
         }
 

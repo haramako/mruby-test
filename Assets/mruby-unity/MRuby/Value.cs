@@ -42,6 +42,10 @@ namespace MRuby
             }
         }
 
+        public Value x(string methodName) => Send(methodName);
+        public Value x(string methodName, params object[] args) => Send(methodName, args);
+        public Value x(string methodName, params Value[] args) => Send(methodName, args);
+
         public Value Send(string methodName)
         {
             var r = DLL.mrb_funcall_argv(mrb, val, methodName, 0, null);

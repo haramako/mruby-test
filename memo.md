@@ -1,9 +1,7 @@
 * paramsに対応
-- Binderの自動収集対応
 * stacktraceの行番号をだす
 * Ruby側のCGをObjectCacheで抑制する => 仮対応でValueにgc_registerを追加した（開放しない）
 * コンストラクタのオーバーロード対応
-- MrbState => VMに変更
 * preludeはbindを不要にする
 
 * ガベージコレクション対策:Ruby側のオブジェクトは、ValueをWeakキャッシュすることで対応可能
@@ -32,6 +30,8 @@
 * CodeGenしなくても、リフレクションで触れる対応
 * preserve(ビルド時にUnityにコードを消されないこと)の対応
 
+- Binderの自動収集対応
+- MrbState => VMに変更
 - boolのcheckTypeを追加
 - ガベージコレクション対策:C#側のオブジェクトが勝手に開放はされなくなった
  
