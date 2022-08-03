@@ -1,20 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
 using System;
-using System.Reflection;
-using System.Linq;
 
 namespace MRuby
 {
     public static class Converter
     {
         #region enum
-		static public bool checkEnum<T>(mrb_state mrb, mrb_value v, out T o) where T : struct
-		{
+        static public bool checkEnum<T>(mrb_state mrb, mrb_value v, out T o) where T : struct
+        {
             int i = (int)DLL.mrb_as_int(mrb, v);
-			o = (T)Enum.ToObject(typeof(T), i);
-			return true;
-		}
+            o = (T)Enum.ToObject(typeof(T), i);
+            return true;
+        }
         #endregion
 
         #region checkType
@@ -59,18 +55,18 @@ namespace MRuby
             r = (int)DLL.mrb_as_int(mrb, v);
         }
 
-		static public void checkType(mrb_state mrb, mrb_value v, out uint r)
-		{
+        static public void checkType(mrb_state mrb, mrb_value v, out uint r)
+        {
             r = (uint)DLL.mrb_as_int(mrb, v);
-		}
+        }
 
-		static public void checkType(mrb_state mrb, mrb_value v, out long r)
-		{
+        static public void checkType(mrb_state mrb, mrb_value v, out long r)
+        {
             r = (long)DLL.mrb_as_int(mrb, v);
         }
 
         static public void checkType(mrb_state mrb, mrb_value v, out ulong r)
-		{
+        {
             r = (ulong)DLL.mrb_as_int(mrb, v);
         }
 
@@ -79,15 +75,15 @@ namespace MRuby
             r = (float)DLL.mrb_as_float(mrb, v);
         }
 
-		static public void checkType(mrb_state mrb, mrb_value v, out double r)
-		{
+        static public void checkType(mrb_state mrb, mrb_value v, out double r)
+        {
             r = (double)DLL.mrb_as_float(mrb, v);
         }
 
-		static public void checkType(mrb_state mrb, mrb_value v, out bool r)
-		{
+        static public void checkType(mrb_state mrb, mrb_value v, out bool r)
+        {
             r = DLL.mrb_bool(v);
-		}
+        }
 
         #endregion
 
@@ -112,18 +108,18 @@ namespace MRuby
             return true;
 #endif
         }
-#endregion
+        #endregion
 
 #if false
-#region IntPtr
+        #region IntPtr
 		static public bool checkType(mrb_state mrb, int p, out IntPtr v)
 		{
 			v = LuaDLL.lua_touserdata(l, p);
 			return true;
 		}
-#endregion
+        #endregion
 
-#region LuaType
+        #region LuaType
 		static public bool checkType(mrb_state mrb, int p, out LuaDelegate f)
 		{
 			LuaState state = LuaState.get(l);
@@ -194,9 +190,9 @@ namespace MRuby
 			t = new LuaTable(l, fref);
 			return true;
 		}
-#endregion
+        #endregion
 
-#region Type
+        #region Type
 		private static Type MonoType = typeof(Type).GetType();
 
 		public static Type FindType(string qualifiedTypeName)
@@ -269,15 +265,15 @@ namespace MRuby
 			}
 			return t != null;
 		}
-#endregion
+        #endregion
 
-#region struct
+        #region struct
 		static public bool checkValueType<T>(mrb_state mrb, int p, out T v) where T : struct
 		{
 			v = (T)checkObj(l, p);
 			return true;
 		}
-#endregion
+        #endregion
 
 		static public bool checkNullable<T>(mrb_state mrb, int p, out Nullable<T> v) where T : struct
 		{
@@ -617,136 +613,47 @@ return true;
         }
 #endif
 
-        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1)
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t0)
         {
-            return matchType(mrb, args[0], t1);
+            return matchType(mrb, args[0], t0);
         }
 
-        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1, Type t2)
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t0, Type t1)
         {
-            return matchType(mrb, args[0], t1) && matchType(mrb, args[1], t2);
+            return matchType(mrb, args[0], t0) && matchType(mrb, args[1], t1);
         }
 
-        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t1, Type t2, Type t3)
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t0, Type t1, Type t2)
         {
-            return matchType(mrb, args[0], t1) && matchType(mrb, args[1], t2) && matchType(mrb, args[2], t3);
+            return matchType(mrb, args[0], t0) && matchType(mrb, args[1], t1) && matchType(mrb, args[2], t2);
         }
 
-#if false
-        public static bool matchType(mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4)
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t0, Type t1, Type t2, Type t3)
         {
-            if (total - from + 1 != 4)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4);
+            return matchType(mrb, args[0], t0) && matchType(mrb, args[1], t1) && matchType(mrb, args[2], t2) && matchType(mrb, args[3], t3);
         }
 
-        public static bool matchType(mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5)
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t0, Type t1, Type t2, Type t3, Type t4)
         {
-            if (total - from + 1 != 5)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-                && matchType(l, from + 4, t5);
+            return matchType(mrb, args[0], t0) && matchType(mrb, args[1], t1) && matchType(mrb, args[2], t2) && matchType(mrb, args[3], t3) && matchType(mrb, args[4], t4);
         }
 
-        public static bool matchType
-            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6)
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, Type t0, Type t1, Type t2, Type t3, Type t4, Type t5)
         {
-            if (total - from + 1 != 6)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-                && matchType(l, from + 4, t5)
-                && matchType(l, from + 5, t6);
+            return matchType(mrb, args[0], t0) && matchType(mrb, args[1], t1) && matchType(mrb, args[2], t2) && matchType(mrb, args[3], t3) && matchType(mrb, args[4], t4) && matchType(mrb, args[5], t5);
         }
 
-        public static bool matchType
-            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7)
+        public static unsafe bool matchType(mrb_state mrb, mrb_value* args, params Type[] t)
         {
-            if (total - from + 1 != 7)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-                && matchType(l, from + 4, t5)
-                && matchType(l, from + 5, t6)
-                && matchType(l, from + 6, t7);
-        }
-
-        public static bool matchType
-            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8)
-        {
-            if (total - from + 1 != 8)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-                && matchType(l, from + 4, t5)
-                && matchType(l, from + 5, t6)
-                && matchType(l, from + 6, t7)
-                && matchType(l, from + 7, t8);
-        }
-
-
-        public static bool matchType
-            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9)
-        {
-            if (total - from + 1 != 9)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-                && matchType(l, from + 4, t5)
-                && matchType(l, from + 5, t6)
-                && matchType(l, from + 6, t7)
-                && matchType(l, from + 7, t8)
-                && matchType(l, from + 8, t9);
-        }
-
-        public static bool matchType
-            (mrb_state mrb, int total, int from, Type t1, Type t2, Type t3, Type t4, Type t5, Type t6, Type t7, Type t8, Type t9, Type t10)
-        {
-            if (total - from + 1 != 10)
-                return false;
-
-            return matchType(l, from, t1) && matchType(l, from + 1, t2) && matchType(l, from + 2, t3) && matchType(l, from + 3, t4)
-                && matchType(l, from + 4, t5)
-                    && matchType(l, from + 5, t6)
-                    && matchType(l, from + 6, t7)
-                    && matchType(l, from + 7, t8)
-                    && matchType(l, from + 8, t9)
-                    && matchType(l, from + 9, t10);
-        }
-
-        public static bool matchType(mrb_state mrb, int total, int from, params Type[] t)
-        {
-            if (total - from + 1 != t.Length)
-                return false;
-
             for (int i = 0; i < t.Length; ++i)
             {
-                if (!matchType(l, from + i, t[i]))
+                if (!matchType(mrb, args[i], t[0]))
+                {
                     return false;
+                }
             }
-
             return true;
         }
-
-        public static bool matchType(mrb_state mrb, int total, int from, ParameterInfo[] pars)
-        {
-#if false
-			if (total - from + 1 != pars.Length)
-				return false;
-
-			for (int n = 0; n < pars.Length; n++)
-			{
-				int p = n + from;
-				LuaTypes t = LuaDLL.lua_type(l, p);
-				if (!matchType(l, p, t, pars[n].ParameterType))
-					return false;
-			}
-#endif
-            return true;
-        }
-#endif
 
         public static string ToString(mrb_state mrb, mrb_value val)
         {
@@ -826,7 +733,7 @@ return true;
 
         public static void CheckArgc(long argc, int min, int max)
         {
-            if( min == max && argc != min)
+            if (min == max && argc != min)
             {
                 throw new Exception($"wrong number of arguments (given {argc}, expected {min})");
             }

@@ -1,11 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using MRuby;
-using System.IO;
 using System.Linq;
+using MRuby;
 
-[MRuby.CustomMRubyClass]
+[CustomMRubyClass]
 public class Sample
 {
     public int IntField;
@@ -128,24 +124,24 @@ public class Sample
     }
 }
 
-[MRuby.CustomMRubyClass]
+[CustomMRubyClass]
 public class DerivedClass : BaseClass
 {
     public int B() => 2;
     public override int Virtual() => 2;
 }
 
-[MRuby.CustomMRubyClass]
+[CustomMRubyClass]
 public class BaseClass
 {
     public int A() => 1;
     public virtual int Virtual() => 1;
 }
 
-[MRuby.CustomMRubyClass]
+[CustomMRubyClass]
 public class ClassInClass
 {
-    [MRuby.CustomMRubyClass]
+    [CustomMRubyClass]
     public class ClassInClassChild
     {
         public ClassInClassChild() { }
@@ -157,7 +153,7 @@ public class ClassInClass
 
 namespace NSSample
 {
-    [MRuby.CustomMRubyClass]
+    [CustomMRubyClass]
     public class NSClass
     {
         public NSClass()
@@ -168,7 +164,7 @@ namespace NSSample
 }
 
 
-[MRuby.CustomMRubyClass]
+[CustomMRubyClass]
 public static class ExtTest
 {
     public static void ExSet(this Extended self, int i) { }
@@ -176,7 +172,7 @@ public static class ExtTest
     //public static T Set<T>(this Extended self, T i) => i;
 }
 
-[MRuby.CustomMRubyClass]
+[CustomMRubyClass]
 public class Extended
 {
     //public Extended() { }

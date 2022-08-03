@@ -1,8 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using MRuby;
 using System.IO;
+using MRuby;
 using IO_File = System.IO.File;
 
 namespace MRubyUnity
@@ -99,7 +96,7 @@ namespace MRubyUnity
 #if SLUA_STANDALONE
             System.Console.WriteLine(s);
 #else
-            Debug.Log(s);
+            UnityEngine.Debug.Log(s);
 #endif
         }
 

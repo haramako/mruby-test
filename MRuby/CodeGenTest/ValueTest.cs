@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MRuby;
 using NUnit.Framework;
-using MRuby;
-using MRuby.CodeGen;
 
 class ValueTest
 {

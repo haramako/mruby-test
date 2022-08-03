@@ -1,7 +1,5 @@
-using NUnit.Framework;
 using MRuby;
-using System.Linq;
-using System;
+using NUnit.Framework;
 
 public class BasicTest
 {

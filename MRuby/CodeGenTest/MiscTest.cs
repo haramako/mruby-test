@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using NUnit.Framework;
 using MRuby.CodeGen;
+using NUnit.Framework;
 
 class MiscTest
 {

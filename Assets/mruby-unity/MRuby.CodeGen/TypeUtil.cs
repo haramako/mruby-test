@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace MRuby.CodeGen
@@ -93,7 +92,7 @@ namespace MRuby.CodeGen
                 method.Name != "op_Implicit" && method.Name != "op_Explicit" &&
                 method.Name != "StartCoroutine_Auto" &&
                 method.Name != "GetComponents" &&
-                method.Name != "ReferenceEquals" && 
+                method.Name != "ReferenceEquals" &&
                 !method.Name.StartsWith("get_", StringComparison.Ordinal) &&
                 !method.Name.StartsWith("set_", StringComparison.Ordinal) &&
                 !method.Name.StartsWith("add_", StringComparison.Ordinal) &&

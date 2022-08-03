@@ -1,8 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
-
-using mrb_int = System.Int64;
 using mrb_float = System.Double;
+using mrb_int = System.Int64;
 
 namespace MRuby
 {

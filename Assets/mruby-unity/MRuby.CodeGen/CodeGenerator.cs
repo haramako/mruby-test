@@ -24,9 +24,9 @@
 
 namespace MRuby.CodeGen
 {
-    using System.Linq;
-    using System.IO;
     using System;
+    using System.IO;
+    using System.Linq;
     using System.Reflection;
 
     public class CodeGenerator
@@ -63,7 +63,6 @@ namespace MRuby.CodeGen
             w.Write("#if true");
             w.Write("using System;");
             w.Write("using MRuby;");
-            w.Write("using System.Collections.Generic;");
             w.Write("public class {0} {{", cls.ExportName);
 
             w.Write("static RClass _cls;");
@@ -298,7 +297,7 @@ namespace MRuby.CodeGen
                 ret = "var ret=";
             }
 
-            if(md.IsConstructor)
+            if (md.IsConstructor)
             {
                 w.Write("var ret = new {0}({1});", cls.CodeName, FuncCallCode(me), ret);
                 w.Write("mrb.GetVM().ObjectCache.NewObjectByVal(mrb, _self, ret);");

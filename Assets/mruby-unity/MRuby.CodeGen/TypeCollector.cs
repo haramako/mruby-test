@@ -2,19 +2,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace MRuby.CodeGen
 {
-    public class ClassRegister
+    public class TypeCollector
     {
-        public ClassRegister()
+        public TypeCollector()
         {
 
         }
 
-        public void RegisterClass(Registry reg, Type t)
+        public void RegisterType(Registry reg, IEnumerable<Type> types)
+        {
+            foreach (var t in types)
+            {
+                RegisterType(reg, t);
+            }
+        }
+
+        public void RegisterType(Registry reg, Type t)
         {
             var cls = reg.FindByType(t, 0);
 
@@ -46,8 +52,8 @@ namespace MRuby.CodeGen
                 }
                 else
                 {
-                    // Normal methods
-                    var constructors = GetValidConstructor(t);
+                    // Normal methodsrr
+                    var constructors = getValidConstructor(t);
                     foreach (var c in constructors)
                     {
                         cls.AddConstructor(c);
@@ -89,7 +95,7 @@ namespace MRuby.CodeGen
             }
         }
 
-        ConstructorInfo[] GetValidConstructor(Type t)
+        ConstructorInfo[] getValidConstructor(Type t)
         {
             List<ConstructorInfo> ret = new List<ConstructorInfo>();
             if (t.GetConstructor(Type.EmptyTypes) == null && t.IsAbstract && t.IsSealed)
@@ -108,7 +114,13 @@ namespace MRuby.CodeGen
             return ret.ToArray();
         }
 
-        public static List<Type> GetMRubyClasses(Assembly assembly)
+        public List<Type> CollectFromAllAssembries()
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            return assemblies.SelectMany(a => CollectFromAssembly(a)).ToList();
+        }
+
+        public List<Type> CollectFromAssembly(Assembly assembly)
         {
             List<Type> exports = new List<Type>();
             Type[] types = assembly.GetExportedTypes();
@@ -124,7 +136,7 @@ namespace MRuby.CodeGen
             return exports;
         }
 
-        public static List<Type> GetMRubyClasses(string[] asemblyNames)
+        public List<Type> CollectFromAssembly(params string[] asemblyNames)
         {
             List<Type> exports = new List<Type>();
 

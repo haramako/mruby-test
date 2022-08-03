@@ -7,10 +7,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MRubyLib", "MRuby\MRubyLib.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeGen", "CodeGen\CodeGen.csproj", "{CC1608BD-F532-4BB5-AC30-8D8B027E4EE2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeGenTest", "CodeGenTest\CodeGenTest.csproj", "{D98337AF-22B9-440B-89D7-007253EFF25F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeGenTest", "CodeGenTest\CodeGenTest.csproj", "{D98337AF-22B9-440B-89D7-007253EFF25F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{CC1608BD-F532-4BB5-AC30-8D8B027E4EE2} = {CC1608BD-F532-4BB5-AC30-8D8B027E4EE2}
 		{9BDA3DEC-55A7-41B5-9287-D686A4C929D9} = {9BDA3DEC-55A7-41B5-9287-D686A4C929D9}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{24551DB0-71E2-47CC-B0FC-EF8BBD2A7C40}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
 Global
