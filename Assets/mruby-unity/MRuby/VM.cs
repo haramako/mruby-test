@@ -106,11 +106,19 @@ namespace MRuby
             }
         }
 
-        public Value Run(string src) => LoadString(src);
+        public Value Run(string src, string filename = null) => LoadString(src, filename);
 
-        public Value LoadString(string src)
+        public Value LoadString(string src, string filename = null)
         {
-            var r = DLL.mrb_load_string(mrb, src);
+            mrb_value r;
+            if (filename != null)
+            {
+                r = DLL.mrb_load_string_filename(mrb, src, filename);
+            }
+            else
+            {
+                r = DLL.mrb_load_string(mrb, src);
+            }
 
             var exc = DLL.mrb_mrb_state_exc(mrb);
             if (!exc.IsNil)

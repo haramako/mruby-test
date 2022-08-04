@@ -1,3 +1,4 @@
+using System;
 using MRuby;
 using NUnit.Framework;
 
@@ -70,12 +71,13 @@ def rec(n)
   if n <= 0 then raise 'ERROR' else rec(n-1) end
 end
 rec(10)
-");
+", "test.rb");
             }
             catch (RubyException ex)
             {
                 Assert.AreEqual("ERROR", ex.Message);
                 Assert.AreEqual(12, ex.StackTrace.Split("\n").Length);
+                //Console.WriteLine(ex.StackTrace);
             }
         }
     }

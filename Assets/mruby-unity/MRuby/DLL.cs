@@ -101,6 +101,9 @@ namespace MRuby
         public static extern mrb_value mrb_load_string(mrb_state mrb, string s);
 
         [DllImport(Dll)]
+        public static extern mrb_value mrb_load_string_filename(mrb_state mrb, string s, string filename);
+
+        [DllImport(Dll)]
         public static extern mrb_value mrb_load_string_cxt(mrb_state mrb, string s, mrbc_context cxt);
 
         [DllImport(Dll)]
@@ -176,6 +179,9 @@ namespace MRuby
 
         [DllImport(Dll)]
         public static extern mrbc_context mrbc_context_new(mrb_state mrb);
+
+        [DllImport(Dll)]
+        public static extern string mrbc_filename(mrb_state mrb, mrbc_context c, string s);
 
         [DllImport(Dll)]
         public static extern void mrbc_context_free(mrb_state mrb, mrbc_context cxt);

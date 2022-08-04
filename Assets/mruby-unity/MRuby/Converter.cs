@@ -4,14 +4,12 @@ namespace MRuby
 {
     public static class Converter
     {
-        #region enum
         static public bool checkEnum<T>(mrb_state mrb, mrb_value v, out T o) where T : struct
         {
             int i = (int)DLL.mrb_as_int(mrb, v);
             o = (T)Enum.ToObject(typeof(T), i);
             return true;
         }
-        #endregion
 
         #region checkType
         static public void checkType(mrb_state mrb, mrb_value v, out sbyte r)
@@ -38,17 +36,6 @@ namespace MRuby
         {
             r = (ushort)DLL.mrb_as_int(mrb, v);
         }
-
-#if false
-        static public bool checkArray(mrb_state mrb, mrb_value v, out char[] pars)
-		{
-			LuaDLL.luaL_checktype(l, p, LuaTypes.LUA_TSTRING);
-			string s;
-			checkType(l, p, out s);
-			pars = s.ToCharArray();
-			return true;
-		}
-#endif
 
         static public void checkType(mrb_state mrb, mrb_value v, out int r)
         {
@@ -85,17 +72,21 @@ namespace MRuby
             r = DLL.mrb_bool(v);
         }
 
-        #endregion
-
-        #region string
         static public void checkType(mrb_state l, mrb_value v, out string r)
         {
             r = DLL.mrb_as_string(l, v);
         }
 
+        static public void checkType<T>(mrb_state l, mrb_value v, out T r) where T : class
+        {
+            // TODO
+            r = null;
+        }
+        #endregion
+
+#if false
         static public bool checkBinaryString(mrb_state l, int p, out byte[] bytes)
         {
-#if false
 			if (LuaDLL.lua_isstring(l, p))
             {
                 bytes = LuaDLL.lua_tobytes(l, p);
@@ -103,177 +94,17 @@ namespace MRuby
             }
             bytes = null;
             return false;
-#else
-            bytes = null;
-            return true;
-#endif
         }
-        #endregion
+#endif
 
 #if false
-        #region IntPtr
-		static public bool checkType(mrb_state mrb, int p, out IntPtr v)
-		{
-			v = LuaDLL.lua_touserdata(l, p);
-			return true;
-		}
-        #endregion
-
-        #region LuaType
-		static public bool checkType(mrb_state mrb, int p, out LuaDelegate f)
-		{
-			LuaState state = LuaState.get(l);
-
-			p = LuaDLL.lua_absindex(l, p);
-			LuaDLL.luaL_checktype(l, p, LuaTypes.LUA_TFUNCTION);
-
-			LuaDLL.lua_getglobal(l, DelgateTable);
-			LuaDLL.lua_pushvalue(l, p);
-			LuaDLL.lua_gettable(l, -2); // find function in __LuaDelegate table
-			if (LuaDLL.lua_isnil(l, -1))
-			{ // not found
-				LuaDLL.lua_pop(l, 1); // pop nil
-				f = newDelegate(l, p);
-			}
-			else
-			{
-				int fref = LuaDLL.lua_tointeger(l, -1);
-				LuaDLL.lua_pop(l, 1); // pop ref value;
-				f = state.delgateMap[fref];
-				if (f == null)
-				{
-					f = newDelegate(l, p);
-				}
-			}
-			LuaDLL.lua_pop(l, 1); // pop DelgateTable
-			return true;
-		}
-
-		static public bool checkType(mrb_state mrb, int p, out LuaThread lt)
-		{
-			if (LuaDLL.lua_isnil(l, p))
-			{
-				lt = null;
-				return true;
-			}
-			LuaDLL.luaL_checktype(l, p, LuaTypes.LUA_TTHREAD);
-			LuaDLL.lua_pushvalue(l, p);
-			int fref = LuaDLL.luaL_ref(l, LuaIndexes.LUA_REGISTRYINDEX);
-			lt = new LuaThread(l, fref);
-			return true;
-		}
-
-		static public bool checkType(mrb_state mrb, int p, out LuaFunction f)
-		{
-			if (LuaDLL.lua_isnil(l, p))
-			{
-				f = null;
-				return true;
-			}
-			LuaDLL.luaL_checktype(l, p, LuaTypes.LUA_TFUNCTION);
-			LuaDLL.lua_pushvalue(l, p);
-			int fref = LuaDLL.luaL_ref(l, LuaIndexes.LUA_REGISTRYINDEX);
-			f = new LuaFunction(l, fref);
-			return true;
-		}
-
-		static public bool checkType(mrb_state mrb, int p, out LuaTable t)
-		{
-			if (LuaDLL.lua_isnil(l, p))
-			{
-				t = null;
-				return true;
-			}
-			LuaDLL.luaL_checktype(l, p, LuaTypes.LUA_TTABLE);
-			LuaDLL.lua_pushvalue(l, p);
-			int fref = LuaDLL.luaL_ref(l, LuaIndexes.LUA_REGISTRYINDEX);
-			t = new LuaTable(l, fref);
-			return true;
-		}
-        #endregion
-
-        #region Type
 		private static Type MonoType = typeof(Type).GetType();
 
-		public static Type FindType(string qualifiedTypeName)
-		{
-			Type t = Type.GetType(qualifiedTypeName);
-
-			if (t != null)
-			{
-				return t;
-			}
-			else
-			{
-				Assembly[] Assemblies = AppDomain.CurrentDomain.GetAssemblies();
-				for (int n = 0; n < Assemblies.Length; n++)
-				{
-					Assembly asm = Assemblies[n];
-					t = asm.GetType(qualifiedTypeName);
-					if (t != null)
-						return t;
-				}
-				return null;
-			}
-		}
-
-
-		static public bool checkType(mrb_state mrb, int p, out Type t)
-		{
-			string tname = null;
-			LuaTypes lt = LuaDLL.lua_type(l, p);
-			switch (lt)
-			{
-				case LuaTypes.LUA_TUSERDATA:
-					object o = checkObj(l, p);
-					if (o.GetType() != MonoType)
-						throw new Exception(string.Format("{0} expect Type, got {1}", p, o.GetType().Name));
-					t = (Type)o;
-					return true;
-				case LuaTypes.LUA_TTABLE:
-					LuaDLL.lua_pushstring(l, "__type");
-					LuaDLL.lua_rawget(l, p);
-					if (!LuaDLL.lua_isnil(l, -1))
-					{
-						t = (Type)checkObj(l, -1);
-						LuaDLL.lua_pop(l, 1);
-						return true;
-					}
-					else
-					{
-						LuaDLL.lua_pushstring(l, "__fullname");
-						LuaDLL.lua_rawget(l, p);
-						tname = LuaDLL.lua_tostring(l, -1);
-						LuaDLL.lua_pop(l, 2);
-					}
-					break;
-
-				case LuaTypes.LUA_TSTRING:
-					checkType(l, p, out tname);
-					break;
-			}
-
-			if (tname == null)
-				throw new Exception("expect string or type table");
-
-			t = LuaObject.FindType(tname);
-			if (t != null && lt == LuaTypes.LUA_TTABLE)
-			{
-				LuaDLL.lua_pushstring(l, "__type");
-				pushLightObject(l, t);
-				LuaDLL.lua_rawset(l, p);
-			}
-			return t != null;
-		}
-        #endregion
-
-        #region struct
 		static public bool checkValueType<T>(mrb_state mrb, int p, out T v) where T : struct
 		{
 			v = (T)checkObj(l, p);
 			return true;
 		}
-        #endregion
 
 		static public bool checkNullable<T>(mrb_state mrb, int p, out Nullable<T> v) where T : struct
 		{
@@ -287,13 +118,13 @@ namespace MRuby
 			}
 			return true;
 		}
-#endif
 
         static public void checkType<T>(mrb_state l, mrb_value v, out T r) where T : class
         {
             // TODO
             r = null;
         }
+#endif
 
         unsafe static public void checkArray<T>(mrb_state mrb, mrb_value ary, out T[] r)
         {
@@ -691,9 +522,14 @@ return true;
             return DLL.mrb_funcall_argv(mrb, val, methodName, args.Length, argsCache);
         }
 
-        public static mrb_value Exec(mrb_state mrb, string src)
+        public static mrb_value Exec(mrb_state mrb, string src, string filename = null)
         {
+#if false
             mrbc_context ctx = DLL.mrbc_context_new(mrb);
+            if (filename != null)
+            {
+                DLL.mrbc_filename(mrb, ctx, filename);
+            }
             var r = DLL.mrb_load_string_cxt(mrb, src, ctx);
             var exc = DLL.mrb_mrb_state_exc(mrb);
 
@@ -703,6 +539,15 @@ return true;
             }
 
             DLL.mrbc_context_free(mrb, ctx);
+#else
+            var r = DLL.mrb_load_string_filename(mrb, src, filename);
+            var exc = DLL.mrb_mrb_state_exc(mrb);
+
+            if (!DLL.mrb_nil_p(exc))
+            {
+                throw new Exception(Converter.ToString(mrb, exc));
+            }
+#endif
 
             return r;
         }

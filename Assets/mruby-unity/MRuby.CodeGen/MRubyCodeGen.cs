@@ -10,7 +10,7 @@ namespace MRuby.CodeGen
             public string OutputDir = "MRubyBinding";
             public bool ExportAllAssembly = true;
             public string[] ExportAssembliyNames = new string[0];
-            public Type[] ExportTypes = new Type[] { typeof(System.Object), typeof(System.Array) };
+            public Type[] ExportTypes = new Type[] { typeof(System.Object) };
             public string BinderClassName = "_Binder";
             public string Namespace = null;
         }

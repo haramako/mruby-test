@@ -1,7 +1,4 @@
-* コンストラクタのオーバーロード対応
 * paramsに対応
-* stacktraceの行番号をだす
-* preludeはbindを不要にする
 
 * Ruby側のCGをObjectCacheで抑制する => 仮対応でValueにgc_registerを追加した（開放しない）
 * ガベージコレクション対策:Ruby側のオブジェクトは、ValueをWeakキャッシュすることで対応可能
@@ -10,12 +7,12 @@
 ? ArrayをC#オブジェクトのまま返すか, RubyのArrayに変換するか・・・
 ? Value の継承を検討する(ArrayValue, DictionaryValue ...)
 
-* ConverterをConverter,Utilに分割
 
 * 例外まわりを整理する(C#の例外をrubyで補足、rubyの例外をC#で補足)
 * GCまわりをちゃんとする
 * generic対応 => Genericクラスだけ対応。Generic関数は無理か
 
+* preludeはほかのbindを不要にする
 * enumに対応
 * delegate対応
 * eventに対応
@@ -30,6 +27,9 @@
 * CodeGenしなくても、リフレクションで触れる対応
 * preserve(ビルド時にUnityにコードを消されないこと)の対応
 
+- stacktraceの行番号をだす
+- コンストラクタのオーバーロード対応
+x ConverterをConverter,Utilに分割
 - Binderの自動収集対応
 - MrbState => VMに変更
 - boolのcheckTypeを追加

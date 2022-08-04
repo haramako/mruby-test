@@ -29,7 +29,7 @@ namespace MRubyUnity
             }
             if (name.StartsWith("./"))
             {
-                if (requireInner(mrb, Path.Combine(Path.GetDirectoryName(currentLoadingFile), name)))
+                if (requireInner(mrb, Path.Combine(Path.GetDirectoryName(currentLoadingFile), name), Path.GetDirectoryName(currentLoadingFile)))
                 {
                     return;
                 }
@@ -38,7 +38,7 @@ namespace MRubyUnity
             {
                 foreach (var path in LoadPath)
                 {
-                    if (requireInner(mrb, Path.Combine(path, name)))
+                    if (requireInner(mrb, Path.Combine(path, name), path))
                     {
                         return;
                     }
@@ -47,16 +47,17 @@ namespace MRubyUnity
             throw new System.Exception($"{name} not found");
         }
 
-        private static bool requireInner(mrb_state mrb, string fullPath)
+        private static bool requireInner(mrb_state mrb, string fullPath, string baseDir)
         {
             if (IO_File.Exists(fullPath))
             {
                 var src = IO_File.ReadAllText(fullPath, System.Text.Encoding.UTF8);
                 var old = currentLoadingFile;
                 currentLoadingFile = fullPath;
+                var relativePath = fullPath.Substring(baseDir.Length + 1);
                 try
                 {
-                    Converter.Exec(mrb, src);
+                    Converter.Exec(mrb, src, relativePath);
                 }
                 finally
                 {
