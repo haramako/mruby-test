@@ -1,17 +1,29 @@
+* カードの操作
+  - クリック選択
+  * フリック（上下左右）
+  * ドラッグ（ドラッグ先）
+* ボタン
+* 数字入力
+* ダイアログ
+* fiberで操作
+
+* ゲームの種類
+  * ポーカー
+  * ソリティア（ドラッグ）
+
+
 * paramsに対応
 
-* Ruby側のCGをObjectCacheで抑制する => 仮対応でValueにgc_registerを追加した（開放しない）
-* ガベージコレクション対策:Ruby側のオブジェクトは、ValueをWeakキャッシュすることで対応可能
 * rubyのDictinay, ArrayなどをC#内で便利に使えるようにする
 
 ? ArrayをC#オブジェクトのまま返すか, RubyのArrayに変換するか・・・
 ? Value の継承を検討する(ArrayValue, DictionaryValue ...)
 
-
 * 例外まわりを整理する(C#の例外をrubyで補足、rubyの例外をC#で補足)
-* GCまわりをちゃんとする
 * generic対応 => Genericクラスだけ対応。Generic関数は無理か
 
+* Ruby側のGCをObjectCacheで抑制する => 仮対応でValueにgc_registerを追加した（開放しない）
+* ガベージコレクション対策:Ruby側のオブジェクトは、ValueをWeakキャッシュすることで対応可能
 * preludeはほかのbindを不要にする
 * enumに対応
 * delegate対応

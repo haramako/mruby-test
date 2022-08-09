@@ -58,4 +58,13 @@ public class BoardView : MonoBehaviour
         return objects[id];
     }
 
+    public void Clear()
+    {
+        foreach( var obj in objects.Values)
+        {
+            Destroy(obj.gameObject);
+        }
+        objects.Clear();
+    }
+
 }

@@ -94,7 +94,7 @@ namespace MRubyUnity
 
         public void Write(string s)
         {
-#if !UNITY_2020_OR_NEWER
+#if !UNITY_2020_1_OR_NEWER
             System.Console.WriteLine(s);
 #else
             UnityEngine.Debug.Log(s);

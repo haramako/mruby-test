@@ -139,6 +139,11 @@ namespace MRuby
             return DLL.mrb_as_float(mrb, val);
         }
 
+        public bool AsBool()
+        {
+            return DLL.mrb_bool(val);
+        }
+
         public object AsObject()
         {
             return Converter.checkVar(mrb, val);
