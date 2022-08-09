@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using MRuby;
+using UnityEngine.EventSystems;
 
 [CustomMRubyClass]
 public class PlaceHolder : BoardObject

@@ -36,6 +36,7 @@ public class BoardView : MonoBehaviour
     {
         if (objects.TryGetValue(id, out var bobj))
         {
+            bobj.transform.SetAsLastSibling();
             return bobj;
         }
 

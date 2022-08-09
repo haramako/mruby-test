@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using MRuby;
+using UnityEngine.EventSystems;
+using System.Linq;
+using DG.Tweening;
 
 [CustomMRubyClass]
-public class Card : BoardObject
+public class Card : BoardObject, IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerDownHandler
 {
     public Text NameText;
     public Button Button;
@@ -99,5 +102,94 @@ public class Card : BoardObject
         }
 
         return atlas.GetSprite(spriteName);
+    }
+
+    private Vector2 screenToLocal(Vector2 screenPosition)
+    {
+        var rt = (RectTransform)MainScene.Instance.transform;
+        //var rt = (RectTransform)this.transform;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(rt, screenPosition, null, out var pos);
+        return pos;
+    }
+
+    bool dragging;
+    Vector3 startLocalPosition;
+    Vector2 startPos;
+    bool dragTemporaryDisabled;
+    bool startClick;
+
+    public void OnBeginDrag(PointerEventData data)
+    {
+        if( dragTemporaryDisabled || !startClick)
+        {
+            return;
+        }
+        var pos = screenToLocal(data.position);
+        //Debug.Log($"Begin {pos}");
+        dragging = true;
+        startClick = false;
+    }
+
+    public void OnDrag(PointerEventData data)
+    {
+        if( !dragging)
+        {
+            return;
+        }
+        var pos = screenToLocal(data.position);
+        //Debug.Log($"Drag {pos} {data.enterEventCamera}");
+        var v = pos - startPos;
+        this.transform.localPosition = startLocalPosition + new Vector3(v.x, v.y, 0);
+    }
+
+    public void OnEndDrag(PointerEventData data)
+    {
+        if (!dragging)
+        {
+            return;
+        }
+        var pos = screenToLocal(data.position);
+        //Debug.Log($"End {pos}");
+        dragging = false;
+
+        var ray = RectTransformUtility.ScreenPointToRay(null, data.position);
+        var canvas = MainScene.Instance.Canvas;
+        List<RaycastResult> list = new();
+        EventSystem.current.RaycastAll(data, list);
+        var found = list.FirstOrDefault(r => r.gameObject != gameObject && r.gameObject.GetComponent<BoardObject>() != null);
+        if (found.isValid)
+        {
+            Debug.Log($"Drag on {found.gameObject}");
+            var targetObj = found.gameObject.GetComponent<BoardObject>();
+            if (targetObj != null)
+            {
+
+                var movable = MainScene.Instance.Game.x("movable?", ObjectID, targetObj.ObjectID).AsBool();
+                if (movable)
+                {
+                    MainScene.Instance.Play(new Command("move") { Card = ObjectID, MoveTo = targetObj.ObjectID });
+                    return;
+                }
+            }
+        }
+
+        dragTemporaryDisabled = true;
+        transform.DOLocalMove(startLocalPosition, 0.3f).AsyncWaitForCompletion().ContinueWith(n=>
+        {
+            Debug.Log("OK");
+            dragTemporaryDisabled = false;
+        });
+    }
+
+    public void OnPointerDown(PointerEventData data)
+    {
+        if (dragTemporaryDisabled)
+        {
+            return;
+        }
+        var pos = screenToLocal(data.position);
+        startClick = true;
+        startLocalPosition = transform.localPosition;
+        startPos = pos;
     }
 }

@@ -38,6 +38,7 @@ public class MainScene : MonoSingleton<MainScene>
     public Button StartButton;
     public Button DiscardButton;
     public Button BetButton;
+    public Canvas Canvas;
 
     VM mrb;
 
